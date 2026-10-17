@@ -27,8 +27,6 @@ internal class MUiTextFieldPreviewParameterProvider : PreviewParameterProvider<M
 						icon = MUiFieldIcon.Mail,
 						value = "",
 						placeholder = "name@company.ru",
-						error = "",
-						focused = false,
 					),
 				),
 			)
@@ -37,10 +35,9 @@ internal class MUiTextFieldPreviewParameterProvider : PreviewParameterProvider<M
 					dark = dark,
 					model = MUiTextFieldModel(
 						icon = MUiFieldIcon.Building,
+						label = "Адрес сервера",
 						value = "meridian.ftc.ru",
-						placeholder = "",
-						error = "",
-						focused = true,
+						highlighted = true,
 					),
 				),
 			)
@@ -50,9 +47,7 @@ internal class MUiTextFieldPreviewParameterProvider : PreviewParameterProvider<M
 					model = MUiTextFieldModel(
 						icon = MUiFieldIcon.Mail,
 						value = "name@company.ru",
-						placeholder = "",
 						error = "Проверьте данные и повторите попытку",
-						focused = false,
 					),
 				),
 			)
@@ -63,8 +58,6 @@ internal class MUiTextFieldPreviewParameterProvider : PreviewParameterProvider<M
 						icon = MUiFieldIcon.Search,
 						value = "",
 						placeholder = "Поиск по контактам",
-						error = "",
-						focused = false,
 					),
 				),
 			)
@@ -82,7 +75,6 @@ private fun MUiTextFieldPreview(
 		MUiTextField(
 			model = data.model,
 			onValueChange = {},
-			onFocusChange = {},
 			modifier = Modifier.width(328.dp),
 		)
 	}

@@ -11,6 +11,11 @@ coroutines = "1.10.2"
 dagger = "2.60.1"
 cicerone = "7.1"
 mvikotlin = "4.4.0"
+ksp = "2.2.21-2.0.5"
+ktorfit = "2.6.5"
+ktor = "3.2.1"
+serialization = "1.9.0"
+bouncycastle = "1.81"
 
 coreKtx = "1.17.0"
 junit = "4.13.2"
@@ -65,6 +70,13 @@ androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 compose-runtime = { group = "androidx.compose.runtime", name = "runtime" }
 
+ktorfit = { group = "de.jensklingenberg.ktorfit", name = "ktorfit-lib", version.ref = "ktorfit" }
+ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
+bouncycastle = { group = "org.bouncycastle", name = "bcprov-jdk18on", version.ref = "bouncycastle" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
@@ -76,6 +88,9 @@ detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 meridian-android-library = { id = "meridian-android-library" }
 meridian-kotlin-library = { id = "meridian-kotlin-library" }
 meridian-detekt = { id = "meridian-detekt" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+ktorfit = { id = "de.jensklingenberg.ktorfit", version.ref = "ktorfit" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 
 [bundles]
 coroutines = ["coroutines-core", "coroutines-android"]

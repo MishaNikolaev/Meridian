@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="empty"/>
+
+	<string name="validation_error_username_length">Логин: от 3 до 32 символов</string>
+	<string name="validation_error_username_characters">Только буквы, цифры, точка, _ или -</string>
+	<string name="validation_error_password_length">Пароль: от 8 до 128 символов</string>
+	<string name="validation_error_display_name_empty">Укажите имя</string>
+	<string name="validation_error_display_name_too_long">Имя: не больше 128 символов</string>
+</resources>

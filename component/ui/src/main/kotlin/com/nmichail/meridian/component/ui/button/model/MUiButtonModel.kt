@@ -3,6 +3,7 @@ package com.nmichail.meridian.component.ui.button.model
 enum class MUiButtonStyle {
 	Primary,
 	Secondary,
+	Outline,
 	Danger,
 	Text,
 	Icon,

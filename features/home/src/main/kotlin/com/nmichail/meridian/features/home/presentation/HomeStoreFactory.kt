@@ -5,12 +5,16 @@ import com.arkivanov.mvikotlin.core.store.SimpleBootstrapper
 import com.arkivanov.mvikotlin.core.store.Store
 import com.arkivanov.mvikotlin.extensions.coroutines.coroutineExecutorFactory
 import com.arkivanov.mvikotlin.main.store.DefaultStoreFactory
-import com.nmichail.meridian.core.preferences.Preferences
-import com.nmichail.meridian.core.validation.NotEmptyValidator
+import com.nmichail.meridian.core.validation.notEmpty.ValidateNotEmptyUseCase
+import com.nmichail.meridian.core.validation.notEmpty.isValid
+import com.nmichail.meridian.features.home.domain.usecase.GetHomeTextUseCase
+import com.nmichail.meridian.features.home.domain.usecase.SaveHomeTextUseCase
+import javax.inject.Inject
 
-class HomeStoreFactory(
-	private val preferences: Preferences,
-	private val validator: NotEmptyValidator,
+class HomeStoreFactory @Inject constructor(
+	private val getHomeTextUseCase: GetHomeTextUseCase,
+	private val saveHomeTextUseCase: SaveHomeTextUseCase,
+	private val validateNotEmptyUseCase: ValidateNotEmptyUseCase,
 ) {
 
 	private val storeFactory = DefaultStoreFactory()
@@ -23,7 +27,7 @@ class HomeStoreFactory(
 			executorFactory = coroutineExecutorFactory {
 				onAction<Action.Restore> {
 					dispatch(Msg.Loading)
-					dispatch(Msg.Restored(preferences.getString(KEY).orEmpty()))
+					dispatch(Msg.Restored(getHomeTextUseCase()))
 				}
 				onIntent<HomeStore.Intent.ChangeText> { intent ->
 					if (state().hasText()) {
@@ -32,9 +36,9 @@ class HomeStoreFactory(
 				}
 				onIntent<HomeStore.Intent.Save> {
 					val text = state().textOrNull() ?: return@onIntent
-					val error = validator.validate(text)
+					val error = text.emptyError()
 					if (error == null) {
-						preferences.putString(KEY, text)
+						saveHomeTextUseCase(text)
 						dispatch(Msg.Saved)
 					} else {
 						dispatch(Msg.TextInvalid(text, error))
@@ -45,21 +49,15 @@ class HomeStoreFactory(
 				override fun HomeStore.State.reduce(msg: Msg): HomeStore.State =
 					when (msg) {
 						is Msg.Loading -> HomeStore.State.Loading
-						is Msg.Restored -> HomeStore.State.Content(
-							text = msg.value,
-							saved = false,
-						)
-						is Msg.TextValid -> HomeStore.State.Content(
-							text = msg.value,
-							saved = false,
-						)
+						is Msg.Restored -> HomeStore.State.Content(text = msg.value)
+						is Msg.TextValid -> HomeStore.State.Content(text = msg.value)
 						is Msg.TextInvalid -> HomeStore.State.Error(
 							text = msg.value,
 							error = msg.error,
 						)
 						is Msg.Saved -> when (this) {
-							is HomeStore.State.Content -> HomeStore.State.Content(text = text, saved = true)
-							is HomeStore.State.Error -> HomeStore.State.Content(text = text, saved = true)
+							is HomeStore.State.Content -> HomeStore.State.Content(text = text)
+							is HomeStore.State.Error -> HomeStore.State.Content(text = text)
 							HomeStore.State.Initial,
 							HomeStore.State.Loading -> this
 						}
@@ -97,7 +95,7 @@ class HomeStoreFactory(
 		}
 
 	private fun String.asTextMsg(): Msg {
-		val error = validator.validate(this)
+		val error = emptyError()
 		return if (error == null) {
 			Msg.TextValid(this)
 		} else {
@@ -105,8 +103,8 @@ class HomeStoreFactory(
 		}
 	}
 
-	private companion object {
-
-		const val KEY = "home_text"
-	}
+	private fun String.emptyError(): String? =
+		if (validateNotEmptyUseCase(this).isValid()) null else EMPTY
 }
+
+private const val EMPTY = "Поле не должно быть пустым"

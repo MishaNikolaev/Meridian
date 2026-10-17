@@ -2,6 +2,7 @@ package com.nmichail.meridian.component.ui.button
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -49,6 +50,7 @@ fun MUiButton(
 			onClick = onClick,
 			modifier = modifier,
 		)
+		MUiButtonStyle.Outline -> MUiOutlineButton(model.label, onClick, modifier)
 		MUiButtonStyle.Danger -> MUiFilledButton(
 			label = model.label,
 			container = palette.statusError,
@@ -78,6 +80,27 @@ private fun MUiFilledButton(
 		contentAlignment = Alignment.Center,
 	) {
 		Text(text = label, style = MeridianType.labelButton, color = content)
+	}
+}
+
+@Composable
+private fun MUiOutlineButton(
+	label: String,
+	onClick: () -> Unit,
+	modifier: Modifier,
+) {
+	val palette = MeridianThemeTokens.palette
+	val shape = RoundedCornerShape(16.dp)
+	Box(
+		modifier = modifier
+			.fillMaxWidth()
+			.clip(shape)
+			.border(width = 1.dp, color = palette.borderStrong, shape = shape)
+			.clickable(onClick = onClick)
+			.padding(horizontal = 24.dp, vertical = 16.dp),
+		contentAlignment = Alignment.Center,
+	) {
+		Text(text = label, style = MeridianType.labelButton, color = palette.textSecondary)
 	}
 }
 

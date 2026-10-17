@@ -16,6 +16,11 @@ class SectionsHostRouter(
 	private val sectionRouterMap: Map<SectionNames, SectionRouter>,
 ) {
 
+	private companion object {
+
+		const val MIN_SCREEN_IN_BACK_STACK = 1
+	}
+
 	private val sectionRoots: Map<SectionNames, () -> FragmentScreen> = mapOf(
 		SectionNames.HOME to { getHomeScreen() },
 	)
@@ -108,10 +113,5 @@ class SectionsHostRouter(
 	enum class HostStatus {
 		EMPTY,
 		NOT_EMPTY,
-	}
-
-	private companion object {
-
-		const val MIN_SCREEN_IN_BACK_STACK = 1
 	}
 }

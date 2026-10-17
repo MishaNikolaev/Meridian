@@ -12,7 +12,6 @@ interface HomeStore : Store<HomeStore.Intent, HomeStore.State, HomeStore.Label> 
 
 		data class Content(
 			val text: String,
-			val saved: Boolean,
 		) : State
 
 		data class Error(

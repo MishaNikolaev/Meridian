@@ -6,6 +6,9 @@ plugins {
 	id("org.jetbrains.kotlin.kapt") apply false
 	id("org.jetbrains.kotlin.plugin.compose") apply false
 	id("io.gitlab.arturbosch.detekt") apply false
+	alias(libs.plugins.ksp) apply false
+	alias(libs.plugins.ktorfit) apply false
+	alias(libs.plugins.kotlin.serialization) apply false
 
 	alias(libs.plugins.meridian.android.library) apply false
 	alias(libs.plugins.meridian.kotlin.library) apply false

@@ -12,13 +12,23 @@ import com.nmichail.meridian.core.navigation.router.FullScreenRouter
 import com.nmichail.meridian.core.navigation.router.GlobalRouter
 import com.nmichail.meridian.core.navigation.router.SectionRouter
 import com.nmichail.meridian.core.navigation.section.SectionNames
-import com.nmichail.meridian.core.preferences.ApplicationContext
+import com.nmichail.meridian.core.storage.ApplicationContext
+import com.nmichail.meridian.features.authorization.signin.presentation.SignInRouter
+import com.nmichail.meridian.features.authorization.workspace.presentation.WorkspaceRouter
 import com.nmichail.meridian.features.home.presentation.HomeRouter
+import com.nmichail.meridian.features.mainhost.presentation.MainHostRouter
+import com.nmichail.meridian.features.profile.presentation.ProfileRouter
+import com.nmichail.meridian.features.registration.presentation.RegistrationRouter
+import com.nmichail.meridian.navigation.router.signin.SignInRouterImpl
+import com.nmichail.meridian.navigation.router.workspace.WorkspaceRouterImpl
 import com.nmichail.meridian.navigation.router.global.GlobalRouterImpl
 import com.nmichail.meridian.navigation.router.global.SectionsHostRouter
 import com.nmichail.meridian.navigation.router.home.HomeRouterImpl
+import com.nmichail.meridian.navigation.router.host.MainHostRouterImpl
+import com.nmichail.meridian.navigation.router.profile.ProfileRouterImpl
 import com.nmichail.meridian.navigation.router.main.MainRouter
 import com.nmichail.meridian.navigation.router.main.MainRouterImpl
+import com.nmichail.meridian.navigation.router.registration.RegistrationRouterImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -26,12 +36,6 @@ import javax.inject.Singleton
 
 @Module
 abstract class RoutersModule {
-
-	@Binds
-	abstract fun bindHomeRouter(impl: HomeRouterImpl): HomeRouter
-
-	@Binds
-	abstract fun bindMainRouter(impl: MainRouterImpl): MainRouter
 
 	companion object {
 
@@ -67,4 +71,25 @@ abstract class RoutersModule {
 			context = context,
 		)
 	}
+
+	@Binds
+	abstract fun bindHomeRouter(impl: HomeRouterImpl): HomeRouter
+
+	@Binds
+	abstract fun bindMainHostRouter(impl: MainHostRouterImpl): MainHostRouter
+
+	@Binds
+	abstract fun bindProfileRouter(impl: ProfileRouterImpl): ProfileRouter
+
+	@Binds
+	abstract fun bindRegistrationRouter(impl: RegistrationRouterImpl): RegistrationRouter
+
+	@Binds
+	abstract fun bindSignInRouter(impl: SignInRouterImpl): SignInRouter
+
+	@Binds
+	abstract fun bindWorkspaceRouter(impl: WorkspaceRouterImpl): WorkspaceRouter
+
+	@Binds
+	abstract fun bindMainRouter(impl: MainRouterImpl): MainRouter
 }

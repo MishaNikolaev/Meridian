@@ -1,8 +1,6 @@
 package com.nmichail.meridian.core.di
 
-interface ComponentHolder<C : FeatureApi, D : FeatureDependencies> {
-
-	fun init(dependencies: D)
+interface ComponentHolder<C : FeatureApi> {
 
 	fun get(): C
 

@@ -22,6 +22,7 @@ internal class MUiButtonPreviewParameterProvider : PreviewParameterProvider<MUiB
 		listOf(false, true).forEach { dark ->
 			yield(MUiButtonPreviewData(dark, MUiButtonModel(MUiButtonStyle.Primary, "Продолжить")))
 			yield(MUiButtonPreviewData(dark, MUiButtonModel(MUiButtonStyle.Secondary, "Скопировать ссылку")))
+			yield(MUiButtonPreviewData(dark, MUiButtonModel(MUiButtonStyle.Outline, "Вход в рабочее пространство")))
 			yield(MUiButtonPreviewData(dark, MUiButtonModel(MUiButtonStyle.Danger, "Закрыть сессию")))
 			yield(MUiButtonPreviewData(dark, MUiButtonModel(MUiButtonStyle.Text, "Сменить сервер")))
 			yield(MUiButtonPreviewData(dark, MUiButtonModel(MUiButtonStyle.Icon, "")))
