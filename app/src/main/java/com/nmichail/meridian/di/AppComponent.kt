@@ -3,8 +3,10 @@ package com.nmichail.meridian.di
 import android.content.Context
 import com.nmichail.meridian.MeridianApplication
 import com.nmichail.meridian.core.navigation.di.NavigationModule
+import com.nmichail.meridian.core.network.di.CoreApi
+import com.nmichail.meridian.core.network.di.NetworkModule
 import com.nmichail.meridian.core.preferences.ApplicationContext
-import com.nmichail.meridian.features.home.di.HomeDependencies
+import com.nmichail.meridian.shared.session.di.SessionDataModule
 import dagger.BindsInstance
 import dagger.Component
 import dagger.Module
@@ -18,10 +20,12 @@ interface AppModule
 	modules = [
 		AppModule::class,
 		NavigationModule::class,
+		NetworkModule::class,
 		RoutersModule::class,
+		SessionDataModule::class,
 	],
 )
-interface AppComponent : HomeDependencies {
+interface AppComponent : CoreApi {
 
 	fun inject(application: MeridianApplication)
 

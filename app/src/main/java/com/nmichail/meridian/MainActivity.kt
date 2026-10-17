@@ -3,17 +3,27 @@ package com.nmichail.meridian
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.lifecycleScope
 import com.github.terrakok.cicerone.NavigatorHolder
 import com.nmichail.meridian.core.navigation.di.FullScreen
 import com.nmichail.meridian.core.navigation.navigator.ScreenNavigator
+import com.nmichail.meridian.core.network.session.SessionEvents
 import com.nmichail.meridian.di.ActivityComponent
 import com.nmichail.meridian.navigation.router.main.MainRouter
+import com.nmichail.meridian.shared.session.domain.usecase.RestoreSessionUseCase
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 class MainActivity : FragmentActivity() {
 
 	@Inject
 	lateinit var router: MainRouter
+
+	@Inject
+	lateinit var restoreSessionUseCase: RestoreSessionUseCase
+
+	@Inject
+	lateinit var sessionEvents: SessionEvents
 
 	@Inject
 	@FullScreen
@@ -31,7 +41,22 @@ class MainActivity : FragmentActivity() {
 		enableEdgeToEdge()
 		setContentView(R.layout.activity_main)
 		if (savedInstanceState == null) {
-			router.navigateToHome()
+			openSavedSession()
+		}
+		lifecycleScope.launch {
+			sessionEvents.expired.collect {
+				router.openSignIn()
+			}
+		}
+	}
+
+	private fun openSavedSession() {
+		lifecycleScope.launch {
+			if (restoreSessionUseCase()) {
+				router.navigateToHome()
+			} else {
+				router.openSignIn()
+			}
 		}
 	}
 
