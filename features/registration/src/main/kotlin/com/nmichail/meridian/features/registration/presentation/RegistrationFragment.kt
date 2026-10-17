@@ -1,0 +1,45 @@
+package com.nmichail.meridian.features.registration.presentation
+
+import android.content.Context
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.compose.ui.platform.ComposeView
+import com.nmichail.meridian.component.ui.theme.MeridianTheme
+import com.nmichail.meridian.core.navigation.screen.FullScreen
+import com.nmichail.meridian.core.navigation.screen.FullScreenFragment
+import com.nmichail.meridian.features.registration.di.RegistrationComponentHolder
+import com.nmichail.meridian.features.registration.presentation.compose.RegistrationScreen
+import javax.inject.Inject
+
+fun getRegistrationScreen(): FullScreen = FullScreen(
+	key = RegistrationFragment::class.java.name,
+	fragmentClass = RegistrationFragment::class.java,
+)
+
+class RegistrationFragment : FullScreenFragment() {
+
+	@Inject
+	lateinit var router: RegistrationRouter
+
+	private val viewModel: RegistrationViewModel by viewModel()
+
+	override fun onAttach(context: Context) {
+		super.onAttach(context)
+		RegistrationComponentHolder.get().inject(this)
+	}
+
+	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
+		ComposeView(requireContext()).apply {
+			setContent {
+				MeridianTheme {
+					RegistrationScreen(viewModel)
+				}
+			}
+		}
+
+	override fun navigateBack() {
+		router.navigateBack()
+	}
+}

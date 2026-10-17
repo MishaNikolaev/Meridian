@@ -1,14 +1,16 @@
 package com.nmichail.meridian.features.home.di
 
 import com.nmichail.meridian.core.di.ComponentHolder
+import com.nmichail.meridian.core.network.di.CoreApi
+import com.nmichail.meridian.features.home.presentation.HomeRouter
 
-object HomeComponentHolder : ComponentHolder<HomeFeatureApi, HomeDependencies> {
+object HomeComponentHolder : ComponentHolder<HomeFeatureApi> {
 
 	private var component: HomeFeatureApi? = null
 
-	override fun init(dependencies: HomeDependencies) {
+	fun init(core: CoreApi, router: HomeRouter) {
 		if (component == null) {
-			component = DaggerHomeComponent.factory().create(dependencies)
+			component = DaggerHomeComponent.factory().create(core, router)
 		}
 	}
 

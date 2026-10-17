@@ -1,12 +1,15 @@
 package com.nmichail.meridian.features.home.di
 
 import com.nmichail.meridian.core.di.PerFeature
+import com.nmichail.meridian.core.network.di.CoreApi
 import com.nmichail.meridian.core.presentation.di.ViewModelModule
+import com.nmichail.meridian.features.home.presentation.HomeRouter
+import dagger.BindsInstance
 import dagger.Component
 
 @PerFeature
 @Component(
-	dependencies = [HomeDependencies::class],
+	dependencies = [CoreApi::class],
 	modules = [HomeModule::class, ViewModelModule::class],
 )
 interface HomeComponent : HomeFeatureApi {
@@ -14,6 +17,6 @@ interface HomeComponent : HomeFeatureApi {
 	@Component.Factory
 	interface Factory {
 
-		fun create(dependencies: HomeDependencies): HomeComponent
+		fun create(core: CoreApi, @BindsInstance router: HomeRouter): HomeComponent
 	}
 }

@@ -5,7 +5,7 @@ import com.nmichail.meridian.MeridianApplication
 import com.nmichail.meridian.core.navigation.di.NavigationModule
 import com.nmichail.meridian.core.network.di.CoreApi
 import com.nmichail.meridian.core.network.di.NetworkModule
-import com.nmichail.meridian.core.preferences.ApplicationContext
+import com.nmichail.meridian.core.storage.ApplicationContext
 import com.nmichail.meridian.shared.session.di.SessionDataModule
 import dagger.BindsInstance
 import dagger.Component

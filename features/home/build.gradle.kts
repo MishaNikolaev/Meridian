@@ -18,6 +18,7 @@ dependencies {
 	api(projects.core.di)
 	implementation(projects.core.presentation)
 	implementation(projects.core.navigation)
-	implementation(projects.core.preferences)
+	implementation(projects.core.network)
+	implementation(projects.core.storage)
 	implementation(projects.core.validation)
 }

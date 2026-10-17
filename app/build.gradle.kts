@@ -63,7 +63,7 @@ dependencies {
 	implementation(projects.component.ui)
 	implementation(projects.core.navigation)
 	implementation(projects.core.network)
-	implementation(projects.core.preferences)
+	implementation(projects.core.storage)
 	implementation(projects.core.validation)
 	implementation(projects.shared.session)
 	implementation(projects.features.mainhost)

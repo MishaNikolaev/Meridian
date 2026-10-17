@@ -2,7 +2,7 @@ package com.nmichail.meridian.component.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-internal data class MeridianPalette(
+data class MeridianPalette(
 	val page: Color,
 	val surface: Color,
 	val field: Color,
@@ -64,12 +64,12 @@ internal val LightPalette = MeridianPalette(
 	chatOutgoing = Color(color = 0xFF2563EB),
 	chatBackground = Color(color = 0xFFEAF0FA),
 	callSpeaking = Color(color = 0xFF34D399),
-	snackbarContainer = Color(color = 0xFF1B1F29),
-	snackbarText = Color(color = 0xFFFFFFFF),
-	snackbarAction = Color(color = 0xFF8DB4FF),
-	snackbarError = Color(color = 0xFFFF6B6B),
-	snackbarInfo = Color(color = 0xFF8DB4FF),
-	snackbarSuccess = Color(color = 0xFF4ADE9A),
+	snackbarContainer = Color(color = 0xFFFFFFFF),
+	snackbarText = Color(color = 0xFF0B0F17),
+	snackbarAction = Color(color = 0xFF2563EB),
+	snackbarError = Color(color = 0xFFBB3B3F),
+	snackbarInfo = Color(color = 0xFF2563EB),
+	snackbarSuccess = Color(color = 0xFF0C795A),
 	snackbarShadow = Color(color = 0x40000000),
 	elevation3 = Color(color = 0x290A0F1A),
 	fabShadow = Color(color = 0x38000000),
