@@ -3,7 +3,10 @@ plugins {
 }
 
 dependencies {
+	implementation(libs.coroutines.core)
 	implementation(libs.androidx.core.ktx)
+	implementation(libs.androidx.lifecycle.livedata)
+	implementation(libs.androidx.lifecycle.runtime.compose)
 	implementation(platform(libs.androidx.compose.bom))
 	implementation(libs.bundles.compose)
 

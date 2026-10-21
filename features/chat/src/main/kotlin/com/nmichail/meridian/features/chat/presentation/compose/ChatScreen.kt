@@ -7,6 +7,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nmichail.meridian.component.ui.text.MUiBodyRegularText
 import com.nmichail.meridian.component.ui.theme.MeridianThemeTokens
@@ -38,8 +39,8 @@ fun ChatScreen(
 }
 
 @Composable
-private fun Error(message: String) {
+private fun Error(message: Int) {
 	Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-		MUiBodyRegularText(text = message, color = MeridianThemeTokens.palette.statusError)
+		MUiBodyRegularText(text = stringResource(message), color = MeridianThemeTokens.palette.statusError)
 	}
 }

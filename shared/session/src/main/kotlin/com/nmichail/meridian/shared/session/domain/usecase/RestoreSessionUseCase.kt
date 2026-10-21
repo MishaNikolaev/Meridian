@@ -1,22 +1,22 @@
 package com.nmichail.meridian.shared.session.domain.usecase
 
-import com.nmichail.meridian.core.network.device.DeviceIdentityStore
+import com.nmichail.meridian.core.network.device.DeviceIdentityRepository
 import com.nmichail.meridian.core.network.session.SessionRefresher
-import com.nmichail.meridian.core.network.session.SessionStore
+import com.nmichail.meridian.core.network.session.SessionRepository
 import java.io.IOException
 import javax.inject.Inject
 
 class RestoreSessionUseCase @Inject constructor(
-	private val sessionStore: SessionStore,
+	private val sessionRepository: SessionRepository,
 	private val sessionRefresher: SessionRefresher,
-	private val deviceIdentityStore: DeviceIdentityStore,
+	private val deviceIdentityRepository: DeviceIdentityRepository,
 ) {
 
 	suspend operator fun invoke(): Boolean {
-		if (sessionStore.isSignedIn()) {
+		if (sessionRepository.isSignedIn()) {
 			return true
 		}
-		if (sessionStore.refreshToken() == null) {
+		if (sessionRepository.getRefreshToken() == null) {
 			dropSession()
 			return false
 		}
@@ -33,7 +33,7 @@ class RestoreSessionUseCase @Inject constructor(
 	}
 
 	private fun dropSession() {
-		sessionStore.clear()
-		deviceIdentityStore.reset()
+		sessionRepository.clear()
+		deviceIdentityRepository.reset()
 	}
 }

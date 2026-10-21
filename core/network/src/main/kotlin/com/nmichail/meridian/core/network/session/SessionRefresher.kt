@@ -1,7 +1,7 @@
 package com.nmichail.meridian.core.network.session
 
 import com.nmichail.meridian.core.network.config.NetworkConfig
-import com.nmichail.meridian.core.network.device.DeviceIdentityStore
+import com.nmichail.meridian.core.network.device.DeviceIdentityRepository
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.okhttp.OkHttp
@@ -21,8 +21,8 @@ import kotlinx.serialization.json.Json
 
 @Singleton
 class SessionRefresher @Inject constructor(
-	private val sessionStore: SessionStore,
-	private val deviceIdentityStore: DeviceIdentityStore,
+	private val sessionRepository: SessionRepository,
+	private val deviceIdentityRepository: DeviceIdentityRepository,
 	private val config: NetworkConfig,
 	private val json: Json,
 	private val events: SessionEvents,
@@ -38,7 +38,7 @@ class SessionRefresher @Inject constructor(
 	}
 
 	suspend fun refresh(): AuthSession? = lock.withLock {
-		val refreshToken = sessionStore.refreshToken() ?: return null
+		val refreshToken = sessionRepository.getRefreshToken() ?: return null
 		val response = client.post("${config.baseUrl}api/gateway/authorization/refresh") {
 			contentType(ContentType.Application.Json)
 			setBody(RefreshBody(refreshToken))
@@ -47,14 +47,14 @@ class SessionRefresher @Inject constructor(
 			return null
 		}
 		val session = response.body<AuthSession>()
-		sessionStore.save(session)
+		sessionRepository.save(session)
 		session
 	}
 
 	fun expire() {
-		val signedIn = sessionStore.accessToken() != null || sessionStore.refreshToken() != null
-		sessionStore.clear()
-		deviceIdentityStore.reset()
+		val signedIn = sessionRepository.getAccessToken() != null || sessionRepository.getRefreshToken() != null
+		sessionRepository.clear()
+		deviceIdentityRepository.reset()
 		if (signedIn) {
 			events.notifyExpired()
 		}

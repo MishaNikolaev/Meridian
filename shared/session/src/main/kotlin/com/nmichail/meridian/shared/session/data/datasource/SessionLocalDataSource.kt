@@ -1,16 +1,20 @@
 package com.nmichail.meridian.shared.session.data.datasource
 
 import com.nmichail.meridian.core.network.session.AuthSession
-import com.nmichail.meridian.core.storage.LocalStore
+import com.nmichail.meridian.core.storage.LocalPreferences
 import javax.inject.Inject
 
 interface SessionLocalDataSource {
 
 	fun isSignedIn(): Boolean
 
-	fun accessToken(): String?
+	fun getAccessToken(): String?
 
-	fun refreshToken(): String?
+	fun getRefreshToken(): String?
+
+	fun getUserId(): String?
+
+	fun getDeviceId(): String?
 
 	fun save(session: AuthSession)
 
@@ -18,7 +22,7 @@ interface SessionLocalDataSource {
 }
 
 class SessionLocalDataSourceImpl @Inject constructor(
-	private val localStore: LocalStore,
+	private val localPreferences: LocalPreferences,
 ) : SessionLocalDataSource {
 
 	private companion object {
@@ -34,29 +38,33 @@ class SessionLocalDataSourceImpl @Inject constructor(
 	}
 
 	override fun isSignedIn(): Boolean {
-		val expiresAt = localStore.getString(EXPIRES_AT)?.toLongOrNull() ?: return false
-		return !accessToken().isNullOrBlank() && expiresAt > System.currentTimeMillis() + EXPIRY_SKEW_MILLIS
+		val expiresAt = localPreferences.getString(EXPIRES_AT)?.toLongOrNull() ?: return false
+		return !getAccessToken().isNullOrBlank() && expiresAt > System.currentTimeMillis() + EXPIRY_SKEW_MILLIS
 	}
 
-	override fun accessToken(): String? = localStore.getSecret(ACCESS_TOKEN)?.takeIf { it.isNotBlank() }
+	override fun getAccessToken(): String? = localPreferences.getSecret(ACCESS_TOKEN)?.takeIf { it.isNotBlank() }
 
-	override fun refreshToken(): String? = localStore.getSecret(REFRESH_TOKEN)?.takeIf { it.isNotBlank() }
+	override fun getRefreshToken(): String? = localPreferences.getSecret(REFRESH_TOKEN)?.takeIf { it.isNotBlank() }
+
+	override fun getUserId(): String? = localPreferences.getString(USER_ID)?.takeIf { it.isNotBlank() }
+
+	override fun getDeviceId(): String? = localPreferences.getString(DEVICE_ID)?.takeIf { it.isNotBlank() }
 
 	override fun save(session: AuthSession) {
-		localStore.putString(USER_ID, session.userId)
-		localStore.putString(DEVICE_ID, session.deviceId)
-		localStore.putSecret(ACCESS_TOKEN, session.accessToken)
-		localStore.putSecret(REFRESH_TOKEN, session.refreshToken)
+		localPreferences.putString(USER_ID, session.userId)
+		localPreferences.putString(DEVICE_ID, session.deviceId)
+		localPreferences.putSecret(ACCESS_TOKEN, session.accessToken)
+		localPreferences.putSecret(REFRESH_TOKEN, session.refreshToken)
 		val expiresAt = System.currentTimeMillis() + session.expiresIn * MILLIS_IN_SECOND
-		localStore.putString(EXPIRES_AT, expiresAt.toString())
+		localPreferences.putString(EXPIRES_AT, expiresAt.toString())
 	}
 
 	override fun clear() {
-		localStore.remove(USER_ID)
-		localStore.remove(DEVICE_ID)
-		localStore.remove(ACCESS_TOKEN)
-		localStore.remove(REFRESH_TOKEN)
-		localStore.remove(EXPIRES_AT)
-		localStore.remove(EXPIRES_IN)
+		localPreferences.remove(USER_ID)
+		localPreferences.remove(DEVICE_ID)
+		localPreferences.remove(ACCESS_TOKEN)
+		localPreferences.remove(REFRESH_TOKEN)
+		localPreferences.remove(EXPIRES_AT)
+		localPreferences.remove(EXPIRES_IN)
 	}
 }

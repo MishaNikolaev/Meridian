@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.nmichail.meridian.component.ui.R
 import com.nmichail.meridian.component.ui.field.model.MUiFieldIcon
@@ -99,6 +100,28 @@ fun MUiTextField(
 			)
 		}
 	}
+}
+
+@Composable
+fun MUiSearchField(
+	value: String,
+	onValueChange: (String) -> Unit,
+	open: Boolean,
+	placeholder: String,
+	modifier: Modifier = Modifier,
+) {
+	if (!open) {
+		return
+	}
+	MUiTextField(
+		model = MUiTextFieldModel(
+			icon = MUiFieldIcon.Search,
+			value = value,
+			placeholder = placeholder,
+		),
+		onValueChange = onValueChange,
+		modifier = modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+	)
 }
 
 @Composable
@@ -172,7 +195,7 @@ private fun MUiPasswordReveal(
 ) {
 	Image(
 		painter = painterResource(if (revealed) R.drawable.ic_visibility else R.drawable.ic_visibility_off),
-		contentDescription = if (revealed) "Скрыть пароль" else "Показать пароль",
+		contentDescription = stringResource(if (revealed) R.string.password_hide else R.string.password_show),
 		colorFilter = ColorFilter.tint(MeridianThemeTokens.palette.textSecondary),
 		modifier = Modifier
 			.size(20.dp)

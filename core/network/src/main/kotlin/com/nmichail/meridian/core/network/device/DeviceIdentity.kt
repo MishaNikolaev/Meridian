@@ -15,6 +15,9 @@ class DeviceIdentity internal constructor(
 
 	companion object {
 
+		private const val PREKEY_ID = 1
+		private const val PRIVATE_KEY_SIZE = 32
+
 		fun generate(): DeviceIdentity {
 			val key = generateKeyPair()
 			return DeviceIdentity(
@@ -94,8 +97,8 @@ class DeviceIdentity internal constructor(
 		)
 	}
 
-	fun registrationKeys(deviceName: String, preKeys: DevicePreKeys): DeviceRegistrationKeys =
-		DeviceRegistrationKeys(
+	fun deviceKeys(deviceName: String, preKeys: DevicePreKeys): DeviceKeys =
+		DeviceKeys(
 			deviceId = deviceId,
 			name = deviceName,
 			identityPublicKey = publicKey,
@@ -118,6 +121,3 @@ private class GeneratedKey(
 private fun ByteArray.encodeBase64(): String = Base64.encodeToString(this, Base64.NO_WRAP)
 
 private fun String.decodeBase64(): ByteArray = Base64.decode(this, Base64.NO_WRAP)
-
-private const val PREKEY_ID = 1
-private const val PRIVATE_KEY_SIZE = 32

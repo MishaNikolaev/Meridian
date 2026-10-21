@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="error_no_connection">Нет соединения с сервером</string>
+	<string name="error_unknown">Не получилось выполнить запрос</string>
+	<string name="error_username_taken">Логин уже занят</string>
+	<string name="error_device_taken">Это устройство уже привязано к аккаунту</string>
+	<string name="error_user_not_found">Пользователь не зарегистрирован</string>
+	<string name="error_device_not_found">Устройство не зарегистрировано</string>
+	<string name="error_forbidden">Устройство отозвано</string>
+	<string name="error_phrase_expired">Проверочная строка истекла</string>
+	<string name="error_invalid_signature">Подпись не подошла</string>
+	<string name="error_phrase_not_found">Проверочная строка не найдена</string>
+	<string name="error_unauthorized">Сессия больше не активна</string>
+	<string name="error_too_many_requests">Слишком много попыток</string>
+	<string name="error_invalid_username">Логин: 3–32 символа, буквы, цифры, точка, _ или -</string>
+	<string name="error_invalid_display_name">Имя: 1–128 символов</string>
+	<string name="error_invalid_identity_key">Публичный ключ устройства не подошёл</string>
+	<string name="error_invalid_signed_prekey">Подпись ключа устройства не совпала</string>
+	<string name="error_invalid_prekeys">Нужен хотя бы один одноразовый prekey</string>
+	<string name="error_invalid_prekey">У одноразового prekey нет публичного ключа</string>
+	<string name="error_invalid_id">Некорректный идентификатор</string>
+	<string name="error_invalid_password">Пароль: от 8 до 128 символов</string>
+	<string name="error_password_not_set">Пароль для аккаунта не задан</string>
+	<string name="error_password_mismatch">Неверный логин или пароль</string>
+	<string name="error_server_not_found">Сервер не найден. Проверьте адрес и подключение</string>
+	<string name="error_not_on_server">Сервер или почта не найден</string>
+	<string name="error_invalid_direct_chat">Личный чат открывается с одним человеком</string>
+	<string name="error_invalid_title">Название: от 1 до 128 символов</string>
+	<string name="error_invalid_members">Себя в участники добавлять не нужно</string>
+	<string name="error_chat_not_found">Чат не найден</string>
+	<string name="error_missing_envelope">Не удалось зашифровать сообщение для собеседника</string>
+</resources>

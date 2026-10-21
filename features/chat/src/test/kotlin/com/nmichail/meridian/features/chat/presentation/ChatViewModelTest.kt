@@ -1,5 +1,6 @@
 package com.nmichail.meridian.features.chat.presentation
 
+import com.nmichail.meridian.core.network.R
 import com.nmichail.meridian.core.testutils.InstantExecutorExtension
 import com.nmichail.meridian.core.testutils.TestCoroutineExtension
 import com.nmichail.meridian.core.testutils.doThrowSafe
@@ -93,7 +94,7 @@ class ChatViewModelTest {
 
 		viewModel.applyIntent(ChatIntent.LoadInitialData)
 
-		assertEquals(ChatState.Error(message = "Нет соединения с сервером"), viewModel.state.value)
+		assertEquals(ChatState.Error(message = R.string.error_no_connection), viewModel.state.value)
 	}
 
 	@Test
@@ -335,7 +336,7 @@ class ChatViewModelTest {
 
 		viewModel.applyIntent(ChatIntent.Submit)
 
-		assertEquals(ChatState.Error(message = "Нет соединения с сервером"), viewModel.state.value)
+		assertEquals(ChatState.Error(message = R.string.error_no_connection), viewModel.state.value)
 	}
 
 	@Test

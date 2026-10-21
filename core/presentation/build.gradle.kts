@@ -9,5 +9,5 @@ dependencies {
 	implementation(libs.coroutines.core)
 	implementation(libs.dagger)
 	kapt(libs.dagger.compiler)
-	implementation(libs.mvikotlin)
+	api(libs.androidx.lifecycle.livedata)
 }

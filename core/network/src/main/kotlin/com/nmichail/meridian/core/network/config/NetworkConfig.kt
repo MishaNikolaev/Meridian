@@ -9,8 +9,9 @@ class NetworkConfig @Inject constructor() {
 
 	private companion object {
 
-		const val EMULATOR_GATEWAY = "http://10.0.2.2:8080/"
-		const val DEVICE_GATEWAY = "http://127.0.0.1:8080/"
+		const val PORT = 8080
+		const val EMULATOR_HOST = "10.0.2.2"
+		const val DEVICE_HOST = "127.0.0.1"
 
 		fun isEmulator(): Boolean {
 			val fingerprint = Build.FINGERPRINT
@@ -25,5 +26,9 @@ class NetworkConfig @Inject constructor() {
 		}
 	}
 
-	val baseUrl: String = if (isEmulator()) EMULATOR_GATEWAY else DEVICE_GATEWAY
+	val host: String = if (isEmulator()) EMULATOR_HOST else DEVICE_HOST
+
+	val port: Int = PORT
+
+	val baseUrl: String = "http://$host:$port/"
 }

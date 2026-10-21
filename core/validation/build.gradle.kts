@@ -6,4 +6,6 @@ plugins {
 dependencies {
 	implementation(libs.dagger)
 	kapt(libs.dagger.compiler)
+
+	testImplementation(libs.bundles.test.junit5)
 }

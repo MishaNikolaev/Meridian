@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import com.nmichail.meridian.component.ui.text.MUiTitleScreenText
+import com.nmichail.meridian.features.contacts.R
 
 @Composable
 fun ContactsScreen() {
@@ -13,6 +15,6 @@ fun ContactsScreen() {
 		modifier = Modifier.fillMaxSize(),
 		contentAlignment = Alignment.Center,
 	) {
-		MUiTitleScreenText(text = "Контакты")
+		MUiTitleScreenText(text = stringResource(R.string.contacts_title))
 	}
 }

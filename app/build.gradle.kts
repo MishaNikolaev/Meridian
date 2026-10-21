@@ -51,7 +51,6 @@ dependencies {
 	implementation(libs.bundles.coroutines)
 	implementation(libs.cicerone)
 	implementation(libs.dagger)
-	implementation(libs.bundles.mvikotlin)
 	kapt(libs.dagger.compiler)
 
 	implementation(libs.androidx.core.ktx)
@@ -67,7 +66,8 @@ dependencies {
 	implementation(projects.core.validation)
 	implementation(projects.shared.session)
 	implementation(projects.features.mainhost)
-	implementation(projects.features.home)
+	implementation(projects.features.chat)
+	implementation(projects.features.conversation)
 	implementation(projects.features.contacts)
 	implementation(projects.features.calls)
 	implementation(projects.features.profile)

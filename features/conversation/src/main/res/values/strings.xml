@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="conversation_greeting">Напишите сообщение</string>
+	<string name="conversation_message">Сообщение</string>
+	<string name="conversation_edit">Редактирование</string>
+	<string name="conversation_bot">бот</string>
+	<plurals name="conversation_members">
+		<item quantity="one">%d участник</item>
+		<item quantity="few">%d участника</item>
+		<item quantity="many">%d участников</item>
+		<item quantity="other">%d участников</item>
+	</plurals>
+</resources>

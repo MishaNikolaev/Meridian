@@ -14,16 +14,20 @@ import com.nmichail.meridian.component.ui.bar.MUiBottomBar
 import com.nmichail.meridian.component.ui.bar.model.MUiBottomDestination
 import com.nmichail.meridian.component.ui.theme.MeridianThemeTokens
 import com.nmichail.meridian.features.calls.presentation.compose.CallsScreen
+import com.nmichail.meridian.features.chat.presentation.ChatIntent
+import com.nmichail.meridian.features.chat.presentation.ChatState
+import com.nmichail.meridian.features.chat.presentation.compose.ChatScreen
 import com.nmichail.meridian.features.contacts.presentation.compose.ContactsScreen
-import com.nmichail.meridian.features.home.presentation.compose.HomeScreen
-import com.nmichail.meridian.features.profile.presentation.ProfileViewModel
 import com.nmichail.meridian.features.profile.presentation.compose.ProfileScreen
+import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun MainHostScreen(
 	selected: MUiBottomDestination,
 	onSelect: (MUiBottomDestination) -> Unit,
-	viewModel: ProfileViewModel,
+	chatState: StateFlow<ChatState>,
+	onChatIntent: (ChatIntent) -> Unit,
+	onLogout: () -> Unit,
 ) {
 	Column(
 		modifier = Modifier
@@ -37,10 +41,13 @@ fun MainHostScreen(
 				.windowInsetsPadding(WindowInsets.statusBars),
 		) {
 			when (selected) {
-				MUiBottomDestination.HOME -> HomeScreen()
+				MUiBottomDestination.HOME -> ChatScreen(
+					state = chatState,
+					onIntent = onChatIntent,
+				)
 				MUiBottomDestination.CONTACTS -> ContactsScreen()
 				MUiBottomDestination.CALLS -> CallsScreen()
-				MUiBottomDestination.PROFILE -> ProfileScreen(viewModel)
+				MUiBottomDestination.PROFILE -> ProfileScreen(onLogout = onLogout)
 			}
 		}
 		MUiBottomBar(

@@ -1,7 +1,7 @@
 package com.nmichail.meridian.shared.chat.data.repository
 
 import com.nmichail.meridian.core.network.error.GatewayException
-import com.nmichail.meridian.core.network.session.SessionStore
+import com.nmichail.meridian.core.network.session.SessionRepository
 import com.nmichail.meridian.shared.chat.data.api.ChatApi
 import com.nmichail.meridian.shared.chat.data.model.ChatDetailsDto
 import com.nmichail.meridian.shared.chat.data.model.ChatMemberDto
@@ -34,12 +34,12 @@ import org.mockito.kotlin.whenever
 class ChatRepositoryImplTest {
 
 	private val api: ChatApi = mock()
-	private val sessionStore: SessionStore = mock()
-	private val repository = ChatRepositoryImpl(api, sessionStore)
+	private val sessionRepository: SessionRepository = mock()
+	private val repository = ChatRepositoryImpl(api, sessionRepository)
 
 	@Test
 	fun `load chats EXPECT summaries`() = runTest {
-		whenever(sessionStore.getUserId()) doReturn "self"
+		whenever(sessionRepository.getUserId()) doReturn "self"
 		whenever(api.getChats()) doReturn ChatPageDto(
 			items = listOf(
 				ChatSummaryDto(
@@ -114,7 +114,7 @@ class ChatRepositoryImplTest {
 
 	@Test
 	fun `load deleted message EXPECT empty text`() = runTest {
-		whenever(sessionStore.getUserId()) doReturn "self"
+		whenever(sessionRepository.getUserId()) doReturn "self"
 		whenever(api.getChat("1")) doReturn details(title = "Анна")
 		whenever(api.getMessages("1")) doReturn MessagePageDto(
 			items = listOf(message(deleted = true)),
@@ -127,7 +127,7 @@ class ChatRepositoryImplTest {
 
 	@Test
 	fun `load deleted message EXPECT no read target`() = runTest {
-		whenever(sessionStore.getUserId()) doReturn "self"
+		whenever(sessionRepository.getUserId()) doReturn "self"
 		whenever(api.getChat("1")) doReturn details(title = "Анна")
 		whenever(api.getMessages("1")) doReturn MessagePageDto(
 			items = listOf(message(deleted = true)),

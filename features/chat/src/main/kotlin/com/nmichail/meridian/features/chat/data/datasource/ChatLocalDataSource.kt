@@ -1,6 +1,6 @@
 package com.nmichail.meridian.features.chat.data.datasource
 
-import com.nmichail.meridian.core.storage.LocalStore
+import com.nmichail.meridian.core.storage.LocalPreferences
 import javax.inject.Inject
 
 interface ChatLocalDataSource {
@@ -11,7 +11,7 @@ interface ChatLocalDataSource {
 }
 
 class ChatLocalDataSourceImpl @Inject constructor(
-	private val localStore: LocalStore,
+	private val localPreferences: LocalPreferences,
 ) : ChatLocalDataSource {
 
 	private companion object {
@@ -19,9 +19,9 @@ class ChatLocalDataSourceImpl @Inject constructor(
 		const val KEY = "home_text"
 	}
 
-	override fun getText(): String = localStore.getString(KEY).orEmpty()
+	override fun getText(): String = localPreferences.getString(KEY).orEmpty()
 
 	override fun save(text: String) {
-		localStore.putString(KEY, text)
+		localPreferences.putString(KEY, text)
 	}
 }

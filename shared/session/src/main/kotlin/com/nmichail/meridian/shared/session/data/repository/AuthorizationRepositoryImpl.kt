@@ -1,10 +1,10 @@
 package com.nmichail.meridian.shared.session.data.repository
 
 import com.nmichail.meridian.core.network.session.AuthSession
-import com.nmichail.meridian.core.network.device.DeviceIdentityStore
+import com.nmichail.meridian.core.network.device.DeviceIdentityRepository
 import com.nmichail.meridian.core.network.error.GatewayException
 import com.nmichail.meridian.core.network.session.SessionRefresher
-import com.nmichail.meridian.core.network.session.SessionStore
+import com.nmichail.meridian.core.network.session.SessionRepository
 import com.nmichail.meridian.shared.session.data.api.AuthorizationApi
 import com.nmichail.meridian.shared.session.data.mapper.toRequest
 import com.nmichail.meridian.shared.session.data.model.LogoutRequest
@@ -15,15 +15,15 @@ import javax.inject.Inject
 
 class AuthorizationRepositoryImpl @Inject constructor(
 	private val api: AuthorizationApi,
-	private val deviceIdentityStore: DeviceIdentityStore,
-	private val sessionStore: SessionStore,
+	private val deviceIdentityRepository: DeviceIdentityRepository,
+	private val sessionRepository: SessionRepository,
 	private val sessionRefresher: SessionRefresher,
 ) : AuthorizationRepository {
 
 	override suspend fun signIn(username: String, password: String): AuthSession {
-		val keys = deviceIdentityStore.identity().registrationKeys(
-			deviceName = deviceIdentityStore.deviceName(),
-			preKeys = deviceIdentityStore.preKeys(),
+		val keys = deviceIdentityRepository.getIdentity().deviceKeys(
+			deviceName = deviceIdentityRepository.getDeviceName(),
+			preKeys = deviceIdentityRepository.getPreKeys(),
 		)
 		val session = api.authorizeByPassword(
 			PasswordAuthorizationRequest(
@@ -32,14 +32,14 @@ class AuthorizationRepositoryImpl @Inject constructor(
 				device = keys.toRequest(),
 			),
 		)
-		sessionStore.save(session)
+		sessionRepository.save(session)
 		return session
 	}
 
 	override suspend fun signInWorkspace(host: String, email: String, password: String): AuthSession {
-		val keys = deviceIdentityStore.identity().registrationKeys(
-			deviceName = deviceIdentityStore.deviceName(),
-			preKeys = deviceIdentityStore.preKeys(),
+		val keys = deviceIdentityRepository.getIdentity().deviceKeys(
+			deviceName = deviceIdentityRepository.getDeviceName(),
+			preKeys = deviceIdentityRepository.getPreKeys(),
 		)
 		val session = api.authorizeWorkspace(
 			WorkspaceAuthorizationRequest(
@@ -49,7 +49,7 @@ class AuthorizationRepositoryImpl @Inject constructor(
 				device = keys.toRequest(),
 			),
 		)
-		sessionStore.save(session)
+		sessionRepository.save(session)
 		return session
 	}
 
@@ -60,14 +60,14 @@ class AuthorizationRepositoryImpl @Inject constructor(
 		)
 
 	override suspend fun logout() {
-		val refreshToken = sessionStore.refreshToken()
+		val refreshToken = sessionRepository.getRefreshToken()
 		try {
 			if (!refreshToken.isNullOrBlank()) {
 				api.logout(LogoutRequest(refreshToken = refreshToken))
 			}
 		} finally {
-			sessionStore.clear()
-			deviceIdentityStore.reset()
+			sessionRepository.clear()
+			deviceIdentityRepository.reset()
 		}
 	}
 }

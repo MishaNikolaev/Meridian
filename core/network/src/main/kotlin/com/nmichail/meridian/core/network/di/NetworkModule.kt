@@ -4,7 +4,7 @@ import com.nmichail.meridian.core.network.config.NetworkConfig
 import com.nmichail.meridian.core.network.error.ApiErrorBody
 import com.nmichail.meridian.core.network.error.GatewayException
 import com.nmichail.meridian.core.network.session.SessionRefresher
-import com.nmichail.meridian.core.network.session.SessionStore
+import com.nmichail.meridian.core.network.session.SessionRepository
 import com.nmichail.meridian.core.network.session.installSessionRefresh
 import dagger.Module
 import dagger.Provides
@@ -40,7 +40,7 @@ object NetworkModule {
 	@Singleton
 	@JvmStatic
 	fun provideHttpClient(
-		sessionStore: SessionStore,
+		sessionRepository: SessionRepository,
 		json: Json,
 		refresher: SessionRefresher,
 	): HttpClient = HttpClient(OkHttp) {
@@ -50,7 +50,7 @@ object NetworkModule {
 		}
 		defaultRequest {
 			contentType(ContentType.Application.Json)
-			val token = sessionStore.accessToken()
+			val token = sessionRepository.getAccessToken()
 			if (!token.isNullOrBlank()) {
 				header(HttpHeaders.Authorization, "Bearer $token")
 			}

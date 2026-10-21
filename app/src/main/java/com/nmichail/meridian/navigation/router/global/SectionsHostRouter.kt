@@ -6,7 +6,7 @@ import com.github.terrakok.cicerone.androidx.FragmentScreen
 import com.nmichail.meridian.core.navigation.router.SectionRouter
 import com.nmichail.meridian.core.navigation.screen.SectionScreen
 import com.nmichail.meridian.core.navigation.section.SectionNames
-import com.nmichail.meridian.features.home.presentation.getHomeScreen
+import com.nmichail.meridian.features.chat.presentation.getChatScreen
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,7 +22,7 @@ class SectionsHostRouter(
 	}
 
 	private val sectionRoots: Map<SectionNames, () -> FragmentScreen> = mapOf(
-		SectionNames.HOME to { getHomeScreen() },
+		SectionNames.HOME to { getChatScreen() },
 	)
 
 	private val sectionBackStack = mutableListOf<SectionScreen>()

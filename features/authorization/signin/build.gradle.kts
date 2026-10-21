@@ -5,7 +5,6 @@ plugins {
 
 dependencies {
 	implementation(libs.bundles.coroutines)
-	implementation(libs.bundles.mvikotlin)
 	implementation(libs.dagger)
 	kapt(libs.dagger.compiler)
 	implementation(libs.androidx.lifecycle.runtime.compose)
@@ -21,4 +20,9 @@ dependencies {
 	implementation(projects.core.navigation)
 	implementation(projects.core.network)
 	implementation(projects.core.validation)
+
+	testImplementation(projects.core.testutils)
+	testImplementation(libs.bundles.test.junit5)
+	testImplementation(libs.bundles.test.mockito)
+	testImplementation(libs.test.coroutines)
 }

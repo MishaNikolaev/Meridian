@@ -1,7 +1,7 @@
 package com.nmichail.meridian.shared.chat.data.repository
 
 import com.nmichail.meridian.core.network.error.GatewayException
-import com.nmichail.meridian.core.network.session.SessionStore
+import com.nmichail.meridian.core.network.session.SessionRepository
 import com.nmichail.meridian.shared.chat.data.api.ChatApi
 import com.nmichail.meridian.shared.chat.data.cipher.MessageCipher
 import com.nmichail.meridian.shared.chat.data.model.CipherEnvelopeDto
@@ -19,11 +19,11 @@ import javax.inject.Inject
 
 class ChatRepositoryImpl @Inject constructor(
 	private val api: ChatApi,
-	private val sessionStore: SessionStore,
+	private val sessionRepository: SessionRepository,
 ) : ChatRepository {
 
 	override suspend fun loadChats(): List<ChatSummary> {
-		val self = sessionStore.getUserId()
+		val self = sessionRepository.getUserId()
 		return api.getChats().items.map { item -> item.toSummary(api, self) }
 	}
 
@@ -37,12 +37,12 @@ class ChatRepositoryImpl @Inject constructor(
 			),
 		)
 		val members = details.members.map { it.userId to it.displayName }
-		val name = details.chat.title ?: peerName(sessionStore.getUserId(), members, details.chat.peerUserId)
+		val name = details.chat.title ?: peerName(sessionRepository.getUserId(), members, details.chat.peerUserId)
 		return CreatedChat(id = details.chat.chatId, title = name)
 	}
 
 	override suspend fun loadMessages(chatId: String): ChatThread {
-		val self = sessionStore.getUserId()
+		val self = sessionRepository.getUserId()
 		val details = api.getChat(chatId)
 		val names = details.members.associate { member -> member.userId to member.displayName }
 		val page = api.getMessages(chatId)
@@ -76,8 +76,8 @@ class ChatRepositoryImpl @Inject constructor(
 	}
 
 	private suspend fun targets(chatId: String): List<String> {
-		val self = sessionStore.getUserId()
-		val mine = sessionStore.getDeviceId() ?: throw GatewayException("DEVICE_NOT_FOUND", "Устройство не зарегистрировано")
+		val self = sessionRepository.getUserId()
+		val mine = sessionRepository.getDeviceId() ?: throw GatewayException("DEVICE_NOT_FOUND", "Устройство не зарегистрировано")
 		val details = api.getChat(chatId)
 		val others = details.members.filter { it.userId != self }.flatMap { member ->
 			api.getBundle(member.userId).devices.map { it.deviceId }

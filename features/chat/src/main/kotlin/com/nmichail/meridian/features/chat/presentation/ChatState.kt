@@ -30,6 +30,6 @@ sealed interface ChatState {
 	) : ChatState
 
 	data class Error(
-		val message: String,
+		val message: Int,
 	) : ChatState
 }

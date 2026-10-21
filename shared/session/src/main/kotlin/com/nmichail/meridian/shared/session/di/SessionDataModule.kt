@@ -1,7 +1,7 @@
 package com.nmichail.meridian.shared.session.di
 
-import com.nmichail.meridian.core.network.device.DeviceIdentityStore
-import com.nmichail.meridian.core.network.session.SessionStore
+import com.nmichail.meridian.core.network.device.DeviceIdentityRepository
+import com.nmichail.meridian.core.network.session.SessionRepository
 import com.nmichail.meridian.shared.session.data.datasource.DeviceIdentityDataSource
 import com.nmichail.meridian.shared.session.data.datasource.DeviceIdentityDataSourceImpl
 import com.nmichail.meridian.shared.session.data.datasource.SessionLocalDataSource
@@ -21,7 +21,7 @@ interface SessionDataModule {
 
 	@Binds
 	@Singleton
-	fun bindSessionRepository(impl: SessionRepositoryImpl): SessionStore
+	fun bindSessionRepository(impl: SessionRepositoryImpl): SessionRepository
 
 	@Binds
 	@Singleton
@@ -29,5 +29,5 @@ interface SessionDataModule {
 
 	@Binds
 	@Singleton
-	fun bindDeviceIdentityRepository(impl: DeviceIdentityRepositoryImpl): DeviceIdentityStore
+	fun bindDeviceIdentityRepository(impl: DeviceIdentityRepositoryImpl): DeviceIdentityRepository
 }
