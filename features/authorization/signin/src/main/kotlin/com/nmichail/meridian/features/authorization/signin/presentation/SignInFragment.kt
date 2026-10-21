@@ -6,12 +6,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
-import com.nmichail.meridian.component.ui.theme.MeridianTheme
+import com.nmichail.meridian.component.ui.compose.Screen
 import com.nmichail.meridian.core.navigation.screen.FullScreen
 import com.nmichail.meridian.core.navigation.screen.FullScreenFragment
 import com.nmichail.meridian.features.authorization.signin.di.SignInComponentHolder
 import com.nmichail.meridian.features.authorization.signin.presentation.compose.SignInScreen
-import javax.inject.Inject
 
 fun getSignInScreen(): FullScreen = FullScreen(
 	key = SignInFragment::class.java.name,
@@ -19,9 +18,6 @@ fun getSignInScreen(): FullScreen = FullScreen(
 )
 
 class SignInFragment : FullScreenFragment() {
-
-	@Inject
-	lateinit var router: SignInRouter
 
 	private val viewModel: SignInViewModel by viewModel()
 
@@ -33,13 +29,16 @@ class SignInFragment : FullScreenFragment() {
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
 		ComposeView(requireContext()).apply {
 			setContent {
-				MeridianTheme {
-					SignInScreen(viewModel)
+				Screen {
+					SignInScreen(
+						state = viewModel.state,
+						onIntent = viewModel::applyIntent,
+					)
 				}
 			}
 		}
 
 	override fun navigateBack() {
-		router.navigateBack()
+		viewModel.applyIntent(SignInIntent.NavigateBack)
 	}
 }

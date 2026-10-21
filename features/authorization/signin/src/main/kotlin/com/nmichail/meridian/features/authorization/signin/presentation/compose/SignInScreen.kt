@@ -1,5 +1,3 @@
-@file:OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-
 package com.nmichail.meridian.features.authorization.signin.presentation.compose
 
 import androidx.compose.foundation.clickable
@@ -23,13 +21,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.arkivanov.mvikotlin.extensions.coroutines.stateFlow
 import com.nmichail.meridian.component.ui.button.MUiButton
+import com.nmichail.meridian.component.ui.button.model.MUiButtonModel
+import com.nmichail.meridian.component.ui.button.model.MUiButtonStyle
 import com.nmichail.meridian.component.ui.compose.passwordErrorMessage
 import com.nmichail.meridian.component.ui.compose.usernameErrorMessage
 import com.nmichail.meridian.component.ui.effect.DismissKeyboardOnDispose
-import com.nmichail.meridian.component.ui.button.model.MUiButtonModel
-import com.nmichail.meridian.component.ui.button.model.MUiButtonStyle
+import kotlinx.coroutines.flow.StateFlow
 import com.nmichail.meridian.component.ui.field.MUiTextField
 import com.nmichail.meridian.component.ui.field.model.MUiFieldIcon
 import com.nmichail.meridian.component.ui.field.model.MUiTextFieldModel
@@ -37,18 +35,57 @@ import com.nmichail.meridian.component.ui.text.MUiBodyDefaultText
 import com.nmichail.meridian.component.ui.text.MUiCaptionSmallText
 import com.nmichail.meridian.component.ui.text.MUiDisplayAuthText
 import com.nmichail.meridian.component.ui.theme.MeridianThemeTokens
-import com.nmichail.meridian.features.authorization.signin.presentation.SignInStore
-import com.nmichail.meridian.features.authorization.signin.presentation.enteredPassword
-import com.nmichail.meridian.features.authorization.signin.presentation.failureMessage
-import com.nmichail.meridian.features.authorization.signin.presentation.passwordItem
-import com.nmichail.meridian.features.authorization.signin.presentation.usernameItem
-import com.nmichail.meridian.features.authorization.signin.presentation.SignInViewModel
+import com.nmichail.meridian.features.authorization.signin.R
+import com.nmichail.meridian.core.validation.password.PasswordValidationItem
+import com.nmichail.meridian.core.validation.username.UsernameValidationItem
+import com.nmichail.meridian.features.authorization.signin.presentation.SignInIntent
+import com.nmichail.meridian.features.authorization.signin.presentation.SignInState
 
 @Composable
-fun SignInScreen(viewModel: SignInViewModel) {
-	val store = viewModel.store
-	val state by store.stateFlow.collectAsStateWithLifecycle(initialValue = store.state)
+fun SignInScreen(
+	state: StateFlow<SignInState>,
+	onIntent: (SignInIntent) -> Unit,
+) {
+	val uiState by state.collectAsStateWithLifecycle()
 	DismissKeyboardOnDispose()
+	when (val current = uiState) {
+		SignInState.Initial -> SignInForm(
+			username = UsernameValidationItem(),
+			password = PasswordValidationItem(),
+			message = null,
+			onIntent = onIntent,
+		)
+
+		is SignInState.Loading -> SignInForm(
+			username = current.username,
+			password = current.password,
+			message = null,
+			onIntent = onIntent,
+		)
+
+		is SignInState.Content -> SignInForm(
+			username = current.username,
+			password = current.password,
+			message = null,
+			onIntent = onIntent,
+		)
+
+		is SignInState.Error -> SignInForm(
+			username = current.username,
+			password = current.password,
+			message = current.message,
+			onIntent = onIntent,
+		)
+	}
+}
+
+@Composable
+private fun SignInForm(
+	username: UsernameValidationItem,
+	password: PasswordValidationItem,
+	message: Int?,
+	onIntent: (SignInIntent) -> Unit,
+) {
 	Column(
 		modifier = Modifier
 			.fillMaxSize()
@@ -57,65 +94,61 @@ fun SignInScreen(viewModel: SignInViewModel) {
 			.padding(horizontal = 24.dp, vertical = 32.dp),
 		verticalArrangement = Arrangement.spacedBy(16.dp),
 	) {
-		MUiDisplayAuthText(text = "Вход")
+		MUiDisplayAuthText(text = stringResource(R.string.sign_in_title))
 		MUiTextField(
 			model = MUiTextFieldModel(
 				icon = MUiFieldIcon.None,
-				value = state.usernameItem().data,
-				placeholder = "Логин",
-				error = stringResource(id = usernameErrorMessage(state = state.usernameItem().validationState)),
+				value = username.data,
+				placeholder = stringResource(R.string.sign_in_login),
+				error = stringResource(id = usernameErrorMessage(state = username.validationState)),
 			),
-			onValueChange = { store.accept(SignInStore.Intent.ChangeUsername(it)) },
+			onValueChange = { onIntent(SignInIntent.ChangeUsername(it)) },
 		)
 		MUiTextField(
 			model = MUiTextFieldModel(
 				icon = MUiFieldIcon.None,
-				value = state.enteredPassword(),
-				placeholder = "Пароль",
-				error = stringResource(id = passwordErrorMessage(state = state.passwordItem().validationState)),
+				value = password.data,
+				placeholder = stringResource(R.string.sign_in_password),
+				error = stringResource(id = passwordErrorMessage(state = password.validationState)),
 				secret = true,
 			),
-			onValueChange = { store.accept(SignInStore.Intent.ChangePassword(it)) },
+			onValueChange = { onIntent(SignInIntent.ChangePassword(it)) },
 		)
-		state.failureMessage()?.let { message ->
+		if (message != null) {
 			MUiCaptionSmallText(
-				text = message,
+				text = stringResource(message),
 				color = MaterialTheme.colorScheme.error,
 			)
 		}
 		MUiButton(
 			model = MUiButtonModel(
 				style = MUiButtonStyle.Primary,
-				label = "Войти",
+				label = stringResource(R.string.sign_in_submit),
 			),
-			onClick = {
-				store.accept(
-					SignInStore.Intent.Submit,
-				)
-			},
+			onClick = { onIntent(SignInIntent.Submit) },
 		)
-		SignInLinks(store)
+		SignInLinks(onIntent = onIntent)
 	}
 }
 
 @Composable
-private fun SignInLinks(store: SignInStore) {
+private fun SignInLinks(onIntent: (SignInIntent) -> Unit) {
 	Column(
 		modifier = Modifier.fillMaxWidth(),
 		horizontalAlignment = Alignment.CenterHorizontally,
 		verticalArrangement = Arrangement.spacedBy(8.dp),
 	) {
 		MUiButton(
-			model = MUiButtonModel(style = MUiButtonStyle.Text, label = "Создать аккаунт"),
-			onClick = { store.accept(SignInStore.Intent.OpenRegistration) },
+			model = MUiButtonModel(style = MUiButtonStyle.Text, label = stringResource(R.string.sign_in_create_account)),
+			onClick = { onIntent(SignInIntent.OpenRegistration) },
 		)
 		HorizontalDivider(color = MeridianThemeTokens.palette.borderDefault)
 		MUiBodyDefaultText(
-			text = "Вход в рабочее пространство",
+			text = stringResource(R.string.sign_in_workspace),
 			color = MeridianThemeTokens.palette.textPrimary,
 			textAlign = TextAlign.Center,
 			modifier = Modifier
-				.clickable { store.accept(SignInStore.Intent.OpenWorkspace) }
+				.clickable { onIntent(SignInIntent.OpenWorkspace) }
 				.padding(8.dp),
 		)
 	}
