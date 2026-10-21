@@ -6,12 +6,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
-import com.nmichail.meridian.component.ui.theme.MeridianTheme
+import com.nmichail.meridian.component.ui.compose.Screen
 import com.nmichail.meridian.core.navigation.screen.FullScreen
 import com.nmichail.meridian.core.navigation.screen.FullScreenFragment
 import com.nmichail.meridian.features.registration.di.RegistrationComponentHolder
 import com.nmichail.meridian.features.registration.presentation.compose.RegistrationScreen
-import javax.inject.Inject
 
 fun getRegistrationScreen(): FullScreen = FullScreen(
 	key = RegistrationFragment::class.java.name,
@@ -19,9 +18,6 @@ fun getRegistrationScreen(): FullScreen = FullScreen(
 )
 
 class RegistrationFragment : FullScreenFragment() {
-
-	@Inject
-	lateinit var router: RegistrationRouter
 
 	private val viewModel: RegistrationViewModel by viewModel()
 
@@ -33,13 +29,16 @@ class RegistrationFragment : FullScreenFragment() {
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
 		ComposeView(requireContext()).apply {
 			setContent {
-				MeridianTheme {
-					RegistrationScreen(viewModel)
+				Screen {
+					RegistrationScreen(
+						state = viewModel.state,
+						onIntent = viewModel::applyIntent,
+					)
 				}
 			}
 		}
 
 	override fun navigateBack() {
-		router.navigateBack()
+		viewModel.applyIntent(RegistrationIntent.NavigateBack)
 	}
 }

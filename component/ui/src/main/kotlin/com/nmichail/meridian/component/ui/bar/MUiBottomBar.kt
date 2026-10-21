@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.nmichail.meridian.component.ui.R
@@ -99,7 +100,7 @@ private fun BottomTab(
 			tint = palette.textPrimary,
 		)
 		MUiLabelBadgeText(
-			text = tab.label,
+			text = stringResource(tab.label),
 			color = if (selected) palette.textPrimary else palette.textSecondary,
 			textAlign = TextAlign.Center,
 		)
@@ -146,12 +147,12 @@ private const val ICON_PRESS_OVERLAY_ALPHA = 0.28f
 private data class BottomTabSpec(
 	val destination: MUiBottomDestination,
 	val icon: Int,
-	val label: String,
+	val label: Int,
 )
 
 private val tabs = listOf(
-	BottomTabSpec(MUiBottomDestination.HOME, R.drawable.ic_tab_chat, "Главная"),
-	BottomTabSpec(MUiBottomDestination.CONTACTS, R.drawable.ic_tab_people, "Контакты"),
-	BottomTabSpec(MUiBottomDestination.CALLS, R.drawable.ic_tab_call, "Звонки"),
-	BottomTabSpec(MUiBottomDestination.PROFILE, R.drawable.ic_tab_profile, "Профиль"),
+	BottomTabSpec(MUiBottomDestination.HOME, R.drawable.ic_tab_chat, R.string.tab_home),
+	BottomTabSpec(MUiBottomDestination.CONTACTS, R.drawable.ic_tab_people, R.string.tab_contacts),
+	BottomTabSpec(MUiBottomDestination.CALLS, R.drawable.ic_tab_call, R.string.tab_calls),
+	BottomTabSpec(MUiBottomDestination.PROFILE, R.drawable.ic_tab_profile, R.string.tab_profile),
 )

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="registration_title">Внешний аккаунт</string>
+	<string name="registration_hint">Личный аккаунт не привязан к серверу компании.</string>
+	<string name="registration_login">Логин</string>
+	<string name="registration_name">Имя</string>
+	<string name="registration_password">Пароль</string>
+	<string name="registration_submit">Создать внешний аккаунт</string>
+	<string name="registration_have_account">Уже есть аккаунт</string>
+	<string name="registration_workspace">Вход в рабочее пространство</string>
+</resources>

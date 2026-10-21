@@ -1,8 +1,8 @@
 package com.nmichail.meridian.features.registration.data.repository
 
 import com.nmichail.meridian.core.network.session.AuthSession
-import com.nmichail.meridian.core.network.device.DeviceIdentityStore
-import com.nmichail.meridian.core.network.session.SessionStore
+import com.nmichail.meridian.core.network.device.DeviceIdentityRepository
+import com.nmichail.meridian.core.network.session.SessionRepository
 import com.nmichail.meridian.features.registration.data.api.RegistrationApi
 import com.nmichail.meridian.features.registration.data.mapper.toRequest
 import com.nmichail.meridian.features.registration.data.model.RegistrationRequest
@@ -12,14 +12,14 @@ import javax.inject.Inject
 
 class RegistrationRepositoryImpl @Inject constructor(
 	private val api: RegistrationApi,
-	private val deviceIdentityStore: DeviceIdentityStore,
-	private val sessionStore: SessionStore,
+	private val deviceIdentityRepository: DeviceIdentityRepository,
+	private val sessionRepository: SessionRepository,
 ) : RegistrationRepository {
 
 	override suspend fun register(data: RegistrationData): AuthSession {
-		val keys = deviceIdentityStore.identity().registrationKeys(
-			deviceName = deviceIdentityStore.deviceName(),
-			preKeys = deviceIdentityStore.preKeys(),
+		val keys = deviceIdentityRepository.getIdentity().deviceKeys(
+			deviceName = deviceIdentityRepository.getDeviceName(),
+			preKeys = deviceIdentityRepository.getPreKeys(),
 		)
 		val session = api.register(
 			RegistrationRequest(
@@ -29,7 +29,7 @@ class RegistrationRepositoryImpl @Inject constructor(
 				device = keys.toRequest(),
 			),
 		)
-		sessionStore.save(session)
+		sessionRepository.save(session)
 		return session
 	}
 }

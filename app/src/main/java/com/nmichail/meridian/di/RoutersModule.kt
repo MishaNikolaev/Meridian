@@ -15,7 +15,8 @@ import com.nmichail.meridian.core.navigation.section.SectionNames
 import com.nmichail.meridian.core.storage.ApplicationContext
 import com.nmichail.meridian.features.authorization.signin.presentation.SignInRouter
 import com.nmichail.meridian.features.authorization.workspace.presentation.WorkspaceRouter
-import com.nmichail.meridian.features.home.presentation.HomeRouter
+import com.nmichail.meridian.features.conversation.presentation.ConversationRouter
+import com.nmichail.meridian.features.chat.presentation.ChatRouter
 import com.nmichail.meridian.features.mainhost.presentation.MainHostRouter
 import com.nmichail.meridian.features.profile.presentation.ProfileRouter
 import com.nmichail.meridian.features.registration.presentation.RegistrationRouter
@@ -23,7 +24,8 @@ import com.nmichail.meridian.navigation.router.signin.SignInRouterImpl
 import com.nmichail.meridian.navigation.router.workspace.WorkspaceRouterImpl
 import com.nmichail.meridian.navigation.router.global.GlobalRouterImpl
 import com.nmichail.meridian.navigation.router.global.SectionsHostRouter
-import com.nmichail.meridian.navigation.router.home.HomeRouterImpl
+import com.nmichail.meridian.navigation.router.conversation.ConversationRouterImpl
+import com.nmichail.meridian.navigation.router.chat.ChatRouterImpl
 import com.nmichail.meridian.navigation.router.host.MainHostRouterImpl
 import com.nmichail.meridian.navigation.router.profile.ProfileRouterImpl
 import com.nmichail.meridian.navigation.router.main.MainRouter
@@ -73,7 +75,10 @@ abstract class RoutersModule {
 	}
 
 	@Binds
-	abstract fun bindHomeRouter(impl: HomeRouterImpl): HomeRouter
+	abstract fun bindChatRouter(impl: ChatRouterImpl): ChatRouter
+
+	@Binds
+	abstract fun bindConversationRouter(impl: ConversationRouterImpl): ConversationRouter
 
 	@Binds
 	abstract fun bindMainHostRouter(impl: MainHostRouterImpl): MainHostRouter

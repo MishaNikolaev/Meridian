@@ -27,6 +27,12 @@ android {
 	buildFeatures {
 		compose = true
 	}
+
+	testOptions {
+		unitTests.all {
+			it.useJUnitPlatform()
+		}
+	}
 }
 
 kotlin {
@@ -44,4 +50,5 @@ dependencies {
 	implementation(libs.findLibrary("kotlin-stdlib").get())
 	implementation(platform(libs.findLibrary("androidx-compose-bom").get()))
 	implementation(libs.findLibrary("compose-runtime").get())
+	add("testRuntimeOnly", libs.findLibrary("test-junit-platform").get())
 }

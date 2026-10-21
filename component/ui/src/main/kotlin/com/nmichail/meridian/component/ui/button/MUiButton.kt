@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -33,7 +34,7 @@ fun MUiButton(
 ) {
 	val palette = MeridianThemeTokens.palette
 	when (model.style) {
-		MUiButtonStyle.Icon -> MUiIconButton(onClick, modifier)
+		MUiButtonStyle.Icon -> MUiIconButton(icon = R.drawable.ic_search, onClick = onClick, modifier = modifier)
 		MUiButtonStyle.Fab -> MUiFabButton(onClick, modifier)
 		MUiButtonStyle.Text -> MUiTextButton(model.label, onClick, modifier)
 		MUiButtonStyle.Primary -> MUiFilledButton(
@@ -121,9 +122,10 @@ private fun MUiTextButton(
 }
 
 @Composable
-private fun MUiIconButton(
-	onClick: () -> Unit,
-	modifier: Modifier,
+fun MUiIconButton(
+	icon: Int,
+	onClick: (() -> Unit)?,
+	modifier: Modifier = Modifier,
 ) {
 	val shape = RoundedCornerShape(18.dp)
 	Box(
@@ -131,16 +133,33 @@ private fun MUiIconButton(
 			.size(36.dp)
 			.clip(shape)
 			.background(MeridianThemeTokens.palette.field)
-			.clickable(onClick = onClick),
+			.then(if (onClick == null) Modifier else Modifier.clickable(onClick = onClick)),
 		contentAlignment = Alignment.Center,
 	) {
 		Image(
-			painter = painterResource(R.drawable.ic_search),
+			painter = painterResource(icon),
 			contentDescription = null,
 			colorFilter = ColorFilter.tint(MeridianThemeTokens.palette.textPrimary),
 			modifier = Modifier.size(20.dp),
 		)
 	}
+}
+
+@Composable
+fun BoxScope.MUiFab(
+	onClick: () -> Unit,
+	modifier: Modifier = Modifier,
+) {
+	MUiButton(
+		model = MUiButtonModel(
+			style = MUiButtonStyle.Fab,
+			label = "",
+		),
+		onClick = onClick,
+		modifier = modifier
+			.align(Alignment.BottomEnd)
+			.padding(all = 16.dp),
+	)
 }
 
 @Composable

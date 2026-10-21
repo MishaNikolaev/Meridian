@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="workspace_title">Вход в рабочее пространство</string>
+	<string name="workspace_hint">Укажите сервер компании, корпоративную почту и пароль</string>
+	<string name="workspace_host">Адрес сервера</string>
+	<string name="workspace_email">Корпоративная почта</string>
+	<string name="workspace_password">Пароль</string>
+	<string name="workspace_submit">Войти</string>
+	<string name="workspace_external">Войти во внешний аккаунт</string>
+	<string name="workspace_not_found">Сервер или почта не найден</string>
+</resources>

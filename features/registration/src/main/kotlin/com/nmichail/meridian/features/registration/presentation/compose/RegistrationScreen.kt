@@ -1,5 +1,3 @@
-@file:OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-
 package com.nmichail.meridian.features.registration.presentation.compose
 
 import androidx.compose.foundation.clickable
@@ -23,7 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.arkivanov.mvikotlin.extensions.coroutines.stateFlow
+import kotlinx.coroutines.flow.StateFlow
 import com.nmichail.meridian.component.ui.button.MUiButton
 import com.nmichail.meridian.component.ui.compose.displayNameErrorMessage
 import com.nmichail.meridian.component.ui.compose.passwordErrorMessage
@@ -39,26 +37,62 @@ import com.nmichail.meridian.component.ui.text.MUiBodyRegularText
 import com.nmichail.meridian.component.ui.text.MUiCaptionSmallText
 import com.nmichail.meridian.component.ui.text.MUiDisplayAuthText
 import com.nmichail.meridian.component.ui.theme.MeridianThemeTokens
-import com.nmichail.meridian.features.registration.presentation.RegistrationStore
-import com.nmichail.meridian.features.registration.presentation.displayNameItem
-import com.nmichail.meridian.features.registration.presentation.enteredPassword
-import com.nmichail.meridian.features.registration.presentation.failureMessage
-import com.nmichail.meridian.features.registration.presentation.passwordItem
-import com.nmichail.meridian.features.registration.presentation.usernameItem
-import com.nmichail.meridian.features.registration.presentation.RegistrationViewModel
+import com.nmichail.meridian.features.registration.R
+import com.nmichail.meridian.core.validation.displayName.DisplayNameValidationItem
+import com.nmichail.meridian.core.validation.password.PasswordValidationItem
+import com.nmichail.meridian.core.validation.username.UsernameValidationItem
+import com.nmichail.meridian.features.registration.presentation.RegistrationIntent
+import com.nmichail.meridian.features.registration.presentation.RegistrationState
 
 @Composable
-fun RegistrationScreen(viewModel: RegistrationViewModel) {
-	val store = viewModel.store
-	val state by store.stateFlow.collectAsStateWithLifecycle(initialValue = store.state)
+fun RegistrationScreen(
+	state: StateFlow<RegistrationState>,
+	onIntent: (RegistrationIntent) -> Unit,
+) {
+	val uiState by state.collectAsStateWithLifecycle()
 	DismissKeyboardOnDispose()
-	RegistrationForm(store = store, state = state)
+	when (val current = uiState) {
+		RegistrationState.Initial -> RegistrationForm(
+			username = UsernameValidationItem(),
+			displayName = DisplayNameValidationItem(),
+			password = PasswordValidationItem(),
+			message = null,
+			onIntent = onIntent,
+		)
+
+		is RegistrationState.Loading -> RegistrationForm(
+			username = current.username,
+			displayName = current.displayName,
+			password = current.password,
+			message = null,
+			onIntent = onIntent,
+		)
+
+		is RegistrationState.Content -> RegistrationForm(
+			username = current.username,
+			displayName = current.displayName,
+			password = current.password,
+			message = null,
+			onIntent = onIntent,
+		)
+
+		is RegistrationState.Error -> RegistrationForm(
+			username = current.username,
+			displayName = current.displayName,
+			password = current.password,
+			message = current.message,
+			onIntent = onIntent,
+		)
+	}
 }
 
 @Composable
 private fun RegistrationForm(
-	store: RegistrationStore,
-	state: RegistrationStore.State,
+	username: UsernameValidationItem,
+	displayName: DisplayNameValidationItem,
+	password: PasswordValidationItem,
+	message: Int?,
+	onIntent: (RegistrationIntent) -> Unit,
 ) {
 	Column(
 		modifier = Modifier
@@ -68,61 +102,57 @@ private fun RegistrationForm(
 			.padding(horizontal = 24.dp, vertical = 32.dp),
 		verticalArrangement = Arrangement.spacedBy(16.dp),
 	) {
-		MUiDisplayAuthText(text = "Внешний аккаунт")
+		MUiDisplayAuthText(text = stringResource(R.string.registration_title))
 		MUiBodyRegularText(
-			text = "Личный аккаунт не привязан к серверу компании.",
+			text = stringResource(R.string.registration_hint),
 			color = MeridianThemeTokens.palette.textSecondary,
 		)
 		MUiTextField(
 			model = MUiTextFieldModel(
 				icon = MUiFieldIcon.None,
-				value = state.usernameItem().data,
-				placeholder = "Логин",
-				error = stringResource(id = usernameErrorMessage(state = state.usernameItem().validationState)),
+				value = username.data,
+				placeholder = stringResource(R.string.registration_login),
+				error = stringResource(id = usernameErrorMessage(state = username.validationState)),
 			),
-			onValueChange = { store.accept(RegistrationStore.Intent.ChangeUsername(it)) },
+			onValueChange = { onIntent(RegistrationIntent.ChangeUsername(it)) },
 		)
 		MUiTextField(
 			model = MUiTextFieldModel(
 				icon = MUiFieldIcon.None,
-				value = state.displayNameItem().data,
-				placeholder = "Имя",
-				error = stringResource(id = displayNameErrorMessage(state = state.displayNameItem().validationState)),
+				value = displayName.data,
+				placeholder = stringResource(R.string.registration_name),
+				error = stringResource(id = displayNameErrorMessage(state = displayName.validationState)),
 			),
-			onValueChange = { store.accept(RegistrationStore.Intent.ChangeDisplayName(it)) },
+			onValueChange = { onIntent(RegistrationIntent.ChangeDisplayName(it)) },
 		)
 		MUiTextField(
 			model = MUiTextFieldModel(
 				icon = MUiFieldIcon.None,
-				value = state.enteredPassword(),
-				placeholder = "Пароль",
-				error = stringResource(id = passwordErrorMessage(state = state.passwordItem().validationState)),
+				value = password.data,
+				placeholder = stringResource(R.string.registration_password),
+				error = stringResource(id = passwordErrorMessage(state = password.validationState)),
 				secret = true,
 			),
-			onValueChange = { store.accept(RegistrationStore.Intent.ChangePassword(it)) },
+			onValueChange = { onIntent(RegistrationIntent.ChangePassword(it)) },
 		)
-		state.failureMessage()?.let { message ->
+		if (message != null) {
 			MUiCaptionSmallText(
-				text = message,
+				text = stringResource(message),
 				color = MaterialTheme.colorScheme.error,
 			)
 		}
-		RegistrationActions(store)
+		RegistrationActions(onIntent)
 	}
 }
 
 @Composable
-private fun RegistrationActions(store: RegistrationStore) {
+private fun RegistrationActions(onIntent: (RegistrationIntent) -> Unit) {
 	MUiButton(
 		model = MUiButtonModel(
 			style = MUiButtonStyle.Primary,
-				label = "Создать внешний аккаунт",
+				label = stringResource(R.string.registration_submit),
 		),
-		onClick = {
-			store.accept(
-				RegistrationStore.Intent.Submit,
-			)
-		},
+		onClick = { onIntent(RegistrationIntent.Submit) },
 	)
 	Column(
 		modifier = Modifier.fillMaxWidth(),
@@ -132,17 +162,17 @@ private fun RegistrationActions(store: RegistrationStore) {
 		MUiButton(
 			model = MUiButtonModel(
 				style = MUiButtonStyle.Text,
-				label = "Уже есть аккаунт",
+				label = stringResource(R.string.registration_have_account),
 			),
-			onClick = { store.accept(RegistrationStore.Intent.OpenSignIn) },
+			onClick = { onIntent(RegistrationIntent.OpenSignIn) },
 		)
 		HorizontalDivider(color = MeridianThemeTokens.palette.borderDefault)
 		MUiBodyDefaultText(
-			text = "Вход в рабочее пространство",
+			text = stringResource(R.string.registration_workspace),
 			color = MeridianThemeTokens.palette.textPrimary,
 			textAlign = TextAlign.Center,
 			modifier = Modifier
-				.clickable { store.accept(RegistrationStore.Intent.OpenWorkspace) }
+				.clickable { onIntent(RegistrationIntent.OpenWorkspace) }
 				.padding(8.dp),
 		)
 	}

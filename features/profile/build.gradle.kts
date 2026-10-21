@@ -16,4 +16,9 @@ dependencies {
 	implementation(projects.core.presentation)
 	implementation(projects.core.network)
 	implementation(projects.shared.session)
+
+	testImplementation(projects.core.testutils)
+	testImplementation(libs.bundles.test.junit5)
+	testImplementation(libs.bundles.test.mockito)
+	testImplementation(libs.test.coroutines)
 }

@@ -16,6 +16,11 @@ dependencies {
 	implementation(projects.core.di)
 	implementation(projects.core.network)
 	implementation(projects.core.storage)
+
+	testImplementation(projects.core.testutils)
+	testImplementation(libs.bundles.test.junit5)
+	testImplementation(libs.bundles.test.mockito)
+	testImplementation(libs.test.coroutines)
 }
 
 afterEvaluate {

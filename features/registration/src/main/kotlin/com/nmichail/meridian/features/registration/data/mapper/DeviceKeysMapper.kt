@@ -1,11 +1,11 @@
 package com.nmichail.meridian.features.registration.data.mapper
 
-import com.nmichail.meridian.core.network.device.DeviceRegistrationKeys
+import com.nmichail.meridian.core.network.device.DeviceKeys
 import com.nmichail.meridian.features.registration.data.model.DeviceKeysRequest
 import com.nmichail.meridian.features.registration.data.model.OneTimePreKeyRequest
 import com.nmichail.meridian.features.registration.data.model.SignedPreKeyRequest
 
-internal fun DeviceRegistrationKeys.toRequest(): DeviceKeysRequest =
+internal fun DeviceKeys.toRequest(): DeviceKeysRequest =
 	DeviceKeysRequest(
 		deviceId = deviceId,
 		name = name,

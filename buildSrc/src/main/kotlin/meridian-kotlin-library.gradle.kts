@@ -23,4 +23,9 @@ kotlin {
 
 dependencies {
 	implementation(libs.findLibrary("kotlin-stdlib").get())
+	add("testRuntimeOnly", libs.findLibrary("test-junit-platform").get())
+}
+
+tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
+	useJUnitPlatform()
 }

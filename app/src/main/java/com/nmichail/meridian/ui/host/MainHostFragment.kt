@@ -12,6 +12,8 @@ import com.nmichail.meridian.component.ui.bar.model.MUiBottomDestination
 import com.nmichail.meridian.component.ui.theme.MeridianTheme
 import com.nmichail.meridian.core.navigation.screen.FullScreen
 import com.nmichail.meridian.core.navigation.screen.FullScreenFragment
+import com.nmichail.meridian.features.chat.di.ChatComponentHolder
+import com.nmichail.meridian.features.chat.presentation.ChatViewModel
 import com.nmichail.meridian.features.profile.di.ProfileComponentHolder
 import com.nmichail.meridian.features.profile.presentation.ProfileViewModel
 import com.nmichail.meridian.features.mainhost.presentation.MainHostRouter
@@ -37,6 +39,10 @@ class MainHostFragment : FullScreenFragment() {
 		ProfileComponentHolder.get().viewModelFactory()
 	}
 
+	private val chatViewModel: ChatViewModel by viewModels {
+		ChatComponentHolder.get().viewModelFactory()
+	}
+
 	override fun onAttach(context: Context) {
 		super.onAttach(context)
 		router = MainHostRouterHolder.get()
@@ -60,7 +66,9 @@ class MainHostFragment : FullScreenFragment() {
 					MainHostScreen(
 						selected = selected.value,
 						onSelect = { selected.value = it },
-						viewModel = viewModel,
+						chatState = chatViewModel.state,
+						onChatIntent = chatViewModel::applyIntent,
+						onLogout = viewModel::logout,
 					)
 				}
 			}
