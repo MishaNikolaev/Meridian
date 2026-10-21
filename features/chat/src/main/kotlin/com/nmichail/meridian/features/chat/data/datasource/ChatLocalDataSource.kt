@@ -1,25 +1,25 @@
-package com.nmichail.meridian.features.home.data.datasource
+package com.nmichail.meridian.features.chat.data.datasource
 
 import com.nmichail.meridian.core.storage.LocalStore
 import javax.inject.Inject
 
-interface HomeLocalDataSource {
+interface ChatLocalDataSource {
 
-	fun text(): String
+	fun getText(): String
 
 	fun save(text: String)
 }
 
-class HomeLocalDataSourceImpl @Inject constructor(
+class ChatLocalDataSourceImpl @Inject constructor(
 	private val localStore: LocalStore,
-) : HomeLocalDataSource {
+) : ChatLocalDataSource {
 
 	private companion object {
 
 		const val KEY = "home_text"
 	}
 
-	override fun text(): String = localStore.getString(KEY).orEmpty()
+	override fun getText(): String = localStore.getString(KEY).orEmpty()
 
 	override fun save(text: String) {
 		localStore.putString(KEY, text)
