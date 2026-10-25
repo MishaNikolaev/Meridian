@@ -23,8 +23,8 @@ import androidx.compose.ui.unit.dp
 import com.nmichail.meridian.component.ui.R
 import com.nmichail.meridian.component.ui.button.model.MUiButtonModel
 import com.nmichail.meridian.component.ui.button.model.MUiButtonStyle
-import com.nmichail.meridian.component.ui.theme.MeridianThemeTokens
 import com.nmichail.meridian.component.ui.theme.MeridianType
+import com.nmichail.meridian.component.ui.theme.palette
 
 @Composable
 fun MUiButton(
@@ -32,7 +32,6 @@ fun MUiButton(
 	onClick: () -> Unit,
 	modifier: Modifier = Modifier,
 ) {
-	val palette = MeridianThemeTokens.palette
 	when (model.style) {
 		MUiButtonStyle.Icon -> MUiIconButton(icon = R.drawable.ic_search, onClick = onClick, modifier = modifier)
 		MUiButtonStyle.Fab -> MUiFabButton(onClick, modifier)
@@ -90,7 +89,6 @@ private fun MUiOutlineButton(
 	onClick: () -> Unit,
 	modifier: Modifier,
 ) {
-	val palette = MeridianThemeTokens.palette
 	val shape = RoundedCornerShape(16.dp)
 	Box(
 		modifier = modifier
@@ -114,7 +112,7 @@ private fun MUiTextButton(
 	Text(
 		text = label,
 		style = MeridianType.bodyDefault,
-		color = MeridianThemeTokens.palette.accentPrimary,
+		color = palette.accentPrimary,
 		modifier = modifier
 			.clickable(onClick = onClick)
 			.padding(8.dp),
@@ -132,14 +130,14 @@ fun MUiIconButton(
 		modifier = modifier
 			.size(36.dp)
 			.clip(shape)
-			.background(MeridianThemeTokens.palette.field)
+			.background(palette.field)
 			.then(if (onClick == null) Modifier else Modifier.clickable(onClick = onClick)),
 		contentAlignment = Alignment.Center,
 	) {
 		Image(
 			painter = painterResource(icon),
 			contentDescription = null,
-			colorFilter = ColorFilter.tint(MeridianThemeTokens.palette.textPrimary),
+			colorFilter = ColorFilter.tint(palette.textPrimary),
 			modifier = Modifier.size(20.dp),
 		)
 	}
@@ -167,7 +165,6 @@ private fun MUiFabButton(
 	onClick: () -> Unit,
 	modifier: Modifier,
 ) {
-	val palette = MeridianThemeTokens.palette
 	val shape = RoundedCornerShape(18.dp)
 	Box(
 		modifier = modifier

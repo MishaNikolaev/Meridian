@@ -20,8 +20,8 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.nmichail.meridian.component.ui.R
-import com.nmichail.meridian.component.ui.theme.MeridianThemeTokens
 import com.nmichail.meridian.component.ui.theme.MeridianType
+import com.nmichail.meridian.component.ui.theme.palette
 import kotlinx.coroutines.delay
 
 enum class MUiSnackbarTone {
@@ -56,7 +56,6 @@ fun MUiSnackbar(
 	modifier: Modifier = Modifier,
 ) {
 	MUiSnackbarTimer(model = model, onDismiss = onDismiss)
-	val palette = MeridianThemeTokens.palette
 	val icon = when (model.tone) {
 		MUiSnackbarTone.Error -> R.drawable.ic_snackbar_error
 		MUiSnackbarTone.Info -> R.drawable.ic_snackbar_info
@@ -113,15 +112,11 @@ private fun MUiSnackbarTimer(
 	onDismiss: () -> Unit,
 ) {
 	LaunchedEffect(model.message, model.duration) {
-		val millis = when (model.duration) {
-			MUiSnackbarDuration.Short -> SHORT_MILLIS
-			MUiSnackbarDuration.Long -> LONG_MILLIS
+		when (model.duration) {
+			MUiSnackbarDuration.Short -> delay(timeMillis = 4_000L)
+			MUiSnackbarDuration.Long -> delay(timeMillis = 10_000L)
 			MUiSnackbarDuration.Indefinite -> return@LaunchedEffect
 		}
-		delay(millis)
 		onDismiss()
 	}
 }
-
-private const val SHORT_MILLIS = 4_000L
-private const val LONG_MILLIS = 10_000L

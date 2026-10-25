@@ -9,6 +9,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalView
@@ -16,10 +17,10 @@ import androidx.core.view.WindowCompat
 
 private val LocalMeridianPalette = staticCompositionLocalOf { LightPalette }
 
-object MeridianThemeTokens {
-	val palette: MeridianPalette
-		@Composable get() = LocalMeridianPalette.current
-}
+val palette: MeridianPalette
+	@Composable
+	@ReadOnlyComposable
+	get() = LocalMeridianPalette.current
 
 @Composable
 fun MeridianTheme(

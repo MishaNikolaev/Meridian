@@ -30,6 +30,7 @@ object MeridianType {
 	val labelBadge = style(weight = FontWeight.SemiBold, size = 11, lineHeight = 14)
 	val labelButton = style(weight = FontWeight.SemiBold, size = 16, lineHeight = 20)
 	val chatMessage = style(weight = FontWeight.Normal, size = 15, lineHeight = 20)
+	val chatEmoji = style(weight = FontWeight.Normal, size = 20, lineHeight = 24)
 	val chatMeta = style(weight = FontWeight.Normal, size = 11, lineHeight = 14)
 	val snackbar = style(weight = FontWeight.Medium, size = 14, lineHeight = 18)
 	val snackbarAction = style(weight = FontWeight.SemiBold, size = 14, lineHeight = 18)
