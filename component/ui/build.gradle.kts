@@ -11,5 +11,8 @@ dependencies {
 	implementation(libs.bundles.compose)
 
 	implementation(projects.core.validation)
+	implementation(libs.dagger)
 	debugImplementation(libs.androidx.ui.tooling)
+
+	testImplementation(libs.bundles.test.junit5)
 }

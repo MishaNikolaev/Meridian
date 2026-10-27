@@ -7,8 +7,8 @@ data class MUiTabModel(
 
 data class MUiTitleSwitchModel(
 	val leadingTitle: String,
-	val leadingCount: String,
+	val leadingCount: Int,
 	val trailingTitle: String,
-	val trailingCount: String,
+	val trailingCount: Int,
 	val leadingSelected: Boolean,
 )

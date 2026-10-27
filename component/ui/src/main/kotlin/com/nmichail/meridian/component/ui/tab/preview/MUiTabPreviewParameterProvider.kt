@@ -24,9 +24,9 @@ internal class MUiTabPreviewParameterProvider : PreviewParameterProvider<MUiTabP
 	override val values: Sequence<MUiTabPreviewData> = sequence {
 		val title = MUiTitleSwitchModel(
 			leadingTitle = "Корпоративные",
-			leadingCount = "12",
+			leadingCount = 12,
 			trailingTitle = "Внешние",
-			trailingCount = "3",
+			trailingCount = 3,
 			leadingSelected = true,
 		)
 		listOf(false, true).forEach { dark ->

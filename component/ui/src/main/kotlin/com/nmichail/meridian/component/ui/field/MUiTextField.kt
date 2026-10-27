@@ -56,6 +56,7 @@ fun MUiTextField(
 		error = model.error,
 		focused = focused,
 		highlighted = model.highlighted,
+		outlined = model.outlined,
 		palette = palette,
 	)
 	Column(
@@ -176,10 +177,12 @@ private fun fieldBorder(
 	error: String,
 	focused: Boolean,
 	highlighted: Boolean,
+	outlined: Boolean,
 	palette: MeridianPalette,
 ): Color? = when {
 	error.isNotEmpty() -> palette.statusError
 	focused || highlighted -> palette.accentButton
+	outlined -> palette.borderStrong
 	else -> null
 }
 

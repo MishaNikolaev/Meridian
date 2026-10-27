@@ -104,7 +104,7 @@ fun MUiTitleSwitch(
 @Composable
 private fun MUiTitleOption(
 	title: String,
-	count: String,
+	count: Int,
 	selected: Boolean,
 	onClick: () -> Unit,
 ) {
@@ -121,9 +121,9 @@ private fun MUiTitleOption(
 				color = titleColor,
 				modifier = Modifier.pressText(onClick),
 			)
-			if (count.isNotEmpty()) {
+			if (count > 0) {
 				Text(
-					text = count,
+					text = count.toString(),
 					style = MeridianType.labelBadge,
 					color = countColor,
 					modifier = Modifier.pressText(onClick),
