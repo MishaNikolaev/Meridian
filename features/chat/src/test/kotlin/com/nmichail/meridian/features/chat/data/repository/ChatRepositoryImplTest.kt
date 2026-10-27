@@ -15,17 +15,17 @@ class ChatRepositoryImplTest {
 
 	@Test
 	fun `get text EXPECT stored text`() {
-		whenever(dataSource.getText()) doReturn "черновик"
+		whenever(dataSource.getText()) doReturn "текст"
 
 		val actual = repository.getText()
 
-		assertEquals("черновик", actual)
+		assertEquals("текст", actual)
 	}
 
 	@Test
 	fun `save EXPECT data source save`() {
-		repository.save("черновик")
+		repository.save("текст")
 
-		verify(dataSource).save("черновик")
+		verify(dataSource).save("текст")
 	}
 }

@@ -1,28 +1,27 @@
 package com.nmichail.meridian.features.chat.presentation
 
-import com.nmichail.meridian.core.network.error.userMessage
+import com.nmichail.meridian.core.network.error.ErrorStateConverter
+import com.nmichail.meridian.core.network.error.StatusCodes
+import com.nmichail.meridian.core.network.error.messageIdOrNull
 import com.nmichail.meridian.core.presentation.BaseViewModel
-import com.nmichail.meridian.core.validation.displayName.DisplayNameValidationItem
-import com.nmichail.meridian.core.validation.displayName.ValidateDisplayNameUseCase
-import com.nmichail.meridian.core.validation.displayName.isValid
-import com.nmichail.meridian.core.validation.username.UsernameValidationItem
-import com.nmichail.meridian.core.validation.username.ValidateUsernameUseCase
-import com.nmichail.meridian.core.validation.username.isValid
 import com.nmichail.meridian.shared.chat.data.realtime.ChatRealtime
-import com.nmichail.meridian.shared.chat.domain.entity.ChatSummary
+import com.nmichail.meridian.shared.chat.domain.entity.Chat
+import com.nmichail.meridian.shared.chat.domain.entity.ChatDiscussion
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType
-import com.nmichail.meridian.shared.chat.domain.usecase.CreateChatUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.LoadChatsUseCase
+import com.nmichail.meridian.shared.chat.domain.usecase.LoadDiscussionsUseCase
 import javax.inject.Inject
+import kotlinx.coroutines.Job
 
 class ChatViewModel @Inject constructor(
 	private val loadChatsUseCase: LoadChatsUseCase,
-	private val createChatUseCase: CreateChatUseCase,
-	private val validateUsernameUseCase: ValidateUsernameUseCase,
-	private val validateDisplayNameUseCase: ValidateDisplayNameUseCase,
+	private val loadDiscussionsUseCase: LoadDiscussionsUseCase,
 	private val realtime: ChatRealtime,
+	private val errorStateConverter: ErrorStateConverter,
 	private val router: ChatRouter,
-) : BaseViewModel<ChatState, ChatIntent, Nothing>() {
+) : BaseViewModel<ChatState, ChatIntent, ChatEvent>() {
+
+	private var updatesJob: Job? = null
 
 	override fun initState(): ChatState = ChatState.Initial
 
@@ -30,16 +29,23 @@ class ChatViewModel @Inject constructor(
 		when (intent) {
 			is ChatIntent.LoadInitialData -> handleLoadInitialData()
 			is ChatIntent.ChangeCorporate -> handleChangeCorporate(intent.corporate)
-			is ChatIntent.ChangeSection -> handleChangeSection(intent.section)
-			is ChatIntent.ChangeSearchOpen -> handleChangeSearchOpen()
-			is ChatIntent.ChangeSearch -> handleChangeSearch(intent.search)
-			is ChatIntent.ChangeCreate -> handleChangeCreate(intent.open)
-			is ChatIntent.ChangeTitle -> handleChangeTitle(intent.title)
-			is ChatIntent.ChangeUsername -> handleChangeUsername(intent.username)
-			is ChatIntent.OpenChat -> handleOpenChat(intent.chat)
-			is ChatIntent.OpenBot -> handleOpenBot(intent.id, intent.title)
-			is ChatIntent.Submit -> handleSubmit()
-			is ChatIntent.NavigateBack -> handleNavigateBack()
+			is ChatIntent.ChangeSection   -> handleChangeSection(intent.section)
+			is ChatIntent.OpenSearch      -> handleNavigateToSearch()
+			is ChatIntent.ChangeCreate    -> handleChangeCreate(intent.open)
+			is ChatIntent.OpenChat        -> handleOpenChat(intent.chat)
+			is ChatIntent.OpenDiscussion  -> handleNavigateToDiscussion(
+				chatId = intent.chatId,
+				messageId = intent.messageId,
+				title = intent.title,
+				corporate = intent.corporate,
+				personId = intent.personId,
+			)
+
+			is ChatIntent.OpenBot         -> handleOpenBot(intent.id, intent.title)
+			is ChatIntent.OpenGroup       -> handleNavigateToGroup()
+			is ChatIntent.Retry           -> handleRetry()
+			is ChatIntent.ChangeServer    -> handleNavigateToWorkspace()
+			is ChatIntent.NavigateBack    -> handleNavigateBack()
 		}
 	}
 
@@ -47,164 +53,187 @@ class ChatViewModel @Inject constructor(
 		if (state.value != ChatState.Initial) {
 			return
 		}
-		realtime.ensureStarted()
-
-		launchTry {
-			realtime.chatIds.collect { handleRefresh() }
-		} catch { _ -> }
 		handleRefresh()
+		handleListen()
 	}
 
 	private fun handleChangeCorporate(corporate: Boolean) {
 		val current = state.value as? ChatState.Content ?: return
-		setState(current.copy(corporate = corporate))
+
+		setState(
+			current.copy(corporate = corporate)
+		)
 	}
 
 	private fun handleChangeSection(section: ChatSection) {
 		val current = state.value as? ChatState.Content ?: return
+		if (current.section == section) {
+			return
+		}
+
 		setState(current.copy(section = section))
 	}
 
-	private fun handleChangeSearchOpen() {
-		val current = state.value as? ChatState.Content ?: return
-		val open = !current.searchOpen
-		val search = if (open) {
-			current.search
-		} else {
-			""
-		}
-
-		setState(
-			current.copy(
-				searchOpen = open,
-				search = search,
-			),
-		)
-	}
-
-	private fun handleChangeSearch(search: String) {
-		val current = state.value as? ChatState.Content ?: return
-		setState(current.copy(search = search))
+	private fun handleNavigateToSearch() {
+		router.navigateToSearch()
 	}
 
 	private fun handleChangeCreate(open: Boolean) {
 		val current = state.value as? ChatState.Content ?: return
+
 		setState(
-			current.copy(
-				createOpen = open,
-				title = DisplayNameValidationItem(),
-				username = UsernameValidationItem(),
-			),
+			current.copy(createOpen = open)
 		)
 	}
 
-	private fun handleChangeTitle(title: String) {
-		val current = state.value as? ChatState.Content ?: return
-		if (current.creating) {
-			return
-		}
-		setState(current.copy(title = validateDisplayNameUseCase(title)))
+	private fun handleOpenChat(chat: Chat) {
+		handleNavigateToConversation(
+			chatId = chat.id,
+			title = chat.title,
+			corporate = chat.corporate && chat.type == ChatType.DIRECT,
+			personId = chat.personId.orEmpty(),
+		)
 	}
 
-	private fun handleChangeUsername(username: String) {
-		val current = state.value as? ChatState.Content ?: return
-		if (current.creating) {
-			return
-		}
-		setState(current.copy(username = validateUsernameUseCase(username)))
+	private fun handleNavigateToDiscussion(
+		chatId: String,
+		messageId: String,
+		title: String,
+		corporate: Boolean,
+		personId: String,
+	) {
+		router.navigateToDiscussion(
+			chatId = chatId,
+			title = title,
+			corporate = corporate,
+			messageId = messageId,
+			personId = personId,
+		)
 	}
 
-	private fun handleOpenChat(chat: ChatSummary) {
-		handleOpenConversation(chat.id, chat.title)
+	private fun handleNavigateToGroup() {
+		val current = state.value as? ChatState.Content ?: return
+		setState(current.copy(createOpen = false))
+
+		router.navigateToGroup()
 	}
 
 	private fun handleOpenBot(id: String, title: String) {
-		handleOpenConversation("bot:$id", title)
+		// TODO Сделаю, когда ботов буду делать
+		handleNavigateToConversation(
+			chatId = "bot:$id",
+			title = title,
+			corporate = false,
+			personId = "",
+		)
 	}
 
-	private fun handleOpenConversation(chatId: String, title: String) {
-		router.openConversation(chatId, title)
+	private fun handleNavigateToConversation(
+		chatId: String,
+		title: String,
+		corporate: Boolean,
+		personId: String,
+	) {
+		router.navigateToConversation(
+			chatId = chatId,
+			title = title,
+			corporate = corporate,
+			personId = personId,
+		)
 	}
 
 	private fun handleNavigateBack() {
 		router.navigateBack()
 	}
 
-	private fun handleSubmit() {
-		val current = state.value as? ChatState.Content ?: return
-		if (current.creating) {
-			return
-		}
-		when (current.section) {
-			ChatSection.WORK -> handleSubmitGroup(current)
-			ChatSection.ALL, ChatSection.PERSONAL, ChatSection.BOTS -> handleSubmitDirect(current)
-		}
+	private fun handleNavigateToWorkspace() {
+		router.navigateToWorkspace()
 	}
 
-	private fun handleSubmitGroup(current: ChatState.Content) {
-		val title = validateDisplayNameUseCase(current.title.data.trim())
-		val username = validateUsernameUseCase(current.username.data.trim())
-		if (!title.isValid() || !username.isValid()) {
-			setState(current.copy(title = title, username = username))
-			return
-		}
-		handleSendChat(current, ChatType.GROUP, title.data, username.data)
+	private fun handleRetry() {
+		handleRefresh()
+		handleListen()
 	}
 
-	private fun handleSubmitDirect(current: ChatState.Content) {
-		val username = validateUsernameUseCase(current.username.data.trim())
-		if (!username.isValid()) {
-			setState(current.copy(username = username))
+	private fun handleListen() {
+		if (updatesJob?.isActive == true) {
 			return
 		}
-		handleSendChat(current, ChatType.DIRECT, "", username.data)
-	}
+		realtime.ensureStarted()
 
-	private fun handleSendChat(current: ChatState.Content, type: ChatType, title: String, username: String) {
-		setState(current.copy(creating = true))
-		launchTry {
-			val chat = createChatUseCase(type, title, username)
-			val content = state.value as? ChatState.Content ?: current
-			setState(
-				content.copy(
-					creating = false,
-					createOpen = false,
-					title = DisplayNameValidationItem(),
-					username = UsernameValidationItem(),
-				),
-			)
-			handleRefresh()
-			handleOpenConversation(chat.id, chat.title)
-		} catch { error ->
-			setState(ChatState.Error(message = error.userMessage()))
-		}
+		updatesJob = launchTry {
+			realtime.collectChats { chatId ->
+				handleReload(chatId)
+			}
+		} catch ::handleError
 	}
 
 	private fun handleRefresh() {
-		if (state.value !is ChatState.Content) {
+		if (state.value is ChatState.Initial) {
 			setState(ChatState.Loading)
 		}
 
 		launchTry {
-			val chats = loadChatsUseCase()
-			when (val current = state.value) {
-				is ChatState.Content -> setState(current.copy(chats = chats))
-				else -> setState(
-					ChatState.Content(
-						corporate = true,
-						section = ChatSection.ALL,
-						chats = chats,
-						search = "",
-						searchOpen = false,
-						createOpen = false,
-						title = DisplayNameValidationItem(),
-						username = UsernameValidationItem(),
-						creating = false,
-					),
-				)
-			}
-		} catch { error ->
-			setState(ChatState.Error(message = error.userMessage()))
+			handleReload(chatId = null)
+		} catch ::handleError
+	}
+
+	private suspend fun handleReload(chatId: String?) {
+		val chats = loadChatsUseCase()
+		val current = state.value as? ChatState.Content
+		val discussions = when {
+			chatId == null || current == null -> loadDiscussionsUseCase(chats)
+
+			else                              -> loadDiscussionsUseCase.replaceChat(
+				chatId = chatId,
+				chats = chats,
+				discussions = current.corporateDiscussions + current.externalTabDiscussions,
+			)
 		}
+		handlePublish(chats, discussions)
+	}
+
+	private fun handlePublish(chats: List<Chat>, discussions: List<ChatDiscussion>) {
+		val corporateChats = chats.filter { chat -> chat.onCorporateTab() }
+		val externalTabChats = chats.filter { chat -> !chat.onCorporateTab() }
+		val corporateDiscussions = discussions.filter { discussion -> discussion.onCorporateTab() }
+		val externalTabDiscussions = discussions.filter { discussion -> !discussion.onCorporateTab() }
+
+		when (val current = state.value) {
+			is ChatState.Content -> setState(
+				current.copy(
+					corporateChats = corporateChats,
+					externalTabChats = externalTabChats,
+					corporateDiscussions = corporateDiscussions,
+					externalTabDiscussions = externalTabDiscussions,
+				),
+			)
+
+			else                 -> setState(
+				ChatState.Content(
+					corporate = true,
+					section = ChatSection.ALL,
+					corporateChats = corporateChats,
+					externalTabChats = externalTabChats,
+					corporateDiscussions = corporateDiscussions,
+					externalTabDiscussions = externalTabDiscussions,
+					createOpen = false,
+				),
+			)
+		}
+	}
+
+	private fun handleError(error: Exception) {
+		val networkError = errorStateConverter.convert(error)
+		when (networkError.messageIdOrNull()) {
+			StatusCodes.NO_CONNECTION.statusCode -> {
+				setEvent(ChatEvent.NoConnection)
+			}
+
+			else                                 -> {
+				setEvent(ChatEvent.Error)
+			}
+		}
+		setState(ChatState.Error)
 	}
 }

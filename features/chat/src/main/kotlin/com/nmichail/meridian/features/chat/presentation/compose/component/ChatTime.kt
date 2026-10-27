@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.chat.presentation
+package com.nmichail.meridian.features.chat.presentation.compose.component
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource

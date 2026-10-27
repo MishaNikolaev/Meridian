@@ -1,6 +1,6 @@
 package com.nmichail.meridian.features.chat.presentation
 
-import com.nmichail.meridian.shared.chat.domain.entity.ChatSummary
+import com.nmichail.meridian.shared.chat.domain.entity.Chat
 
 sealed interface ChatIntent {
 
@@ -14,26 +14,22 @@ sealed interface ChatIntent {
 		val section: ChatSection,
 	) : ChatIntent
 
-	data object ChangeSearchOpen : ChatIntent
-
-	data class ChangeSearch(
-		val search: String,
-	) : ChatIntent
+	data object OpenSearch : ChatIntent
 
 	data class ChangeCreate(
 		val open: Boolean,
 	) : ChatIntent
 
-	data class ChangeTitle(
-		val title: String,
-	) : ChatIntent
-
-	data class ChangeUsername(
-		val username: String,
-	) : ChatIntent
-
 	data class OpenChat(
-		val chat: ChatSummary,
+		val chat: Chat,
+	) : ChatIntent
+
+	data class OpenDiscussion(
+		val chatId: String,
+		val messageId: String,
+		val title: String,
+		val corporate: Boolean,
+		val personId: String,
 	) : ChatIntent
 
 	data class OpenBot(
@@ -41,7 +37,11 @@ sealed interface ChatIntent {
 		val title: String,
 	) : ChatIntent
 
-	data object Submit : ChatIntent
+	data object OpenGroup : ChatIntent
+
+	data object Retry : ChatIntent
+
+	data object ChangeServer : ChatIntent
 
 	data object NavigateBack : ChatIntent
 }
