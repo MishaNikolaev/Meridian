@@ -68,6 +68,9 @@ class MainHostFragment : FullScreenFragment() {
 						onSelect = { selected.value = it },
 						chatState = chatViewModel.state,
 						onChatIntent = chatViewModel::applyIntent,
+						chatEvent = chatViewModel.event,
+						profileState = viewModel.state,
+						onProfileLoad = viewModel::load,
 						onLogout = viewModel::logout,
 					)
 				}

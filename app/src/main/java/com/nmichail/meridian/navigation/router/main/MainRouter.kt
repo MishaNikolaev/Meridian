@@ -4,5 +4,7 @@ interface MainRouter {
 
 	fun navigateToHome()
 
-	fun openSignIn()
+	fun navigateToSignIn()
+
+	fun navigateToSplash()
 }
