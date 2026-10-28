@@ -2,6 +2,7 @@ package com.nmichail.meridian.shared.session.data.repository
 
 import com.nmichail.meridian.core.network.session.AuthSession
 import com.nmichail.meridian.core.network.device.DeviceIdentityRepository
+import com.nmichail.meridian.core.network.error.GatewayCode
 import com.nmichail.meridian.core.network.error.GatewayException
 import com.nmichail.meridian.core.network.session.SessionRefresher
 import com.nmichail.meridian.core.network.session.SessionRepository
@@ -33,6 +34,8 @@ class AuthorizationRepositoryImpl @Inject constructor(
 			),
 		)
 		sessionRepository.save(session)
+		sessionRepository.saveHost("")
+		sessionRepository.email("")
 		return session
 	}
 
@@ -50,14 +53,13 @@ class AuthorizationRepositoryImpl @Inject constructor(
 			),
 		)
 		sessionRepository.save(session)
+		sessionRepository.saveHost(host.trim())
+		sessionRepository.email(email.trim())
 		return session
 	}
 
 	override suspend fun refresh(): AuthSession =
-		sessionRefresher.refresh() ?: throw GatewayException(
-			code = "UNAUTHORIZED",
-			message = "Сессия больше не активна",
-		)
+		sessionRefresher.refresh() ?: throw GatewayException(code = GatewayCode.UNAUTHORIZED)
 
 	override suspend fun logout() {
 		val refreshToken = sessionRepository.getRefreshToken()

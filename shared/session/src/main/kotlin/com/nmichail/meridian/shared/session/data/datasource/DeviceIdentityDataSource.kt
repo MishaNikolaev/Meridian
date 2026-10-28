@@ -1,9 +1,13 @@
 package com.nmichail.meridian.shared.session.data.datasource
 
+import android.content.Context
+import androidx.core.content.edit
 import com.nmichail.meridian.core.network.device.DeviceIdentity
 import com.nmichail.meridian.core.network.device.DevicePreKey
 import com.nmichail.meridian.core.network.device.DevicePreKeys
-import com.nmichail.meridian.core.storage.LocalPreferences
+import com.nmichail.meridian.core.storage.ApplicationContext
+import com.nmichail.meridian.core.storage.SecretCipher
+import com.nmichail.meridian.core.storage.openSecret
 import javax.inject.Inject
 
 interface DeviceIdentityDataSource {
@@ -20,11 +24,13 @@ interface DeviceIdentityDataSource {
 }
 
 class DeviceIdentityDataSourceImpl @Inject constructor(
-	private val localPreferences: LocalPreferences,
+	@ApplicationContext context: Context,
+	private val secrets: SecretCipher,
 ) : DeviceIdentityDataSource {
 
 	private companion object {
 
+		const val DEVICE_PREF = "meridian"
 		const val DEVICE_ID = "device_identity_id"
 		const val PUBLIC_KEY = "device_identity_public"
 		const val PRIVATE_KEY = "device_identity_private"
@@ -37,22 +43,26 @@ class DeviceIdentityDataSourceImpl @Inject constructor(
 		const val ONE_TIME_PREKEY_PRIVATE = "device_onetime_prekey_private"
 	}
 
+	private val preferences = context.getSharedPreferences(DEVICE_PREF, Context.MODE_PRIVATE)
+
 	override fun read(): DeviceIdentity? {
-		val deviceId = localPreferences.getString(DEVICE_ID) ?: return null
-		val publicKey = localPreferences.getString(PUBLIC_KEY) ?: return null
-		val privateKey = localPreferences.getSecret(PRIVATE_KEY) ?: return null
+		val deviceId = preferences.getString(DEVICE_ID, null) ?: return null
+		val publicKey = preferences.getString(PUBLIC_KEY, null) ?: return null
+		val privateKey = preferences.openSecret(secrets, PRIVATE_KEY) ?: return null
 		return DeviceIdentity.restore(deviceId, publicKey, privateKey)
 	}
 
 	override fun write(identity: DeviceIdentity) {
-		localPreferences.putString(DEVICE_ID, identity.deviceId)
-		localPreferences.putString(PUBLIC_KEY, identity.publicKey)
-		localPreferences.putSecret(PRIVATE_KEY, identity.exportPrivateKey())
+		preferences.edit {
+			putString(DEVICE_ID, identity.deviceId)
+			putString(PUBLIC_KEY, identity.publicKey)
+			putString(PRIVATE_KEY, secrets.seal(identity.exportPrivateKey()))
+		}
 	}
 
 	override fun readPreKeys(): DevicePreKeys? {
 		val signedPreKey = readPreKey(SIGNED_PREKEY_ID, SIGNED_PREKEY_PUBLIC, SIGNED_PREKEY_PRIVATE) ?: return null
-		val signedPreKeySignature = localPreferences.getString(SIGNED_PREKEY_SIGNATURE) ?: return null
+		val signedPreKeySignature = preferences.getString(SIGNED_PREKEY_SIGNATURE, null) ?: return null
 		val oneTimePreKey = readPreKey(ONE_TIME_PREKEY_ID, ONE_TIME_PREKEY_PUBLIC, ONE_TIME_PREKEY_PRIVATE) ?: return null
 		return DeviceIdentity.restorePreKeys(
 			DevicePreKeys(
@@ -64,32 +74,36 @@ class DeviceIdentityDataSourceImpl @Inject constructor(
 	}
 
 	private fun readPreKey(idKey: String, publicKey: String, privateKey: String): DevicePreKey? {
-		val id = localPreferences.getString(idKey)?.toIntOrNull() ?: return null
-		val public = localPreferences.getString(publicKey) ?: return null
-		val private = localPreferences.getSecret(privateKey) ?: return null
+		val id = preferences.getString(idKey, null)?.toIntOrNull() ?: return null
+		val public = preferences.getString(publicKey, null) ?: return null
+		val private = preferences.openSecret(secrets, privateKey) ?: return null
 		return DevicePreKey(id, public, private)
 	}
 
 	override fun writePreKeys(preKeys: DevicePreKeys) {
-		localPreferences.putString(SIGNED_PREKEY_ID, preKeys.signedPreKey.id.toString())
-		localPreferences.putString(SIGNED_PREKEY_PUBLIC, preKeys.signedPreKey.publicKey)
-		localPreferences.putSecret(SIGNED_PREKEY_PRIVATE, preKeys.signedPreKey.privateKey)
-		localPreferences.putString(SIGNED_PREKEY_SIGNATURE, preKeys.signedPreKeySignature)
-		localPreferences.putString(ONE_TIME_PREKEY_ID, preKeys.oneTimePreKey.id.toString())
-		localPreferences.putString(ONE_TIME_PREKEY_PUBLIC, preKeys.oneTimePreKey.publicKey)
-		localPreferences.putSecret(ONE_TIME_PREKEY_PRIVATE, preKeys.oneTimePreKey.privateKey)
+		preferences.edit {
+			putString(SIGNED_PREKEY_ID, preKeys.signedPreKey.id.toString())
+			putString(SIGNED_PREKEY_PUBLIC, preKeys.signedPreKey.publicKey)
+			putString(SIGNED_PREKEY_PRIVATE, secrets.seal(preKeys.signedPreKey.privateKey))
+			putString(SIGNED_PREKEY_SIGNATURE, preKeys.signedPreKeySignature)
+			putString(ONE_TIME_PREKEY_ID, preKeys.oneTimePreKey.id.toString())
+			putString(ONE_TIME_PREKEY_PUBLIC, preKeys.oneTimePreKey.publicKey)
+			putString(ONE_TIME_PREKEY_PRIVATE, secrets.seal(preKeys.oneTimePreKey.privateKey))
+		}
 	}
 
 	override fun clear() {
-		localPreferences.remove(DEVICE_ID)
-		localPreferences.remove(PUBLIC_KEY)
-		localPreferences.remove(PRIVATE_KEY)
-		localPreferences.remove(SIGNED_PREKEY_ID)
-		localPreferences.remove(SIGNED_PREKEY_PUBLIC)
-		localPreferences.remove(SIGNED_PREKEY_PRIVATE)
-		localPreferences.remove(SIGNED_PREKEY_SIGNATURE)
-		localPreferences.remove(ONE_TIME_PREKEY_ID)
-		localPreferences.remove(ONE_TIME_PREKEY_PUBLIC)
-		localPreferences.remove(ONE_TIME_PREKEY_PRIVATE)
+		preferences.edit {
+			remove(DEVICE_ID)
+			remove(PUBLIC_KEY)
+			remove(PRIVATE_KEY)
+			remove(SIGNED_PREKEY_ID)
+			remove(SIGNED_PREKEY_PUBLIC)
+			remove(SIGNED_PREKEY_PRIVATE)
+			remove(SIGNED_PREKEY_SIGNATURE)
+			remove(ONE_TIME_PREKEY_ID)
+			remove(ONE_TIME_PREKEY_PUBLIC)
+			remove(ONE_TIME_PREKEY_PRIVATE)
+		}
 	}
 }
