@@ -35,11 +35,11 @@ class ValidateEmailUseCaseTest {
 	@Test
 	fun `email with domain EXPECT valid`() {
 		val expected = EmailValidationItem(
-			data = "chief@ftc.ru",
+			data = "chief@name.ru",
 			validationState = DefaultValidationState.Valid,
 		)
 
-		val actual = useCase("chief@ftc.ru")
+		val actual = useCase("chief@name.ru")
 
 		assertEquals(expected, actual)
 	}

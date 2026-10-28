@@ -22,11 +22,11 @@ class ValidateNotEmptyUseCaseTest {
 	@Test
 	fun `filled value EXPECT valid`() {
 		val expected = NotEmptyValidationItem(
-			data = "meridian.ftc.ru",
+			data = "meridian.name.ru",
 			validationState = NotEmptyValidationState.Valid,
 		)
 
-		val actual = useCase("meridian.ftc.ru")
+		val actual = useCase("meridian.name.ru")
 
 		assertEquals(expected, actual)
 	}
