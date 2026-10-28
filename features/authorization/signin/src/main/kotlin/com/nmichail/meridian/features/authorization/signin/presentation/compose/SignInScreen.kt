@@ -97,6 +97,7 @@ private fun SignInForm(
 				value = username.data,
 				placeholder = stringResource(R.string.sign_in_login),
 				error = stringResource(id = usernameErrorMessage(state = username.validationState)),
+				outlined = true,
 			),
 			onValueChange = { onIntent(SignInIntent.ChangeUsername(it)) },
 		)
@@ -107,6 +108,7 @@ private fun SignInForm(
 				placeholder = stringResource(R.string.sign_in_password),
 				error = stringResource(id = passwordErrorMessage(state = password.validationState)),
 				secret = true,
+				outlined = true,
 			),
 			onValueChange = { onIntent(SignInIntent.ChangePassword(it)) },
 		)

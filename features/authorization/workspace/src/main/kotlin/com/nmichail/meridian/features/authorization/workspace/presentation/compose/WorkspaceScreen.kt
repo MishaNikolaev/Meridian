@@ -128,6 +128,7 @@ private fun WorkspaceForm(
 				icon = MUiFieldIcon.Building,
 				label = stringResource(R.string.workspace_host),
 				value = host,
+				outlined = true,
 			),
 			onValueChange = { onIntent(WorkspaceIntent.ChangeHost(it)) },
 		)
@@ -138,6 +139,7 @@ private fun WorkspaceForm(
 				label = stringResource(R.string.workspace_email),
 				value = email,
 				email = true,
+				outlined = true,
 			),
 			onValueChange = { onIntent(WorkspaceIntent.ChangeEmail(it)) },
 		)
@@ -148,6 +150,7 @@ private fun WorkspaceForm(
 				label = stringResource(R.string.workspace_password),
 				value = password,
 				secret = true,
+				outlined = true,
 			),
 			onValueChange = { onIntent(WorkspaceIntent.ChangePassword(it)) },
 		)
