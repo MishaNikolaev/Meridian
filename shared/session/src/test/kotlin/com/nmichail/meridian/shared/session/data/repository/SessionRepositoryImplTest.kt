@@ -68,9 +68,9 @@ class SessionRepositoryImplTest {
 
 	@Test
 	fun `save host EXPECT data source host`() {
-		repository.saveHost("meridian.ftc.ru")
+		repository.saveHost("meridian.name.ru")
 
-		verify(dataSource).saveHost("meridian.ftc.ru")
+		verify(dataSource).saveHost("meridian.name.ru")
 	}
 
 	@Test

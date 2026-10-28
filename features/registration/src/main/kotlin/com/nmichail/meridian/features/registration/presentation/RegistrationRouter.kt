@@ -2,11 +2,11 @@ package com.nmichail.meridian.features.registration.presentation
 
 interface RegistrationRouter {
 
-	fun openHome()
+	fun navigateToHome()
 
-	fun openSignIn()
+	fun navigateToSignIn()
 
-	fun openWorkspace()
+	fun navigateToWorkspace()
 
 	fun navigateBack()
 }

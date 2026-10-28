@@ -87,18 +87,18 @@ class AuthorizationRepositoryImplTest {
 	fun `sign in workspace EXPECT trimmed request`() = runTest {
 		stubKeys()
 		val request = WorkspaceAuthorizationRequest(
-			host = "meridian.ftc.ru",
-			email = "chief@ftc.ru",
+			host = "meridian.name.ru",
+			email = "chief@name.ru",
 			password = "meridian1",
 			device = keys.toRequest(),
 		)
 		whenever(api.authorizeWorkspace(request)) doReturn session
 
-		repository.signInWorkspace(" meridian.ftc.ru ", " chief@ftc.ru ", "meridian1")
+		repository.signInWorkspace(" meridian.name.ru ", " chief@name.ru ", "meridian1")
 
 		verify(api).authorizeWorkspace(request)
-		verify(sessionRepository).saveHost("meridian.ftc.ru")
-		verify(sessionRepository).email("chief@ftc.ru")
+		verify(sessionRepository).saveHost("meridian.name.ru")
+		verify(sessionRepository).email("chief@name.ru")
 	}
 
 	@Test

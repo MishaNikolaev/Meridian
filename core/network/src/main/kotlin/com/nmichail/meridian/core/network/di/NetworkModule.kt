@@ -85,9 +85,6 @@ private suspend fun HttpResponse.toGatewayException(): GatewayException {
 	return GatewayException(
 		code = raw?.let(GatewayCode::from) ?: GatewayCode.UNKNOWN,
 		message = error?.message ?: status.description,
-		httpStatus = when {
-			raw == null -> status.value
-			else -> raw.toIntOrNull()
-		},
+		httpStatus = raw?.toIntOrNull() ?: status.value,
 	)
 }

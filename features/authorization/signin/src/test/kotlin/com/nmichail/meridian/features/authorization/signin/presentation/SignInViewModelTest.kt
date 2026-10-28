@@ -118,7 +118,7 @@ class SignInViewModelTest {
 
 		viewModel.applyIntent(SignInIntent.Submit)
 
-		verify(router).openHome()
+		verify(router).navigateToHome()
 	}
 
 	@Test
@@ -145,14 +145,14 @@ class SignInViewModelTest {
 	fun `open registration EXPECT registration`() = runTest {
 		viewModel.applyIntent(SignInIntent.OpenRegistration)
 
-		verify(router).openRegistration()
+		verify(router).navigateToRegistration()
 	}
 
 	@Test
 	fun `open workspace EXPECT workspace`() = runTest {
 		viewModel.applyIntent(SignInIntent.OpenWorkspace)
 
-		verify(router).openWorkspace()
+		verify(router).navigateToWorkspace()
 	}
 
 	@Test

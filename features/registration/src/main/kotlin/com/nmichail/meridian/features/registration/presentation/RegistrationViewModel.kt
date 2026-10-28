@@ -148,10 +148,22 @@ class RegistrationViewModel @Inject constructor(
 		val password = validatePasswordUseCase(passwordData)
 
 		if (!username.isValid() || !displayName.isValid() || !password.isValid()) {
-			setState(RegistrationState.Content(username = username, displayName = displayName, password = password))
+			setState(
+				RegistrationState.Content(
+					username = username,
+					displayName = displayName,
+					password = password,
+				),
+			)
 			return
 		}
-		setState(RegistrationState.Loading(username = username, displayName = displayName, password = password))
+		setState(
+			RegistrationState.Loading(
+				username = username,
+				displayName = displayName,
+				password = password,
+			),
+		)
 		launchTry {
 			registerUseCase(
 				RegistrationData(
@@ -160,26 +172,28 @@ class RegistrationViewModel @Inject constructor(
 					password = password.data,
 				),
 			)
-			router.openHome()
-		} catch { error ->
-			val current = state.value as? RegistrationState.Loading ?: return@catch
-			setState(
-				RegistrationState.Error(
-					username = current.username,
-					displayName = current.displayName,
-					password = current.password,
-					message = error.userMessage(),
-				),
-			)
-		}
+			router.navigateToHome()
+		} catch ::handleError
+	}
+
+	private fun handleError(error: Exception) {
+		val current = state.value as? RegistrationState.Loading ?: return
+		setState(
+			RegistrationState.Error(
+				username = current.username,
+				displayName = current.displayName,
+				password = current.password,
+				message = error.userMessage(),
+			),
+		)
 	}
 
 	private fun handleOpenSignIn() {
-		router.openSignIn()
+		router.navigateToSignIn()
 	}
 
 	private fun handleOpenWorkspace() {
-		router.openWorkspace()
+		router.navigateToWorkspace()
 	}
 
 	private fun handleNavigateBack() {

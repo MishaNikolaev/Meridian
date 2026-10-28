@@ -266,9 +266,9 @@ class SessionLocalDataSourceImplTest {
 
 	@Test
 	fun `save host EXPECT stored host`() {
-		dataSource.saveHost(" meridian.ftc.ru ")
+		dataSource.saveHost(" meridian.name.ru ")
 
-		verify(editor).putString("session_host", "meridian.ftc.ru")
+		verify(editor).putString("session_host", "meridian.name.ru")
 	}
 
 	@Test

@@ -6,9 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
@@ -21,6 +18,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.nmichail.meridian.component.ui.theme.palette
 import kotlinx.coroutines.flow.StateFlow
 import com.nmichail.meridian.component.ui.button.MUiButton
 import com.nmichail.meridian.component.ui.compose.displayNameErrorMessage
@@ -36,7 +34,6 @@ import com.nmichail.meridian.component.ui.text.MUiBodyDefaultText
 import com.nmichail.meridian.component.ui.text.MUiBodyRegularText
 import com.nmichail.meridian.component.ui.text.MUiCaptionSmallText
 import com.nmichail.meridian.component.ui.text.MUiDisplayAuthText
-import com.nmichail.meridian.component.ui.theme.MeridianThemeTokens
 import com.nmichail.meridian.features.registration.R
 import com.nmichail.meridian.core.validation.displayName.DisplayNameValidationItem
 import com.nmichail.meridian.core.validation.password.PasswordValidationItem
@@ -97,7 +94,6 @@ private fun RegistrationForm(
 	Column(
 		modifier = Modifier
 			.fillMaxSize()
-			.windowInsetsPadding(WindowInsets.safeDrawing)
 			.verticalScroll(rememberScrollState())
 			.padding(horizontal = 24.dp, vertical = 32.dp),
 		verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -105,7 +101,7 @@ private fun RegistrationForm(
 		MUiDisplayAuthText(text = stringResource(R.string.registration_title))
 		MUiBodyRegularText(
 			text = stringResource(R.string.registration_hint),
-			color = MeridianThemeTokens.palette.textSecondary,
+			color = palette.textSecondary,
 		)
 		MUiTextField(
 			model = MUiTextFieldModel(
@@ -166,10 +162,10 @@ private fun RegistrationActions(onIntent: (RegistrationIntent) -> Unit) {
 			),
 			onClick = { onIntent(RegistrationIntent.OpenSignIn) },
 		)
-		HorizontalDivider(color = MeridianThemeTokens.palette.borderDefault)
+		HorizontalDivider(color = palette.borderDefault)
 		MUiBodyDefaultText(
 			text = stringResource(R.string.registration_workspace),
-			color = MeridianThemeTokens.palette.textPrimary,
+			color = palette.textPrimary,
 			textAlign = TextAlign.Center,
 			modifier = Modifier
 				.clickable { onIntent(RegistrationIntent.OpenWorkspace) }
