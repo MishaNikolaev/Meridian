@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="search_placeholder">Поиск по чатам, людям и сообщениям</string>
+	<string name="search_recent">Недавние запросы</string>
+	<string name="search_recent_people">Недавние контакты</string>
+	<string name="search_empty_title">Ничего не найдено</string>
+	<string name="search_empty_text">Проверьте запрос или попробуйте другое слово</string>
+	<string name="search_people">Люди</string>
+	<string name="search_chats">Чаты</string>
+	<string name="search_messages">Сообщения</string>
+	<string name="search_files">Файлы</string>
+	<string name="search_section_all">Все</string>
+	<string name="search_section_chats">Чаты</string>
+	<string name="search_section_people">Люди</string>
+	<string name="search_section_text">Текст</string>
+	<string name="search_section_files">Файлы</string>
+</resources>
