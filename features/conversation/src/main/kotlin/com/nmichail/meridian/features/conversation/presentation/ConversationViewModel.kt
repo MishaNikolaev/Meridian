@@ -1,177 +1,632 @@
 package com.nmichail.meridian.features.conversation.presentation
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.nmichail.meridian.core.network.error.userMessage
-import com.nmichail.meridian.core.presentation.launchTry
+import com.nmichail.meridian.core.presentation.BaseViewModel
+import com.nmichail.meridian.core.validation.initials.InitialsUseCase
+import com.nmichail.meridian.core.validation.mention.ApplyMentionUseCase
+import com.nmichail.meridian.core.validation.mention.EveryoneMentionUseCase
+import com.nmichail.meridian.core.validation.mention.MatchMentionUseCase
+import com.nmichail.meridian.core.validation.mention.MentionQueryUseCase
+import com.nmichail.meridian.features.conversation.presentation.compose.component.keepingEdits
+import com.nmichail.meridian.features.conversation.presentation.compose.component.markDeleted
+import com.nmichail.meridian.features.conversation.presentation.compose.component.mergeReactionViewers
+import com.nmichail.meridian.features.conversation.presentation.compose.component.reactionGlyphs
 import com.nmichail.meridian.shared.chat.data.realtime.ChatRealtime
 import com.nmichail.meridian.shared.chat.domain.entity.ChatLine
+import com.nmichail.meridian.shared.chat.domain.entity.ChatPerson
+import com.nmichail.meridian.shared.chat.domain.entity.ChatReaction
+import com.nmichail.meridian.shared.chat.domain.usecase.DeleteMessageUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.LoadMessagesUseCase
+import com.nmichail.meridian.shared.chat.domain.usecase.ReadCachedMessagesUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.MarkReadUseCase
+import com.nmichail.meridian.shared.chat.domain.usecase.ReactUseCase
+import com.nmichail.meridian.shared.chat.domain.usecase.ReadReactionsUseCase
+import com.nmichail.meridian.shared.chat.domain.usecase.SaveReactionUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.SendMessageUseCase
 import java.time.Instant
 import javax.inject.Inject
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-
-private const val BOT_CHAT = "bot:"
-
-data class ConversationState(
-	val title: String,
-	val lines: List<ChatLine>,
-	val members: Int,
-	val bot: Boolean,
-	val draft: String,
-	val editingId: String?,
-	val editingText: String,
-	val failure: Int?,
-	val sending: Boolean,
-)
 
 class ConversationViewModel @Inject constructor(
 	private val loadMessagesUseCase: LoadMessagesUseCase,
+	private val readCachedMessagesUseCase: ReadCachedMessagesUseCase,
 	private val sendMessageUseCase: SendMessageUseCase,
 	private val markReadUseCase: MarkReadUseCase,
+	private val readReactionsUseCase: ReadReactionsUseCase,
+	private val saveReactionUseCase: SaveReactionUseCase,
+	private val reactUseCase: ReactUseCase,
+	private val deleteMessageUseCase: DeleteMessageUseCase,
+	private val mentionQueryUseCase: MentionQueryUseCase,
+	private val applyMentionUseCase: ApplyMentionUseCase,
+	private val matchMentionUseCase: MatchMentionUseCase,
+	private val everyoneMentionUseCase: EveryoneMentionUseCase,
+	private val initialsUseCase: InitialsUseCase,
 	private val realtime: ChatRealtime,
 	private val router: ConversationRouter,
-) : ViewModel() {
+) : BaseViewModel<ConversationState, ConversationIntent, Nothing>() {
 
-	private val stateFlow = MutableStateFlow(
-		ConversationState(
-			title = "",
-			lines = emptyList(),
-			members = 0,
-			bot = false,
-			draft = "",
-			editingId = null,
-			editingText = "",
-			failure = null,
-			sending = false,
-		),
-	)
-	val state: StateFlow<ConversationState> = stateFlow.asStateFlow()
-	private var chatId: String? = null
-	private var readId: String? = null
+	private var markedChatId: String? = null
 
-	fun attach(id: String, title: String) {
-		if (chatId == id) {
+	private var markedMessageId: String? = null
+
+	override fun initState(): ConversationState = ConversationState.Initial
+
+	override fun applyIntent(intent: ConversationIntent) {
+		when (intent) {
+			is ConversationIntent.LoadInitialData    -> handleLoadInitialData(intent)
+			is ConversationIntent.ChangeDraft        -> handleChangeDraft(intent.draft)
+			is ConversationIntent.PickMention        -> handlePickMention(intent.token)
+			is ConversationIntent.BeginEdit          -> handleBeginEdit(intent.line)
+			is ConversationIntent.CancelEdit         -> handleCancelEdit()
+			is ConversationIntent.StartReply         -> handleStartReply(intent.author, intent.text)
+			is ConversationIntent.CancelReply        -> handleCancelReply()
+			is ConversationIntent.Send               -> handleSend()
+			is ConversationIntent.NavigateBack       -> handleNavigateBack()
+			is ConversationIntent.OpenPerson         -> handleOpenPerson()
+			is ConversationIntent.OpenMessage        -> handleOpenMessage(intent.lineId)
+			is ConversationIntent.DismissMessageMenu -> handleDismissMessageMenu()
+			is ConversationIntent.PickReaction       -> handlePickReaction(intent.lineId, intent.reaction)
+			is ConversationIntent.Pin                -> handlePin(intent.lineId)
+			is ConversationIntent.StartDiscussion    -> handleStartDiscussion(intent.lineId)
+			is ConversationIntent.StartSelection     -> handleStartSelection(intent.lineId)
+			is ConversationIntent.ClearSelection     -> handleClearSelection()
+			is ConversationIntent.DeleteSelection    -> handleDeleteSelection()
+		}
+	}
+
+	private fun handleLoadInitialData(load: ConversationIntent.LoadInitialData) {
+		if (state.value != ConversationState.Initial) {
 			return
 		}
-		chatId = id
-		readId = null
-		if (id.startsWith(BOT_CHAT)) {
-			stateFlow.value = ConversationState(
-				title = title,
-				lines = listOf(botGreeting(title)),
-				members = 0,
-				bot = true,
-				draft = "",
-				editingId = null,
-				editingText = "",
-				failure = null,
-				sending = false,
+		if (load.chatId.startsWith("bot:")) {
+			handleOpenBot(
+				chatId = load.chatId.removePrefix("bot:"),
+				title = load.title,
+				corporate = load.corporate,
+				rootId = load.rootId,
+				personId = load.personId,
 			)
 			return
 		}
-		stateFlow.update { it.copy(title = title) }
+		handleOpenChat(
+			chatId = load.chatId,
+			title = load.title,
+			corporate = load.corporate,
+			rootId = load.rootId,
+			personId = load.personId,
+		)
+	}
+
+	private fun handleOpenBot(
+		chatId: String,
+		title: String,
+		corporate: Boolean,
+		rootId: String?,
+		personId: String,
+	) {
+		handlePublish(
+			chatId = chatId,
+			title = title,
+			corporate = corporate,
+			rootId = rootId,
+			personId = personId,
+			bot = true,
+			lines = listOf(
+				ChatLine(
+					id = "hello",
+					mine = false,
+					text = "",
+					sentAt = Instant.now().toString(),
+					author = title,
+					replyAuthor = null,
+					replyText = null,
+					threadRoot = null,
+					deleted = false,
+					edited = false,
+				),
+			),
+			members = 0,
+			people = emptyList(),
+			reactions = emptyMap(),
+			reactionViewers = emptyMap(),
+		)
+	}
+
+	private fun handleOpenChat(
+		chatId: String,
+		title: String,
+		corporate: Boolean,
+		rootId: String?,
+		personId: String,
+	) {
+		val cached = readCachedMessagesUseCase(chatId)
+		if (cached == null) {
+			setState(ConversationState.Loading)
+		} else {
+			handlePublish(
+				chatId = chatId,
+				title = title,
+				corporate = corporate,
+				rootId = rootId,
+				personId = personId,
+				bot = false,
+				lines = cached.lines,
+				members = cached.members,
+				people = cached.people,
+				reactions = reactionGlyphs(cached.reactions) + reactionGlyphs(readReactionsUseCase()),
+				reactionViewers = cached.reactionViewers,
+			)
+		}
+		handleListen(
+			chatId = chatId,
+			title = title,
+			corporate = corporate,
+			rootId = rootId,
+			personId = personId,
+		)
+		handleLoadMessages(
+			chatId = chatId,
+			title = title,
+			corporate = corporate,
+			rootId = rootId,
+			personId = personId,
+		)
+	}
+
+	private fun handleListen(
+		chatId: String,
+		title: String,
+		corporate: Boolean,
+		rootId: String?,
+		personId: String,
+	) {
 		realtime.ensureStarted()
-		viewModelScope.launchTry {
+		launchTry {
 			realtime.chatIds.collect { changed ->
-				if (changed == id) {
-					reload(id)
+				if (changed == chatId) {
+					handleLoadMessages(
+						chatId = chatId,
+						title = title,
+						corporate = corporate,
+						rootId = rootId,
+						personId = personId,
+					)
 				}
 			}
 		} catch { _ -> }
-		reload(id)
 	}
 
-	fun onDraft(value: String) {
-		stateFlow.update { it.copy(draft = value) }
+	private fun handleChangeDraft(value: String) {
+		handleDraft(value)
 	}
 
-	fun beginEdit(line: ChatLine) {
-		if (!line.mine) {
+	private fun handlePickMention(token: String) {
+		val currentState = state.value as? ConversationState.Content ?: return
+		val next = applyMentionUseCase(
+			draft = currentState.draft,
+			token = token,
+		)
+		handleDraft(next)
+	}
+
+	private fun handleBeginEdit(line: ChatLine) {
+		if (!line.mine || line.deleted) {
 			return
 		}
-		stateFlow.update { it.copy(editingId = line.id, editingText = line.text, draft = line.text) }
+		val currentState = state.value as? ConversationState.Content ?: return
+		setState(
+			currentState.copy(
+				menuLineId = null,
+				editingId = line.id,
+				editingText = line.text,
+				replyAuthor = "",
+				replyText = "",
+			),
+		)
+		handleDraft(line.text)
 	}
 
-	fun cancelEdit() {
-		stateFlow.update { it.copy(editingId = null, editingText = "", draft = "") }
+	private fun handleCancelEdit() {
+		val currentState = state.value as? ConversationState.Content ?: return
+		setState(
+			currentState.copy(
+				editingId = null,
+				editingText = "",
+			),
+		)
+		handleDraft("")
 	}
 
-	fun send() {
-		val id = chatId ?: return
-		val text = stateFlow.value.draft.trim()
-		if (text.isEmpty() || stateFlow.value.sending) {
-			return
-		}
-		if (stateFlow.value.editingId != null) {
-			applyEdit(text)
-			return
-		}
-		if (id.startsWith(BOT_CHAT)) {
-			val line = ChatLine(id = "mine-${stateFlow.value.lines.size}", mine = true, text = text, sentAt = Instant.now().toString())
-			stateFlow.update { current -> current.copy(draft = "", lines = current.lines + line) }
-			return
-		}
-		stateFlow.update { it.copy(sending = true, draft = "", failure = null) }
-		viewModelScope.launchTry {
-			sendMessageUseCase(id, text)
-			stateFlow.update { it.copy(sending = false) }
-			reload(id)
-		} catch { error ->
-			stateFlow.update { it.copy(sending = false, draft = text, failure = error.userMessage()) }
-		}
+	private fun handleStartReply(author: String, text: String) {
+		val currentState = state.value as? ConversationState.Content ?: return
+		setState(
+			currentState.copy(
+				menuLineId = null,
+				replyAuthor = author,
+				replyText = text,
+				editingId = null,
+				editingText = "",
+			)
+		)
 	}
 
-	fun back() {
+	private fun handleCancelReply() {
+		val currentState = state.value as? ConversationState.Content ?: return
+		setState(currentState.copy(replyAuthor = "", replyText = ""))
+	}
+
+	private fun handleSend() {
+		val currentState = state.value as? ConversationState.Content ?: return
+		val text = currentState.draft.trim()
+		if (text.isEmpty() || currentState.sending) {
+			return
+		}
+		if (currentState.editingId != null) {
+			handleApplyEdit(text)
+			return
+		}
+		val replyAuthor = currentState.replyAuthor
+		val replyText = currentState.replyText
+		val threadRoot = currentState.rootId.orEmpty()
+		val chatId = currentState.chatId
+		if (currentState.bot) {
+			handleSendBot(text, replyAuthor, replyText)
+			return
+		}
+		setState(
+			currentState.copy(
+				sending = true,
+				replyAuthor = "",
+				replyText = "",
+			),
+		)
+		handleDraft("")
+		launchTry {
+			sendMessageUseCase(
+				chatId,
+				text,
+				replyAuthor,
+				replyText,
+				threadRoot,
+			)
+			val sent = state.value as? ConversationState.Content ?: return@launchTry
+			setState(sent.copy(sending = false))
+			handleLoadMessages(chatId)
+		} catch ::handleError
+	}
+
+	private fun handleSendBot(text: String, replyAuthor: String, replyText: String) {
+		val currentState = state.value as? ConversationState.Content ?: return
+		val line = ChatLine(
+			id = "${currentState.lines.size}",
+			mine = true,
+			text = text,
+			sentAt = Instant.now().toString(),
+			author = null,
+			replyAuthor = replyAuthor.ifEmpty { null },
+			replyText = replyText.ifEmpty { null },
+			threadRoot = currentState.rootId,
+			deleted = false,
+			edited = false,
+		)
+		val lines = currentState.lines + line
+		setState(
+			currentState.copy(
+				replyAuthor = "",
+				replyText = "",
+				lines = lines,
+				days = lines.days(),
+			),
+		)
+		handleDraft("")
+	}
+
+	private fun handleNavigateBack() {
 		router.navigateBack()
 	}
 
-	private fun applyEdit(text: String) {
-		val editing = stateFlow.value.editingId ?: return
-		stateFlow.update { current ->
-			current.copy(
+	private fun handleOpenPerson() {
+		val currentState = state.value as? ConversationState.Content ?: return
+		if (currentState.personId.isEmpty()) {
+			return
+		}
+		router.navigateToPerson(
+			userId = currentState.personId,
+			corporate = currentState.corporate,
+		)
+	}
+
+	private fun handleOpenMessage(lineId: String) {
+		val currentState = state.value as? ConversationState.Content ?: return
+		if (currentState.selectedIds.isNotEmpty()) {
+			handleToggleSelection(lineId)
+			return
+		}
+		setState(currentState.copy(menuLineId = lineId))
+	}
+
+	private fun handleDismissMessageMenu() {
+		val currentState = state.value as? ConversationState.Content ?: return
+		setState(currentState.copy(menuLineId = null))
+	}
+
+	private fun handlePickReaction(lineId: String, reaction: String) {
+		val currentState = state.value as? ConversationState.Content ?: return
+		val others = currentState.reactionViewers[lineId].orEmpty().filter { viewer -> !viewer.mine }
+		val mine = ChatReaction(
+			name = "",
+			reaction = reaction,
+			sentAt = Instant.now().toString(),
+			mine = true,
+		)
+		setState(
+			currentState.copy(
+				menuLineId = null,
+				reactions = currentState.reactions + (lineId to reaction),
+				reactionViewers = currentState.reactionViewers + (lineId to (others + mine)),
+			)
+		)
+		if (currentState.bot) {
+			return
+		}
+		saveReactionUseCase(lineId, reaction)
+		launchTry {
+			reactUseCase(lineId, reaction)
+		} catch { _ -> }
+	}
+
+	private fun handlePin(lineId: String) {
+		val currentState = state.value as? ConversationState.Content ?: return
+		setState(
+			currentState.copy(
+				menuLineId = null,
+				pinnedId = if (currentState.pinnedId == lineId) {
+					null
+				} else {
+					lineId
+				},
+			)
+		)
+	}
+
+	private fun handleStartDiscussion(lineId: String) {
+		val currentState = state.value as? ConversationState.Content ?: return
+		setState(currentState.copy(menuLineId = null))
+		val screenId = if (currentState.bot) "bot:${currentState.chatId}" else currentState.chatId
+		router.navigateToDiscussion(
+			chatId = screenId,
+			title = currentState.title,
+			corporate = currentState.corporate,
+			messageId = lineId,
+			personId = currentState.personId,
+		)
+	}
+
+	private fun handleStartSelection(lineId: String) {
+		val currentState = state.value as? ConversationState.Content ?: return
+		setState(currentState.copy(menuLineId = null, selectedIds = setOf(lineId)))
+	}
+
+	private fun handleToggleSelection(lineId: String) {
+		val currentState = state.value as? ConversationState.Content ?: return
+		val next = if (lineId in currentState.selectedIds) {
+			currentState.selectedIds - lineId
+		} else {
+			currentState.selectedIds + lineId
+		}
+		setState(currentState.copy(selectedIds = next))
+	}
+
+	private fun handleClearSelection() {
+		val currentState = state.value as? ConversationState.Content ?: return
+		setState(currentState.copy(selectedIds = emptySet()))
+	}
+
+	private fun handleDeleteSelection() {
+		val currentState = state.value as? ConversationState.Content ?: return
+		val ids = currentState.selectedIds
+		val lines = currentState.lines.map { line ->
+			if (line.id in ids) {
+				line.markDeleted()
+			} else {
+				line
+			}
+		}
+		setState(
+			currentState.copy(
+				lines = lines,
+				days = lines.days(),
+				selectedIds = emptySet(),
+				menuLineId = null,
+				pinnedId = if (currentState.pinnedId in ids) {
+					null
+				} else {
+					currentState.pinnedId
+				},
+				reactions = currentState.reactions.filterKeys { it !in ids },
+				reactionViewers = currentState.reactionViewers.filterKeys { it !in ids },
+			)
+		)
+		if (currentState.bot) {
+			return
+		}
+		launchTry {
+			ids.forEach { id -> deleteMessageUseCase(id) }
+		} catch { _ ->
+			handleLoadMessages(currentState.chatId)
+		}
+	}
+
+	private fun handleApplyEdit(text: String) {
+		val currentState = state.value as? ConversationState.Content ?: return
+		val editing = currentState.editingId ?: return
+		val lines = currentState.lines.map { line ->
+			if (line.id == editing) {
+				line.copy(text = text, edited = line.edited || text != line.text)
+			} else {
+				line
+			}
+		}
+		setState(
+			currentState.copy(
 				editingId = null,
 				editingText = "",
-				draft = "",
-				lines = current.lines.map { line -> if (line.id == editing) line.copy(text = text) else line },
+				lines = lines,
+				days = lines.days(),
+			),
+		)
+		handleDraft("")
+	}
+
+	private fun handleLoadMessages(chatId: String) {
+		val current = state.value as? ConversationState.Content ?: return
+		handleLoadMessages(
+			chatId = chatId,
+			title = current.title,
+			corporate = current.corporate,
+			rootId = current.rootId,
+			personId = current.personId,
+		)
+	}
+
+	private fun handleLoadMessages(
+		chatId: String,
+		title: String,
+		corporate: Boolean,
+		rootId: String?,
+		personId: String,
+	) {
+		launchTry {
+			val thread = loadMessagesUseCase(chatId)
+			val contentState = state.value as? ConversationState.Content
+			handlePublish(
+				chatId = contentState?.chatId ?: chatId,
+				title = contentState?.title ?: title,
+				corporate = contentState?.corporate ?: corporate,
+				rootId = contentState?.rootId ?: rootId,
+				personId = contentState?.personId ?: personId,
+				bot = contentState?.bot ?: false,
+				lines = thread.lines,
+				members = thread.members,
+				people = thread.people,
+				reactions = reactionGlyphs(thread.reactions) + reactionGlyphs(readReactionsUseCase()),
+				reactionViewers = thread.reactionViewers,
+			)
+			handleMarkRead(chatId, thread.readUpTo)
+		} catch ::handleError
+	}
+
+	private suspend fun handleMarkRead(chatId: String, messageId: String?) {
+		if (markedChatId != chatId) {
+			markedChatId = chatId
+			markedMessageId = null
+		}
+		if (messageId == null || messageId == markedMessageId) {
+			return
+		}
+		markReadUseCase(messageId)
+		markedMessageId = messageId
+	}
+
+	private fun handleError(error: Exception) {
+		val current = state.value as? ConversationState.Content
+		if (current != null && !current.sending) {
+			return
+		}
+		setState(ConversationState.Error(message = error.userMessage()))
+	}
+
+	private fun handlePublish(
+		chatId: String,
+		title: String,
+		corporate: Boolean,
+		rootId: String?,
+		personId: String,
+		bot: Boolean,
+		lines: List<ChatLine>,
+		members: Int,
+		people: List<ChatPerson>,
+		reactions: Map<String, String>,
+		reactionViewers: Map<String, List<ChatReaction>>,
+	) {
+		when (val current = state.value) {
+			is ConversationState.Content -> {
+				val kept = lines.keepingEdits(current.lines)
+				setState(
+					current.copy(
+						lines = kept,
+						days = kept.days(),
+						members = members,
+						people = people,
+						reactions = reactions,
+						reactionViewers = mergeReactionViewers(
+							reactionViewers,
+							current.reactionViewers,
+						),
+					),
+				)
+				handleDraft(current.draft)
+			}
+
+			else                         -> setState(
+				ConversationState.Content(
+					title = title,
+					lines = lines,
+					days = lines.days(),
+					members = members,
+					people = people,
+					chatId = chatId,
+					bot = bot,
+					draft = "",
+					mentionQuery = null,
+					mentions = emptyList(),
+					mentionEveryone = false,
+					editingId = null,
+					editingText = "",
+					sending = false,
+					menuLineId = null,
+					pinnedId = null,
+					selectedIds = emptySet(),
+					reactions = reactions,
+					reactionViewers = reactionViewers,
+					corporate = corporate,
+					replyAuthor = "",
+					replyText = "",
+					rootId = rootId,
+					personId = personId,
+				),
 			)
 		}
 	}
 
-	private fun botGreeting(title: String): ChatLine = ChatLine(
-		id = "hello",
-		mine = false,
-		text = "",
-		sentAt = Instant.now().toString(),
-		author = title,
-	)
-
-	private fun reload(id: String) {
-		viewModelScope.launchTry {
-			val thread = loadMessagesUseCase(id)
-			stateFlow.update { it.copy(lines = thread.lines, members = thread.members, failure = null) }
-			acknowledge(thread.readUpTo)
-		} catch { error ->
-			stateFlow.update { it.copy(failure = error.userMessage()) }
-		}
-	}
-
-	private fun acknowledge(messageId: String?) {
-		if (messageId == null || messageId == readId) {
-			return
-		}
-		readId = messageId
-		viewModelScope.launchTry {
-			markReadUseCase(messageId)
-		} catch { _ ->
-			if (readId == messageId) {
-				readId = null
+	private fun handleDraft(value: String) {
+		val current = state.value as? ConversationState.Content ?: return
+		val query = mentionQueryUseCase(value)
+		val mentions = if (query == null) {
+			emptyList()
+		} else {
+			current.people.filter { person ->
+				matchMentionUseCase(
+					name = person.displayName,
+					username = person.username,
+					query = query,
+				)
+			}.map { person ->
+				val title = person.displayName.ifBlank { person.username }
+				Mention(
+					token = person.username,
+					title = title,
+					note = "@${person.username}",
+					initials = initialsUseCase(title),
+				)
 			}
 		}
+		setState(
+			current.copy(
+				draft = value,
+				mentionQuery = query,
+				mentions = mentions,
+				mentionEveryone = query != null && everyoneMentionUseCase(query),
+			),
+		)
 	}
 }

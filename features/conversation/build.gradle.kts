@@ -12,12 +12,14 @@ dependencies {
 
 	implementation(platform(libs.androidx.compose.bom))
 	implementation(libs.bundles.compose)
+	implementation(libs.androidx.emoji2.picker)
 
 	implementation(projects.component.ui)
 	api(projects.core.di)
 	implementation(projects.core.presentation)
 	implementation(projects.core.navigation)
 	implementation(projects.core.network)
+	implementation(projects.core.validation)
 	implementation(projects.shared.chat)
 	implementation(projects.shared.session)
 
