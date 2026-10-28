@@ -8,17 +8,14 @@ class ValidateUsernameUseCase @Inject constructor() {
 	operator fun invoke(username: String): UsernameValidationItem =
 		UsernameValidationItem(
 			data = username,
-			validationState = validationState(username),
+			validationState = when {
+				UsernameValidator.isLengthInvalid(username) -> {
+					DefaultValidationState.Invalid(UsernameInvalidState.INVALID_LENGTH)
+				}
+				UsernameValidator.isCharactersInvalid(username) -> {
+					DefaultValidationState.Invalid(UsernameInvalidState.INVALID_CHARACTERS)
+				}
+				else -> DefaultValidationState.Valid
+			},
 		)
-
-	private fun validationState(username: String): DefaultValidationState =
-		when {
-			UsernameValidator.isLengthInvalid(username) -> {
-				DefaultValidationState.Invalid(UsernameInvalidState.INVALID_LENGTH)
-			}
-			UsernameValidator.isCharactersInvalid(username) -> {
-				DefaultValidationState.Invalid(UsernameInvalidState.INVALID_CHARACTERS)
-			}
-			else -> DefaultValidationState.Valid
-		}
 }

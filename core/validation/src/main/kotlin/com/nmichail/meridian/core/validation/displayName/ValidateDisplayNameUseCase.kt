@@ -8,17 +8,14 @@ class ValidateDisplayNameUseCase @Inject constructor() {
 	operator fun invoke(displayName: String): DisplayNameValidationItem =
 		DisplayNameValidationItem(
 			data = displayName,
-			validationState = validationState(displayName),
+			validationState = when {
+				DisplayNameValidator.isEmpty(displayName) -> {
+					DefaultValidationState.Invalid(DisplayNameInvalidState.EMPTY)
+				}
+				DisplayNameValidator.isTooLong(displayName) -> {
+					DefaultValidationState.Invalid(DisplayNameInvalidState.TOO_LONG)
+				}
+				else -> DefaultValidationState.Valid
+			},
 		)
-
-	private fun validationState(displayName: String): DefaultValidationState =
-		when {
-			DisplayNameValidator.isEmpty(displayName) -> {
-				DefaultValidationState.Invalid(DisplayNameInvalidState.EMPTY)
-			}
-			DisplayNameValidator.isTooLong(displayName) -> {
-				DefaultValidationState.Invalid(DisplayNameInvalidState.TOO_LONG)
-			}
-			else -> DefaultValidationState.Valid
-		}
 }
