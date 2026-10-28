@@ -97,6 +97,8 @@ class AuthorizationRepositoryImplTest {
 		repository.signInWorkspace(" meridian.ftc.ru ", " chief@ftc.ru ", "meridian1")
 
 		verify(api).authorizeWorkspace(request)
+		verify(sessionRepository).saveHost("meridian.ftc.ru")
+		verify(sessionRepository).email("chief@ftc.ru")
 	}
 
 	@Test

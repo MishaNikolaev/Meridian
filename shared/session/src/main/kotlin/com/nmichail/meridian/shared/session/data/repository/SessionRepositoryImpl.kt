@@ -19,6 +19,14 @@ class SessionRepositoryImpl @Inject constructor(
 
 	override fun getDeviceId(): String? = dataSource.getDeviceId()
 
+	override fun getHost(): String? = dataSource.getHost()
+
+	override fun saveHost(host: String) {
+		dataSource.saveHost(host)
+	}
+
+	override fun email(value: String?): String? = dataSource.email(value)
+
 	override fun save(session: AuthSession) {
 		dataSource.save(session)
 	}

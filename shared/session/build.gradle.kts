@@ -8,6 +8,7 @@ plugins {
 
 dependencies {
 	implementation(libs.bundles.coroutines)
+	implementation(libs.androidx.core.ktx)
 	implementation(libs.dagger)
 	kapt(libs.dagger.compiler)
 	implementation(libs.ktorfit)
