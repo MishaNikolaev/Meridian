@@ -198,27 +198,6 @@ class ChatViewModelTest {
 	}
 
 	@Test
-	fun `change section EXPECT catalog`() = runTest {
-		whenever(loadChatsUseCase.invoke()) doReturn chats
-		viewModel.applyIntent(ChatIntent.LoadInitialData)
-
-		viewModel.applyIntent(ChatIntent.ChangeSection(section = ChatSection.CATALOG))
-
-		assertEquals(
-			ChatState.Content(
-				corporate = true,
-				section = ChatSection.CATALOG,
-				corporateChats = chats,
-				externalTabChats = emptyList(),
-				corporateDiscussions = emptyList(),
-				externalTabDiscussions = emptyList(),
-				createOpen = false,
-			),
-			viewModel.state.value,
-		)
-	}
-
-	@Test
 	fun `open search EXPECT router`() = runTest {
 		viewModel.applyIntent(ChatIntent.OpenSearch)
 

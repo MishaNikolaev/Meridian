@@ -15,6 +15,10 @@ internal val previewCorporateChats = listOf(
 		sentAt = "2026-10-27T03:00:00Z",
 		unread = 2,
 		corporate = true,
+		mentioned = false,
+		personId = null,
+		discussionRoot = null,
+		discussionText = null,
 	),
 	Chat(
 		id = "2",
@@ -24,6 +28,10 @@ internal val previewCorporateChats = listOf(
 		sentAt = "2026-10-26T03:00:00Z",
 		unread = 0,
 		corporate = true,
+		mentioned = false,
+		personId = null,
+		discussionRoot = null,
+		discussionText = null,
 	),
 )
 
@@ -36,6 +44,10 @@ internal val previewExternalChats = listOf(
 		sentAt = "2026-10-27T01:00:00Z",
 		unread = 1,
 		corporate = false,
+		mentioned = false,
+		personId = null,
+		discussionRoot = null,
+		discussionText = null,
 	),
 )
 
