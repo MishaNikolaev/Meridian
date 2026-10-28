@@ -8,15 +8,16 @@ plugins {
 
 dependencies {
 	implementation(libs.bundles.coroutines)
+	implementation(libs.androidx.core.ktx)
 	implementation(libs.dagger)
 	kapt(libs.dagger.compiler)
 	implementation(libs.ktorfit)
 	implementation(libs.kotlinx.serialization.json)
 	implementation(libs.ktor.client.websockets)
-	implementation(libs.bouncycastle)
 
 	implementation(projects.core.di)
 	implementation(projects.core.network)
+	implementation(projects.core.storage)
 	implementation(projects.shared.session)
 
 	testImplementation(projects.core.testutils)

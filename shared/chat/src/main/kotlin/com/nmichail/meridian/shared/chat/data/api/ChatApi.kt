@@ -3,7 +3,7 @@ package com.nmichail.meridian.shared.chat.data.api
 import com.nmichail.meridian.shared.chat.data.dto.ChatDetailsDto
 import com.nmichail.meridian.shared.chat.data.dto.ChatPageDto
 import com.nmichail.meridian.shared.chat.data.dto.CreateChatDto
-import com.nmichail.meridian.shared.chat.data.dto.KeyBundleDto
+import com.nmichail.meridian.shared.chat.data.dto.KeyDto
 import com.nmichail.meridian.shared.chat.data.dto.MessageDto
 import com.nmichail.meridian.shared.chat.data.dto.MessagePageDto
 import com.nmichail.meridian.shared.chat.data.dto.PostMessageDto
@@ -46,7 +46,7 @@ interface ChatApi {
 	suspend fun setReaction(@Path("messageId") messageId: String, @Body body: ReactionRequestDto): HttpStatement
 
 	@GET("api/gateway/keys/{userId}")
-	suspend fun getKeys(@Path("userId") userId: String): KeyBundleDto
+	suspend fun getKeys(@Path("userId") userId: String): KeyDto
 
 	@GET("api/gateway/users")
 	suspend fun getUsers(@Query("query") query: String): List<UserCardDto>
