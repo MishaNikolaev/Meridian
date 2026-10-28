@@ -12,7 +12,7 @@ interface ChatRepository {
 
 	suspend fun create(type: ChatType, title: String, usernames: List<String>): CreatedChat
 
-	suspend fun person(username: String): ChatPerson
+	suspend fun findPerson(username: String): ChatPerson
 
 	suspend fun loadMessages(chatId: String): ChatThread
 
@@ -24,7 +24,7 @@ interface ChatRepository {
 
 	fun readReactions(): Map<String, String>
 
-	fun rememberReaction(messageId: String, reaction: String)
+	fun saveReaction(messageId: String, reaction: String)
 
 	suspend fun react(messageId: String, reaction: String)
 }

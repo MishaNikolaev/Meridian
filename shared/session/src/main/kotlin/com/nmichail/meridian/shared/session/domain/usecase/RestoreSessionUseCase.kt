@@ -13,11 +13,12 @@ class RestoreSessionUseCase @Inject constructor(
 ) {
 
 	suspend operator fun invoke(): Boolean {
-		if (sessionRepository.isSignedIn()) {
+		if (sessionRepository.isSignedIn() || !sessionRepository.getAccessToken().isNullOrBlank()) {
 			return true
 		}
 		if (sessionRepository.getRefreshToken() == null) {
-			dropSession()
+			sessionRepository.clear()
+			deviceIdentityRepository.reset()
 			return false
 		}
 		val session = try {
@@ -28,12 +29,8 @@ class RestoreSessionUseCase @Inject constructor(
 		if (session != null) {
 			return true
 		}
-		dropSession()
-		return false
-	}
-
-	private fun dropSession() {
 		sessionRepository.clear()
 		deviceIdentityRepository.reset()
+		return false
 	}
 }

@@ -1,6 +1,6 @@
-package com.nmichail.meridian.shared.chat.data.repository
+package com.nmichail.meridian.shared.chat.data.mapper
 
-import com.nmichail.meridian.shared.chat.data.model.ChatTypeDto
+import com.nmichail.meridian.shared.chat.data.dto.ChatTypeDto
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType
 
 internal fun ChatTypeDto.toEntity(): ChatType = when (this) {

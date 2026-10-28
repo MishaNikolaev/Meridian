@@ -17,13 +17,17 @@ class CreateChatUseCaseTest {
 
 	private val repository: ChatRepository = mock()
 	private val useCase = CreateChatUseCase(repository)
-	private val created = CreatedChat(id = "1", title = "Обсуждение")
+	private val created = CreatedChat(
+		id = "1",
+		title = "Обсуждение",
+		corporate = true,
+	)
 
 	@Test
 	fun `invoke EXPECT created chat`() = runTest {
-		whenever(repository.create(ChatType.GROUP, "Обсуждение", "member")) doReturn created
+		whenever(repository.create(ChatType.GROUP, "Обсуждение", listOf("member"))) doReturn created
 
-		val actual = useCase(ChatType.GROUP, "Обсуждение", "member")
+		val actual = useCase(ChatType.GROUP, "Обсуждение", listOf("member"))
 
 		assertEquals(created, actual)
 	}

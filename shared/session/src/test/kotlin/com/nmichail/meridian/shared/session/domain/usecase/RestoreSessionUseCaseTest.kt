@@ -42,6 +42,26 @@ class RestoreSessionUseCaseTest {
 	}
 
 	@Test
+	fun `stored access token EXPECT true`() = runTest {
+		whenever(sessionRepository.isSignedIn()) doReturn false
+		whenever(sessionRepository.getAccessToken()) doReturn "access"
+
+		val actual = useCase()
+
+		assertEquals(true, actual)
+	}
+
+	@Test
+	fun `stored access token EXPECT no refresh`() = runTest {
+		whenever(sessionRepository.isSignedIn()) doReturn false
+		whenever(sessionRepository.getAccessToken()) doReturn "access"
+
+		useCase()
+
+		verify(sessionRefresher, never()).refresh()
+	}
+
+	@Test
 	fun `missing refresh token EXPECT false`() = runTest {
 		whenever(sessionRepository.isSignedIn()) doReturn false
 		whenever(sessionRepository.getRefreshToken()) doReturn null

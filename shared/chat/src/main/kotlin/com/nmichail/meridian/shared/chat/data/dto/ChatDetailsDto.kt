@@ -4,6 +4,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class ChatDetailsDto(
-	val chat: ChatSummaryDto,
+	val chat: ChatDto,
 	val members: List<ChatMemberDto>,
 )

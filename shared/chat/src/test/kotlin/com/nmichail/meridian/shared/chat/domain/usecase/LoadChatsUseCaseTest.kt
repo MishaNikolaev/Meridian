@@ -1,6 +1,6 @@
 package com.nmichail.meridian.shared.chat.domain.usecase
 
-import com.nmichail.meridian.shared.chat.domain.entity.ChatSummary
+import com.nmichail.meridian.shared.chat.domain.entity.Chat
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType
 import com.nmichail.meridian.core.testutils.TestCoroutineExtension
 import com.nmichail.meridian.shared.chat.domain.repository.ChatRepository
@@ -18,13 +18,18 @@ class LoadChatsUseCaseTest {
 	private val repository: ChatRepository = mock()
 	private val useCase = LoadChatsUseCase(repository)
 	private val chats = listOf(
-		ChatSummary(
+		Chat(
 			id = "1",
 			type = ChatType.DIRECT,
 			title = "Анна",
 			preview = "",
 			sentAt = null,
 			unread = 0,
+			corporate = true,
+			mentioned = false,
+			personId = null,
+			discussionRoot = null,
+			discussionText = null,
 		),
 	)
 
