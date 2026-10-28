@@ -20,7 +20,8 @@ import com.nmichail.meridian.features.chat.presentation.ChatIntent
 import com.nmichail.meridian.features.chat.presentation.ChatState
 import com.nmichail.meridian.features.chat.presentation.compose.ChatScreen
 import com.nmichail.meridian.features.contacts.presentation.compose.ContactsScreen
-import com.nmichail.meridian.features.profile.domain.entity.ProfileAccount
+import com.nmichail.meridian.features.profile.presentation.ProfileIntent
+import com.nmichail.meridian.features.profile.presentation.ProfileState
 import com.nmichail.meridian.features.profile.presentation.compose.ProfileScreen
 import kotlinx.coroutines.flow.StateFlow
 
@@ -31,9 +32,8 @@ fun MainHostScreen(
 	chatState: StateFlow<ChatState>,
 	onChatIntent: (ChatIntent) -> Unit,
 	chatEvent: LiveData<ChatEvent>,
-	profileState: StateFlow<ProfileAccount>,
-	onProfileLoad: () -> Unit,
-	onLogout: () -> Unit,
+	profileState: StateFlow<ProfileState>,
+	onProfileIntent: (ProfileIntent) -> Unit,
 ) {
 	Column(
 		modifier = Modifier
@@ -56,8 +56,7 @@ fun MainHostScreen(
 				MUiBottomDestination.CALLS -> CallsScreen()
 				MUiBottomDestination.PROFILE -> ProfileScreen(
 					state = profileState,
-					onLoad = onProfileLoad,
-					onLogout = onLogout,
+					onIntent = onProfileIntent,
 				)
 			}
 		}

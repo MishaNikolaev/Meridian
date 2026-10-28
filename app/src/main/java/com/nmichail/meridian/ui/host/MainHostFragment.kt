@@ -70,8 +70,7 @@ class MainHostFragment : FullScreenFragment() {
 						onChatIntent = chatViewModel::applyIntent,
 						chatEvent = chatViewModel.event,
 						profileState = viewModel.state,
-						onProfileLoad = viewModel::load,
-						onLogout = viewModel::logout,
+						onProfileIntent = viewModel::applyIntent,
 					)
 				}
 			}
