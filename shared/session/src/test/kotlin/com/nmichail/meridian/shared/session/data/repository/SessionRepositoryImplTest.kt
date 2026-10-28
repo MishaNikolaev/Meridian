@@ -67,6 +67,13 @@ class SessionRepositoryImplTest {
 	}
 
 	@Test
+	fun `save host EXPECT data source host`() {
+		repository.saveHost("meridian.name.ru")
+
+		verify(dataSource).saveHost("meridian.name.ru")
+	}
+
+	@Test
 	fun `save EXPECT data source save`() {
 		repository.save(session)
 

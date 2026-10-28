@@ -6,7 +6,9 @@ sealed interface WorkspaceEvent {
 
 	data object PasswordLength : WorkspaceEvent
 
-	data class NotHandledError(
-		val message: Int,
-	) : WorkspaceEvent
+	data object WrongPassword : WorkspaceEvent
+
+	data object NoConnection : WorkspaceEvent
+
+	data object NotHandledError : WorkspaceEvent
 }

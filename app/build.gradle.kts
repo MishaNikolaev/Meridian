@@ -67,6 +67,8 @@ dependencies {
 	implementation(projects.shared.session)
 	implementation(projects.features.mainhost)
 	implementation(projects.features.chat)
+	implementation(projects.features.groups)
+	implementation(projects.features.search)
 	implementation(projects.features.conversation)
 	implementation(projects.features.contacts)
 	implementation(projects.features.calls)
@@ -74,6 +76,7 @@ dependencies {
 	implementation(projects.features.registration)
 	implementation(projects.features.authorization.workspace)
 	implementation(projects.features.authorization.signin)
+	implementation(projects.features.authorization.splash)
 
 	testImplementation(libs.junit)
 	androidTestImplementation(libs.androidx.junit)

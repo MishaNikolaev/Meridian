@@ -16,4 +16,5 @@ data class MUiTextFieldModel(
 	val secret: Boolean = false,
 	val email: Boolean = false,
 	val highlighted: Boolean = false,
+	val outlined: Boolean = false,
 )

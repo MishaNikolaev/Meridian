@@ -10,7 +10,6 @@ import com.nmichail.meridian.core.navigation.navigator.ScreenNavigator
 import com.nmichail.meridian.core.network.session.SessionEvents
 import com.nmichail.meridian.di.ActivityComponent
 import com.nmichail.meridian.navigation.router.main.MainRouter
-import com.nmichail.meridian.shared.session.domain.usecase.RestoreSessionUseCase
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 
@@ -18,9 +17,6 @@ class MainActivity : FragmentActivity() {
 
 	@Inject
 	lateinit var router: MainRouter
-
-	@Inject
-	lateinit var restoreSessionUseCase: RestoreSessionUseCase
 
 	@Inject
 	lateinit var sessionEvents: SessionEvents
@@ -41,21 +37,11 @@ class MainActivity : FragmentActivity() {
 		enableEdgeToEdge()
 		setContentView(R.layout.activity_main)
 		if (savedInstanceState == null) {
-			openSavedSession()
+			router.navigateToSplash()
 		}
 		lifecycleScope.launch {
 			sessionEvents.expired.collect {
-				router.openSignIn()
-			}
-		}
-	}
-
-	private fun openSavedSession() {
-		lifecycleScope.launch {
-			if (restoreSessionUseCase()) {
-				router.navigateToHome()
-			} else {
-				router.openSignIn()
+				router.navigateToSignIn()
 			}
 		}
 	}

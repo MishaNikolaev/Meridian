@@ -1,6 +1,8 @@
 package com.nmichail.meridian.features.authorization.workspace.presentation
 
-import com.nmichail.meridian.core.network.error.userMessage
+import com.nmichail.meridian.core.network.error.ErrorStateConverter
+import com.nmichail.meridian.core.network.error.StatusCodes
+import com.nmichail.meridian.core.network.error.messageIdOrNull
 import com.nmichail.meridian.core.presentation.BaseViewModel
 import com.nmichail.meridian.core.validation.email.ValidateEmailUseCase
 import com.nmichail.meridian.core.validation.email.isValid
@@ -16,6 +18,7 @@ class WorkspaceViewModel @Inject constructor(
 	private val validateNotEmptyUseCase: ValidateNotEmptyUseCase,
 	private val validateEmailUseCase: ValidateEmailUseCase,
 	private val validatePasswordUseCase: ValidatePasswordUseCase,
+	private val errorStateConverter: ErrorStateConverter,
 	private val router: WorkspaceRouter,
 ) : BaseViewModel<WorkspaceState, WorkspaceIntent, WorkspaceEvent>() {
 
@@ -139,48 +142,67 @@ class WorkspaceViewModel @Inject constructor(
 		val email = emailData.trim()
 		when {
 			!validateNotEmptyUseCase(host).isValid() || !validateEmailUseCase(email).isValid() -> {
-				handleFailure(host, email, passwordData, WorkspaceEvent.NotFound)
+				setState(
+					WorkspaceState.Error(
+						host = host,
+						email = email,
+						password = passwordData,
+					),
+				)
+				setEvent(WorkspaceEvent.NotFound)
 				return
 			}
 
 			!validatePasswordUseCase(passwordData).isValid()                                   -> {
-				handleFailure(host, email, passwordData, WorkspaceEvent.PasswordLength)
+				setState(
+					WorkspaceState.Error(
+						host = host,
+						email = email,
+						password = passwordData,
+					),
+				)
+				setEvent(WorkspaceEvent.PasswordLength)
 				return
 			}
 		}
-		setState(WorkspaceState.Loading(host = host, email = email, password = passwordData))
+		setState(
+			WorkspaceState.Loading(
+				host = host,
+				email = email,
+				password = passwordData,
+			),
+		)
 		launchTry {
 			signInWorkspaceUseCase(host, email, passwordData)
-			router.openHome()
+			router.navigateToHome()
 		} catch ::handleError
 	}
 
 	private fun handleOpenExternalSignIn() {
-		router.openSignIn()
+		router.navigateToSignIn()
 	}
 
 	private fun handleNavigateBack() {
 		router.navigateBack()
 	}
 
-	private fun handleFailure(host: String, email: String, password: String, event: WorkspaceEvent) {
-		setState(
-			WorkspaceState.Error(
-				host = host,
-				email = email,
-				password = password,
-			),
-		)
-		setEvent(event)
-	}
-
 	private fun handleError(error: Exception) {
 		val failed = state.value as? WorkspaceState.Loading ?: return
-		handleFailure(
-			host = failed.host,
-			email = failed.email,
-			password = failed.password,
-			event = WorkspaceEvent.NotHandledError(message = error.userMessage()),
+		setState(
+			WorkspaceState.Error(
+				host = failed.host,
+				email = failed.email,
+				password = failed.password,
+			),
+		)
+		setEvent(
+			when (errorStateConverter.convert(error).messageIdOrNull()) {
+				StatusCodes.NO_CONNECTION.statusCode       -> WorkspaceEvent.NoConnection
+
+				StatusCodes.NEEDS_AUTHORIZATION.statusCode -> WorkspaceEvent.WrongPassword
+
+				else                                       -> WorkspaceEvent.NotHandledError
+			},
 		)
 	}
 }

@@ -1,0 +1,40 @@
+package com.nmichail.meridian.core.network.error
+
+/**
+ * Связь кода ошибки и http-статуса:
+ *
+ * 100 -> 500
+ *
+ * 101 -> 503
+ *
+ * 102 -> 401
+ *
+ * 103, 104 -> 403
+ *
+ * 105, 202, 304 -> 400
+ *
+ * 106 -> 404
+ *
+ * 107 -> 406
+ */
+@Suppress("MagicNumber")
+enum class StatusCodes(val statusCode: Int) {
+
+	UNKNOWN(0),
+	OK(200),
+	INTERNAL_SERVER_ERROR(500),
+	SERVICE_UNAVAILABLE(503),
+	NEEDS_AUTHORIZATION(401),
+	ACCESS_DENIED(403),
+	AUTHORIZATION_FAILED(400),
+	ENTITY_NOT_FOUND(404),
+	NOT_RELEVANT_VERSION(406),
+	REFRESH_FAILED(102),
+	NO_CONNECTION(1000),
+	ALREADY_REGISTERED(304),
+	WRONG_OTP(202),
+	ACCESS_DENIED_103(103),
+	UNREGISTERED_USER(105),
+	CONFIRMATION_CODE_NOT_FOUND(115),
+	CONFIRMATION_CODE_EXPIRED(116),
+}

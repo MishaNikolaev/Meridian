@@ -20,70 +20,126 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.nmichail.meridian.component.ui.theme.MeridianThemeTokens
+import com.nmichail.meridian.component.ui.initials.initials
 import com.nmichail.meridian.component.ui.theme.MeridianType
+import com.nmichail.meridian.component.ui.R as UiR
+import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.features.conversation.R
-
-private const val HEADER_AVATAR = 40
-private const val AVATAR_CORNER = 14
-private const val BACK_ICON = 16
-private const val ACTION_ICON = 22
-private const val INITIALS = 2
+import com.nmichail.meridian.features.conversation.presentation.ConversationIntent
 
 @Composable
-internal fun ConversationHeader(title: String, note: String, bot: Boolean, onBack: () -> Unit) {
-	val palette = MeridianThemeTokens.palette
-	Row(
+internal fun ConversationBar(
+	title: String,
+	note: String,
+	bot: Boolean,
+	pinned: String?,
+	personId: String,
+	onIntent: (ConversationIntent) -> Unit,
+) {
+	val border = palette.borderDefault
+	Column(
 		modifier = Modifier
 			.fillMaxWidth()
 			.background(palette.bar)
 			.drawBehind {
 				val stroke = 1.dp.toPx()
-				drawLine(palette.borderDefault, Offset(0f, size.height), Offset(size.width, size.height), stroke)
-			}
-			.padding(start = 10.dp, end = 12.dp, top = 10.dp, bottom = 10.dp),
-		verticalAlignment = Alignment.CenterVertically,
-		horizontalArrangement = Arrangement.spacedBy(10.dp),
+				drawLine(
+					border,
+					Offset(0f, size.height),
+					Offset(size.width, size.height),
+					stroke,
+				)
+			},
 	) {
-		HeaderGlyph(R.drawable.ic_back, BACK_ICON, onBack)
-		PeerMark(title, bot)
-		Column(modifier = Modifier.weight(1f)) {
-			Text(
-				text = title,
-				style = MeridianType.bodyName,
-				color = palette.textPrimary,
-				maxLines = 1,
-				overflow = TextOverflow.Ellipsis,
-			)
-			if (note.isNotEmpty()) {
-				Text(text = note, style = MeridianType.captionSmall, color = palette.textSecondary, maxLines = 1)
+		Row(
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(start = 10.dp, end = 12.dp, top = 10.dp, bottom = 10.dp),
+			verticalAlignment = Alignment.CenterVertically,
+			horizontalArrangement = Arrangement.spacedBy(10.dp),
+		) {
+			BarIcon(UiR.drawable.ic_back, size = 16) { onIntent(ConversationIntent.NavigateBack) }
+			Row(
+				modifier = Modifier
+					.weight(1f)
+					.clickable(enabled = personId.isNotEmpty()) { onIntent(ConversationIntent.OpenPerson) },
+				verticalAlignment = Alignment.CenterVertically,
+				horizontalArrangement = Arrangement.spacedBy(10.dp),
+			) {
+				PeerMark(title, bot)
+				Column(modifier = Modifier.weight(1f)) {
+					Text(
+						text = title,
+						style = MeridianType.bodyName,
+						color = palette.textPrimary,
+						maxLines = 1,
+						overflow = TextOverflow.Ellipsis,
+					)
+					if (note.isNotEmpty()) {
+						Text(text = note, style = MeridianType.captionSmall, color = palette.textSecondary, maxLines = 1)
+					}
+				}
 			}
+			BarIcon(R.drawable.ic_phone, size = 22, onClick = null)
+			BarIcon(R.drawable.ic_more, size = 18, onClick = null)
 		}
-		HeaderGlyph(R.drawable.ic_phone, ACTION_ICON, onClick = null)
-		HeaderGlyph(R.drawable.ic_more, ACTION_ICON, onClick = null)
+		if (!pinned.isNullOrBlank()) {
+			PinnedLine(text = pinned)
+		}
 	}
 }
 
 @Composable
-internal fun EditBar(text: String, onClose: () -> Unit) {
-	val palette = MeridianThemeTokens.palette
+private fun PinnedLine(text: String) {
+	Row(
+		modifier = Modifier
+			.fillMaxWidth()
+			.padding(start = 86.dp, end = 12.dp, bottom = 10.dp),
+		horizontalArrangement = Arrangement.spacedBy(8.dp),
+		verticalAlignment = Alignment.CenterVertically,
+	) {
+		Image(
+			painter = painterResource(R.drawable.ic_message_pin),
+			contentDescription = null,
+			modifier = Modifier.size(16.dp),
+			colorFilter = ColorFilter.tint(palette.accentPrimary),
+		)
+		Text(
+			text = text,
+			style = MeridianType.captionDefault,
+			color = palette.textPrimary,
+			maxLines = 1,
+			overflow = TextOverflow.Ellipsis,
+		)
+	}
+}
+
+@Composable
+internal fun EditBar(text: String, onIntent: (ConversationIntent) -> Unit) {
+	val border = palette.borderDefault
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
 			.background(palette.bar)
 			.drawBehind {
 				val stroke = 1.dp.toPx()
-				drawLine(palette.borderDefault, Offset.Zero, Offset(size.width, 0f), stroke)
+				drawLine(
+					border,
+					Offset.Zero,
+					Offset(size.width, 0f),
+					stroke,
+				)
 			}
 			.padding(start = 14.dp, end = 10.dp, top = 8.dp, bottom = 8.dp),
 		verticalAlignment = Alignment.CenterVertically,
 		horizontalArrangement = Arrangement.spacedBy(12.dp),
 	) {
-		HeaderGlyph(R.drawable.ic_edit, ACTION_ICON, onClick = null)
+		BarIcon(R.drawable.ic_edit, size = 22, onClick = null)
 		Column(modifier = Modifier.weight(1f)) {
 			Text(text = stringResource(R.string.conversation_edit), style = MeridianType.captionSmall, color = palette.accentPrimary)
 			Text(
@@ -94,40 +150,88 @@ internal fun EditBar(text: String, onClose: () -> Unit) {
 				overflow = TextOverflow.Ellipsis,
 			)
 		}
-		HeaderGlyph(R.drawable.ic_close, ACTION_ICON, onClose)
+		BarIcon(UiR.drawable.ic_close, size = 22) { onIntent(ConversationIntent.CancelEdit) }
+	}
+}
+
+@Composable
+internal fun ReplyBar(author: String, text: String, onIntent: (ConversationIntent) -> Unit) {
+	val border = palette.borderDefault
+	Row(
+		modifier = Modifier
+			.fillMaxWidth()
+			.background(palette.bar)
+			.drawBehind {
+				val stroke = 1.dp.toPx()
+				drawLine(
+					border,
+					Offset.Zero,
+					Offset(size.width, 0f),
+					stroke,
+				)
+			}
+			.padding(start = 14.dp, end = 10.dp, top = 8.dp, bottom = 8.dp),
+		verticalAlignment = Alignment.CenterVertically,
+		horizontalArrangement = Arrangement.spacedBy(12.dp),
+	) {
+		Image(
+			painter = painterResource(UiR.drawable.ic_message_reply),
+			contentDescription = null,
+			colorFilter = ColorFilter.tint(palette.accentPrimary),
+			modifier = Modifier.size(22.dp),
+		)
+		Column(modifier = Modifier.weight(1f)) {
+			Text(
+				text = stringResource(R.string.conversation_reply_author, shortName(author)),
+				style = MeridianType.captionSmall,
+				color = palette.accentPrimary,
+				maxLines = 1,
+				overflow = TextOverflow.Ellipsis,
+			)
+			Text(
+				text = text,
+				style = MeridianType.captionDefault,
+				color = palette.textSecondary,
+				maxLines = 1,
+				overflow = TextOverflow.Ellipsis,
+			)
+		}
+		BarIcon(UiR.drawable.ic_close, size = 16) { onIntent(ConversationIntent.CancelReply) }
+	}
+}
+
+private fun shortName(author: String): String {
+	val parts = author.trim().split(" ").filter { it.isNotEmpty() }
+	return if (parts.size > 2) {
+		parts[0] + " " + parts[1]
+	} else {
+		author
 	}
 }
 
 @Composable
 private fun PeerMark(title: String, bot: Boolean) {
-	val palette = MeridianThemeTokens.palette
-	val shape = if (bot) CircleShape else RoundedCornerShape(AVATAR_CORNER.dp)
+	val shape = if (bot) CircleShape else RoundedCornerShape(14.dp)
 	val fill = if (bot) palette.accentPrimary else palette.accentPrimarySoft
 	val ink = if (bot) palette.textOnAccent else palette.accentPrimary
 	Box(
 		modifier = Modifier
-			.size(HEADER_AVATAR.dp)
+			.size(40.dp)
 			.clip(shape)
 			.background(fill)
 			.then(if (bot) Modifier else Modifier.border(1.dp, palette.borderDefault, shape)),
 		contentAlignment = Alignment.Center,
 	) {
-		Text(text = mark(title), style = MeridianType.captionDefault, color = ink)
+		Text(text = initials(title), style = MeridianType.captionDefault, color = ink)
 	}
 }
 
 @Composable
-private fun HeaderGlyph(icon: Int, size: Int, onClick: (() -> Unit)?) {
+private fun BarIcon(icon: Int, size: Int, onClick: (() -> Unit)?) {
 	val modifier = Modifier.size(size.dp)
 	Image(
 		painter = painterResource(icon),
 		contentDescription = null,
 		modifier = if (onClick == null) modifier else modifier.clickable(onClick = onClick),
 	)
-}
-
-private fun mark(title: String): String {
-	val parts = title.trim().split(" ").filter { it.isNotEmpty() }
-	val raw = if (parts.size >= INITIALS) parts[0].take(1) + parts[1].take(1) else title.take(INITIALS)
-	return raw.uppercase()
 }

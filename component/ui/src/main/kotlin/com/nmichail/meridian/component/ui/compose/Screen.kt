@@ -2,7 +2,7 @@ package com.nmichail.meridian.component.ui.compose
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -18,7 +18,7 @@ fun Screen(
 		Surface(
 			modifier = modifier
 				.fillMaxSize()
-				.imePadding(),
+				.safeDrawingPadding(),
 			color = MaterialTheme.colorScheme.background,
 		) {
 			Box(modifier = Modifier.fillMaxSize()) {

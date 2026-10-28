@@ -12,6 +12,12 @@ interface SessionRepository {
 
 	fun getDeviceId(): String?
 
+	fun getHost(): String?
+
+	fun saveHost(host: String)
+
+	fun email(value: String? = null): String?
+
 	fun save(session: AuthSession)
 
 	fun clear()

@@ -10,14 +10,18 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.LiveData
 import com.nmichail.meridian.component.ui.bar.MUiBottomBar
 import com.nmichail.meridian.component.ui.bar.model.MUiBottomDestination
-import com.nmichail.meridian.component.ui.theme.MeridianThemeTokens
+import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.features.calls.presentation.compose.CallsScreen
+import com.nmichail.meridian.features.chat.presentation.ChatEvent
 import com.nmichail.meridian.features.chat.presentation.ChatIntent
 import com.nmichail.meridian.features.chat.presentation.ChatState
 import com.nmichail.meridian.features.chat.presentation.compose.ChatScreen
 import com.nmichail.meridian.features.contacts.presentation.compose.ContactsScreen
+import com.nmichail.meridian.features.profile.presentation.ProfileIntent
+import com.nmichail.meridian.features.profile.presentation.ProfileState
 import com.nmichail.meridian.features.profile.presentation.compose.ProfileScreen
 import kotlinx.coroutines.flow.StateFlow
 
@@ -27,12 +31,14 @@ fun MainHostScreen(
 	onSelect: (MUiBottomDestination) -> Unit,
 	chatState: StateFlow<ChatState>,
 	onChatIntent: (ChatIntent) -> Unit,
-	onLogout: () -> Unit,
+	chatEvent: LiveData<ChatEvent>,
+	profileState: StateFlow<ProfileState>,
+	onProfileIntent: (ProfileIntent) -> Unit,
 ) {
 	Column(
 		modifier = Modifier
 			.fillMaxSize()
-			.background(MeridianThemeTokens.palette.page),
+			.background(palette.page),
 	) {
 		Box(
 			modifier = Modifier
@@ -44,10 +50,14 @@ fun MainHostScreen(
 				MUiBottomDestination.HOME -> ChatScreen(
 					state = chatState,
 					onIntent = onChatIntent,
+					event = chatEvent,
 				)
 				MUiBottomDestination.CONTACTS -> ContactsScreen()
 				MUiBottomDestination.CALLS -> CallsScreen()
-				MUiBottomDestination.PROFILE -> ProfileScreen(onLogout = onLogout)
+				MUiBottomDestination.PROFILE -> ProfileScreen(
+					state = profileState,
+					onIntent = onProfileIntent,
+				)
 			}
 		}
 		MUiBottomBar(

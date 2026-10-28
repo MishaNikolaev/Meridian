@@ -2,11 +2,11 @@ package com.nmichail.meridian.features.authorization.signin.presentation
 
 interface SignInRouter {
 
-	fun openHome()
+	fun navigateToHome()
 
-	fun openRegistration()
+	fun navigateToRegistration()
 
-	fun openWorkspace()
+	fun navigateToWorkspace()
 
 	fun navigateBack()
 }

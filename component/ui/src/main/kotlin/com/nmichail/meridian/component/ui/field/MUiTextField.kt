@@ -39,8 +39,8 @@ import com.nmichail.meridian.component.ui.field.model.MUiFieldIcon
 import com.nmichail.meridian.component.ui.field.model.MUiTextFieldModel
 import com.nmichail.meridian.component.ui.text.MUiCaptionDefaultText
 import com.nmichail.meridian.component.ui.theme.MeridianPalette
-import com.nmichail.meridian.component.ui.theme.MeridianThemeTokens
 import com.nmichail.meridian.component.ui.theme.MeridianType
+import com.nmichail.meridian.component.ui.theme.palette
 
 @Composable
 fun MUiTextField(
@@ -49,7 +49,6 @@ fun MUiTextField(
 	onDone: (() -> Unit)? = null,
 	modifier: Modifier = Modifier,
 ) {
-	val palette = MeridianThemeTokens.palette
 	val shape = RoundedCornerShape(14.dp)
 	var focused by remember { mutableStateOf(false) }
 	var revealed by remember { mutableStateOf(false) }
@@ -57,6 +56,7 @@ fun MUiTextField(
 		error = model.error,
 		focused = focused,
 		highlighted = model.highlighted,
+		outlined = model.outlined,
 		palette = palette,
 	)
 	Column(
@@ -133,7 +133,6 @@ private fun MUiTextFieldInput(
 	onDone: (() -> Unit)?,
 	modifier: Modifier = Modifier,
 ) {
-	val palette = MeridianThemeTokens.palette
 	BasicTextField(
 		value = model.value,
 		onValueChange = onValueChange,
@@ -178,10 +177,12 @@ private fun fieldBorder(
 	error: String,
 	focused: Boolean,
 	highlighted: Boolean,
+	outlined: Boolean,
 	palette: MeridianPalette,
 ): Color? = when {
 	error.isNotEmpty() -> palette.statusError
 	focused || highlighted -> palette.accentButton
+	outlined -> palette.borderStrong
 	else -> null
 }
 
@@ -196,7 +197,7 @@ private fun MUiPasswordReveal(
 	Image(
 		painter = painterResource(if (revealed) R.drawable.ic_visibility else R.drawable.ic_visibility_off),
 		contentDescription = stringResource(if (revealed) R.string.password_hide else R.string.password_show),
-		colorFilter = ColorFilter.tint(MeridianThemeTokens.palette.textSecondary),
+		colorFilter = ColorFilter.tint(palette.textSecondary),
 		modifier = Modifier
 			.size(20.dp)
 			.clickable(onClick = onClick),
@@ -223,7 +224,7 @@ private fun MUiTextFieldIcon(icon: MUiFieldIcon) {
 	Image(
 		painter = painterResource(drawable),
 		contentDescription = null,
-		colorFilter = ColorFilter.tint(MeridianThemeTokens.palette.textPrimary),
+		colorFilter = ColorFilter.tint(palette.textPrimary),
 		modifier = Modifier.size(20.dp),
 	)
 }

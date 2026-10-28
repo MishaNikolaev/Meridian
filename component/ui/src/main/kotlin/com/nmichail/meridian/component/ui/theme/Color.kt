@@ -25,6 +25,7 @@ data class MeridianPalette(
 	val statusErrorSoft: Color,
 	val chatIncoming: Color,
 	val chatOutgoing: Color,
+	val chatOutgoingText: Color,
 	val chatBackground: Color,
 	val callSpeaking: Color,
 	val snackbarContainer: Color,
@@ -61,7 +62,8 @@ internal val LightPalette = MeridianPalette(
 	statusError = Color(color = 0xFFBB3B3F),
 	statusErrorSoft = Color(color = 0xFFFDEBEC),
 	chatIncoming = Color(color = 0xFFFFFFFF),
-	chatOutgoing = Color(color = 0xFF2563EB),
+	chatOutgoing = Color(color = 0xFFCFE5FC),
+	chatOutgoingText = Color(color = 0xFF0B0F17),
 	chatBackground = Color(color = 0xFFEAF0FA),
 	callSpeaking = Color(color = 0xFF34D399),
 	snackbarContainer = Color(color = 0xFFFFFFFF),
@@ -98,7 +100,8 @@ internal val DarkPalette = MeridianPalette(
 	statusError = Color(color = 0xFFFF8A8A),
 	statusErrorSoft = Color(color = 0xFF3A1C22),
 	chatIncoming = Color(color = 0xFF111826),
-	chatOutgoing = Color(color = 0xFF2563EB),
+	chatOutgoing = Color(color = 0xFFCFE5FC),
+	chatOutgoingText = Color(color = 0xFF06101F),
 	chatBackground = Color(color = 0xFF0A0E16),
 	callSpeaking = Color(color = 0xFF34D399),
 	snackbarContainer = Color(color = 0xFFE8EDF7),
@@ -111,4 +114,46 @@ internal val DarkPalette = MeridianPalette(
 	elevation3 = Color(color = 0x290A0F1A),
 	fabShadow = Color(color = 0x38000000),
 	controlThumb = Color(color = 0xFFFFFFFF),
+)
+
+val Glow = Color(color = 0xFF2F7BFF)
+val Glow2 = Color(color = 0xFF00B2FF)
+
+val LightSplash = SplashColors(
+	gradientTop = Color(color = 0xFFFFFFFF),
+	gradientBottom = Color(color = 0xFFE3EDFF),
+	glowAlpha = 0.16f,
+	glow2Alpha = 0.12f,
+	icon = Color(color = 0xFFD6E3FF),
+	iconBorder = Color(color = 0xFFE7EAF0),
+	mark = Color(color = 0xFF1F3F8F),
+	title = Color(color = 0xFF0B0F17),
+	subtitle = Color(color = 0xFF5F6673),
+	version = Color(color = 0xFF5F6673),
+)
+
+val DarkSplash = SplashColors(
+	gradientTop = Color(color = 0xFF070B14),
+	gradientBottom = Color(color = 0xFF0B1E4A),
+	glowAlpha = 0.32f,
+	glow2Alpha = 0.22f,
+	icon = Color(color = 0xFF1F2D52),
+	iconBorder = Color(color = 0xFF1F2D52),
+	mark = Color(color = 0xFFB9CCFF),
+	title = Color(color = 0xFFFFFFFF),
+	subtitle = Color(color = 0xFF9FB6E8),
+	version = Color(color = 0xFF6B7FA8),
+)
+
+data class SplashColors(
+	val gradientTop: Color,
+	val gradientBottom: Color,
+	val glowAlpha: Float,
+	val glow2Alpha: Float,
+	val icon: Color,
+	val iconBorder: Color,
+	val mark: Color,
+	val title: Color,
+	val subtitle: Color,
+	val version: Color,
 )

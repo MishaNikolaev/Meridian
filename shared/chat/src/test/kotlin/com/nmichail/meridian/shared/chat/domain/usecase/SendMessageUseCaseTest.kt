@@ -16,8 +16,8 @@ class SendMessageUseCaseTest {
 
 	@Test
 	fun `invoke EXPECT repository send`() = runTest {
-		useCase("1", "привет")
+		useCase("1", "привет", "", "", "")
 
-		verify(repository).send("1", "привет")
+		verify(repository).send("1", "привет", "", "", "")
 	}
 }

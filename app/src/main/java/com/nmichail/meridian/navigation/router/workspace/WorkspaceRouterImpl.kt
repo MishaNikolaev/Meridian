@@ -10,11 +10,11 @@ class WorkspaceRouterImpl @Inject constructor(
 	private val router: GlobalRouter,
 ) : WorkspaceRouter {
 
-	override fun openHome() {
+	override fun navigateToHome() {
 		router.newRootScreen(getMainHostScreen())
 	}
 
-	override fun openSignIn() {
+	override fun navigateToSignIn() {
 		router.navigateTo(getSignInScreen())
 	}
 

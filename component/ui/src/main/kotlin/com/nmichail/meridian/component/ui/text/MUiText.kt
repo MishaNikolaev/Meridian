@@ -10,8 +10,8 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import com.nmichail.meridian.component.ui.theme.MeridianThemeTokens
 import com.nmichail.meridian.component.ui.theme.MeridianType
+import com.nmichail.meridian.component.ui.theme.palette
 
 @Composable
 fun MUiDisplayAuthText(
@@ -366,7 +366,7 @@ fun MUiErrorText(
 		style = MeridianType.bodyRegular,
 		modifier = modifier,
 		textAlign = textAlign,
-		color = MeridianThemeTokens.palette.statusError,
+		color = palette.statusError,
 		maxLines = maxLines,
 		overflow = overflow,
 	)
@@ -385,7 +385,7 @@ fun MUiHelperText(
 		style = MeridianType.bodySmall,
 		modifier = modifier,
 		textAlign = textAlign,
-		color = MeridianThemeTokens.palette.textSecondary,
+		color = palette.textSecondary,
 		maxLines = maxLines,
 		overflow = overflow,
 	)

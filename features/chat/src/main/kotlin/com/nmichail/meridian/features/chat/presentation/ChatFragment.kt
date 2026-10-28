@@ -30,6 +30,7 @@ class ChatFragment : FullScreenFragment() {
 					ChatScreen(
 						state = viewModel.state,
 						onIntent = viewModel::applyIntent,
+						event = viewModel.event,
 					)
 				}
 			}

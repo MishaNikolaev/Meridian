@@ -36,7 +36,7 @@ import dagger.Module
 import dagger.Provides
 import javax.inject.Singleton
 
-@Module
+@Module(includes = [GroupRoutersModule::class, SearchRoutersModule::class, SplashRoutersModule::class])
 abstract class RoutersModule {
 
 	companion object {

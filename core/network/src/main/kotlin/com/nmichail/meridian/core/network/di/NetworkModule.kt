@@ -2,7 +2,9 @@ package com.nmichail.meridian.core.network.di
 
 import com.nmichail.meridian.core.network.config.NetworkConfig
 import com.nmichail.meridian.core.network.error.ApiErrorBody
+import com.nmichail.meridian.core.network.error.GatewayCode
 import com.nmichail.meridian.core.network.error.GatewayException
+import com.nmichail.meridian.core.network.okhttp.interceptor.LoggingInterceptor
 import com.nmichail.meridian.core.network.session.SessionRefresher
 import com.nmichail.meridian.core.network.session.SessionRepository
 import com.nmichail.meridian.core.network.session.installSessionRefresh
@@ -44,6 +46,9 @@ object NetworkModule {
 		json: Json,
 		refresher: SessionRefresher,
 	): HttpClient = HttpClient(OkHttp) {
+		engine {
+			addInterceptor(LoggingInterceptor())
+		}
 		expectSuccess = false
 		install(ContentNegotiation) {
 			json(json)
@@ -80,8 +85,10 @@ object NetworkModule {
 
 private suspend fun HttpResponse.toGatewayException(): GatewayException {
 	val error = runCatching { body<ApiErrorBody>() }.getOrNull()
+	val raw = error?.code
 	return GatewayException(
-		code = error?.code ?: status.value.toString(),
+		code = raw?.let(GatewayCode::from) ?: GatewayCode.UNKNOWN,
 		message = error?.message ?: status.description,
+		httpStatus = raw?.toIntOrNull() ?: status.value,
 	)
 }

@@ -2,9 +2,9 @@ package com.nmichail.meridian.features.authorization.workspace.presentation
 
 interface WorkspaceRouter {
 
-	fun openHome()
+	fun navigateToHome()
 
-	fun openSignIn()
+	fun navigateToSignIn()
 
 	fun navigateBack()
 }

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="group_title">Новая группа</string>
+	<string name="group_photo">Добавить фото группы</string>
+	<string name="group_name">Название группы</string>
+	<string name="group_description">Описание · необязательно</string>
+	<string name="group_description_hint">О чём эта группа</string>
+	<string name="group_members">Участники · %d</string>
+	<string name="group_add">Добавить участников</string>
+	<string name="group_submit">Создать группу</string>
+	<string name="group_member_login">Логин участника</string>
+</resources>

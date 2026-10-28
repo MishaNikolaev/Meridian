@@ -29,8 +29,8 @@ import androidx.compose.ui.window.Dialog
 import com.nmichail.meridian.component.ui.R
 import com.nmichail.meridian.component.ui.dialog.model.MUiDialogModel
 import com.nmichail.meridian.component.ui.dialog.model.MUiDialogType
-import com.nmichail.meridian.component.ui.theme.MeridianThemeTokens
 import com.nmichail.meridian.component.ui.theme.MeridianType
+import com.nmichail.meridian.component.ui.theme.palette
 
 @Composable
 fun MUiDialog(
@@ -58,7 +58,6 @@ fun MUiDialogCard(
 	onOptionSelected: (Int) -> Unit,
 	modifier: Modifier = Modifier,
 ) {
-	val palette = MeridianThemeTokens.palette
 	val shape = RoundedCornerShape(28.dp)
 	val confirmColor = if (model.type == MUiDialogType.Destructive) {
 		palette.statusError
@@ -116,7 +115,6 @@ fun MUiDialogCard(
 
 @Composable
 private fun MUiDialogIcon(model: MUiDialogModel) {
-	val palette = MeridianThemeTokens.palette
 	val icon = when (model.type) {
 		MUiDialogType.Destructive -> R.drawable.ic_dialog_delete
 		MUiDialogType.Icon -> R.drawable.ic_dialog_info
@@ -140,7 +138,7 @@ private fun MUiDialogMessage(message: String) {
 	Text(
 		text = message,
 		style = MeridianType.bodyRegular,
-		color = MeridianThemeTokens.palette.textSecondary,
+		color = palette.textSecondary,
 	)
 }
 
@@ -166,7 +164,6 @@ private fun MUiDialogOption(
 	selected: Boolean,
 	onClick: () -> Unit,
 ) {
-	val palette = MeridianThemeTokens.palette
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -215,7 +212,6 @@ private fun MUiDialogField(
 	label: String,
 	value: String,
 ) {
-	val palette = MeridianThemeTokens.palette
 	Column(
 		modifier = Modifier.fillMaxWidth(),
 		verticalArrangement = Arrangement.spacedBy(6.dp),

@@ -1,5 +1,6 @@
 package com.nmichail.meridian.shared.chat.domain.usecase
 
+import com.nmichail.meridian.shared.chat.data.memory.MessageMemory
 import com.nmichail.meridian.shared.chat.domain.entity.ChatThread
 import com.nmichail.meridian.core.testutils.TestCoroutineExtension
 import com.nmichail.meridian.shared.chat.domain.repository.ChatRepository
@@ -15,8 +16,17 @@ import org.mockito.kotlin.whenever
 class LoadMessagesUseCaseTest {
 
 	private val repository: ChatRepository = mock()
-	private val useCase = LoadMessagesUseCase(repository)
-	private val thread = ChatThread(lines = emptyList(), members = 2, readUpTo = null)
+	private val memory = MessageMemory()
+	private val useCase = LoadMessagesUseCase(repository, memory)
+	private val cached = ReadCachedMessagesUseCase(memory)
+	private val thread = ChatThread(
+		lines = emptyList(),
+		members = 2,
+		readUpTo = null,
+		reactions = emptyMap(),
+		reactionViewers = emptyMap(),
+		people = emptyList(),
+	)
 
 	@Test
 	fun `invoke EXPECT chat thread`() = runTest {
@@ -25,5 +35,14 @@ class LoadMessagesUseCaseTest {
 		val actual = useCase("1")
 
 		assertEquals(thread, actual)
+	}
+
+	@Test
+	fun `loaded thread EXPECT remembered`() = runTest {
+		whenever(repository.loadMessages("1")) doReturn thread
+
+		useCase("1")
+
+		assertEquals(thread, cached("1"))
 	}
 }

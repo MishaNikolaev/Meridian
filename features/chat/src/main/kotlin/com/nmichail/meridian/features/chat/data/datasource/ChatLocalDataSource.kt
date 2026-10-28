@@ -1,6 +1,8 @@
 package com.nmichail.meridian.features.chat.data.datasource
 
-import com.nmichail.meridian.core.storage.LocalPreferences
+import android.content.Context
+import androidx.core.content.edit
+import com.nmichail.meridian.core.storage.ApplicationContext
 import javax.inject.Inject
 
 interface ChatLocalDataSource {
@@ -11,17 +13,20 @@ interface ChatLocalDataSource {
 }
 
 class ChatLocalDataSourceImpl @Inject constructor(
-	private val localPreferences: LocalPreferences,
+	@ApplicationContext context: Context,
 ) : ChatLocalDataSource {
 
 	private companion object {
 
+		const val CHAT_PREF = "meridian"
 		const val KEY = "home_text"
 	}
 
-	override fun getText(): String = localPreferences.getString(KEY).orEmpty()
+	private val preferences = context.getSharedPreferences(CHAT_PREF, Context.MODE_PRIVATE)
+
+	override fun getText(): String = preferences.getString(KEY, null).orEmpty()
 
 	override fun save(text: String) {
-		localPreferences.putString(KEY, text)
+		preferences.edit { putString(KEY, text) }
 	}
 }

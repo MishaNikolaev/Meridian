@@ -26,9 +26,9 @@ class SignInWorkspaceUseCaseTest {
 
 	@Test
 	fun `invoke EXPECT repository session`() = runTest {
-		whenever(repository.signInWorkspace("meridian.ftc.ru", "chief@ftc.ru", "meridian1")) doReturn session
+		whenever(repository.signInWorkspace("meridian.name.ru", "chief@name.ru", "meridian1")) doReturn session
 
-		val actual = useCase("meridian.ftc.ru", "chief@ftc.ru", "meridian1")
+		val actual = useCase("meridian.name.ru", "chief@name.ru", "meridian1")
 
 		assertEquals(session, actual)
 	}

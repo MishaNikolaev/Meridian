@@ -1,20 +1,13 @@
 package com.nmichail.meridian.features.chat.presentation
 
-import com.nmichail.meridian.core.network.R
+import androidx.lifecycle.Observer
+import com.nmichail.meridian.core.network.error.ErrorStateConverter
 import com.nmichail.meridian.core.testutils.InstantExecutorExtension
 import com.nmichail.meridian.core.testutils.TestCoroutineExtension
 import com.nmichail.meridian.core.testutils.doThrowSafe
-import com.nmichail.meridian.core.validation.DefaultValidationState
-import com.nmichail.meridian.core.validation.displayName.DisplayNameValidationItem
-import com.nmichail.meridian.core.validation.displayName.ValidateDisplayNameUseCase
-import com.nmichail.meridian.core.validation.username.UsernameInvalidState
-import com.nmichail.meridian.core.validation.username.UsernameValidationItem
-import com.nmichail.meridian.core.validation.username.ValidateUsernameUseCase
 import com.nmichail.meridian.shared.chat.data.realtime.ChatRealtime
-import com.nmichail.meridian.shared.chat.domain.entity.ChatSummary
+import com.nmichail.meridian.shared.chat.domain.entity.Chat
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType
-import com.nmichail.meridian.shared.chat.domain.entity.CreatedChat
-import com.nmichail.meridian.shared.chat.domain.usecase.CreateChatUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.LoadChatsUseCase
 import java.io.IOException
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -32,56 +25,85 @@ import org.mockito.kotlin.whenever
 class ChatViewModelTest {
 
 	private val loadChatsUseCase: LoadChatsUseCase = mock()
-	private val createChatUseCase: CreateChatUseCase = mock()
-	private val validateUsernameUseCase: ValidateUsernameUseCase = mock()
-	private val validateDisplayNameUseCase: ValidateDisplayNameUseCase = mock()
-	private val realtime: ChatRealtime = mock()
+	private val realtime: ChatRealtime = mock {
+		on { chatIds } doReturn MutableSharedFlow()
+	}
+	private val errorStateConverter = ErrorStateConverter()
 	private val router: ChatRouter = mock()
+	private val eventObserver: Observer<ChatEvent> = mock()
 	private val viewModel = ChatViewModel(
 		loadChatsUseCase,
-		createChatUseCase,
-		validateUsernameUseCase,
-		validateDisplayNameUseCase,
 		realtime,
+		errorStateConverter,
 		router,
 	)
+
 	private val chats = listOf(
-		ChatSummary(
+		Chat(
 			id = "1",
 			type = ChatType.DIRECT,
 			title = "Анна",
 			preview = "",
 			sentAt = null,
 			unread = 0,
+			corporate = true,
+			mentioned = false,
+			personId = "member",
+			discussionRoot = null,
+			discussionText = null,
 		),
 	)
-	private val validUsername = UsernameValidationItem(
-		data = "member",
-		validationState = DefaultValidationState.Valid,
+
+	private val externalChat = Chat(
+		id = "ext",
+		type = ChatType.DIRECT,
+		title = "Кирилл",
+		preview = "",
+		sentAt = null,
+		unread = 0,
+		corporate = false,
+		mentioned = false,
+		personId = "guest",
+		discussionRoot = null,
+		discussionText = null,
 	)
-	private val invalidUsername = UsernameValidationItem(
-		data = "a",
-		validationState = DefaultValidationState.Invalid(UsernameInvalidState.INVALID_LENGTH),
-	)
+
+	private val ioException = IOException()
+	private val illegalStateException = IllegalStateException()
 
 	@Test
 	fun `load initial data EXPECT content`() = runTest {
-		whenever(realtime.chatIds) doReturn MutableSharedFlow()
 		whenever(loadChatsUseCase.invoke()) doReturn chats
-
 		viewModel.applyIntent(ChatIntent.LoadInitialData)
 
 		assertEquals(
 			ChatState.Content(
 				corporate = true,
 				section = ChatSection.ALL,
-				chats = chats,
-				search = "",
-				searchOpen = false,
+				corporateChats = chats,
+				externalTabChats = emptyList(),
+				corporateDiscussions = emptyList(),
+				externalTabDiscussions = emptyList(),
 				createOpen = false,
-				title = DisplayNameValidationItem(),
-				username = UsernameValidationItem(),
-				creating = false,
+			),
+			viewModel.state.value,
+		)
+	}
+
+	@Test
+	fun `external direct chat EXPECT external list`() = runTest {
+		whenever(loadChatsUseCase.invoke()) doReturn chats + externalChat
+		viewModel.applyIntent(ChatIntent.LoadInitialData)
+
+		assertEquals(
+			ChatState.Content(
+				corporate = true,
+				section = ChatSection.ALL,
+				corporateChats = chats,
+				externalTabChats = listOf(externalChat),
+				corporateDiscussions = emptyList(),
+				externalTabDiscussions = emptyList(),
+				createOpen = false,
 			),
 			viewModel.state.value,
 		)
@@ -89,17 +111,63 @@ class ChatViewModelTest {
 
 	@Test
 	fun `load failure EXPECT error`() = runTest {
-		whenever(realtime.chatIds) doReturn MutableSharedFlow()
-		whenever(loadChatsUseCase.invoke()) doThrowSafe IOException("down")
+		whenever(loadChatsUseCase.invoke()).doThrowSafe(ioException)
 
 		viewModel.applyIntent(ChatIntent.LoadInitialData)
 
-		assertEquals(ChatState.Error(message = R.string.error_no_connection), viewModel.state.value)
+		assertEquals(ChatState.Error, viewModel.state.value)
+	}
+
+	@Test
+	fun `load failure EXPECT no connection event`() = runTest {
+		whenever(loadChatsUseCase.invoke()).doThrowSafe(ioException)
+		viewModel.event.observeForever(eventObserver)
+
+		viewModel.applyIntent(ChatIntent.LoadInitialData)
+
+		verify(eventObserver).onChanged(ChatEvent.NoConnection)
+	}
+
+	@Test
+	fun `load failure EXPECT unknown event`() = runTest {
+		whenever(loadChatsUseCase.invoke()).doThrowSafe(illegalStateException)
+		viewModel.event.observeForever(eventObserver)
+
+		viewModel.applyIntent(ChatIntent.LoadInitialData)
+
+		verify(eventObserver).onChanged(ChatEvent.Error)
+	}
+
+	@Test
+	fun `retry EXPECT chats`() = runTest {
+		whenever(loadChatsUseCase.invoke()).doThrowSafe(ioException).doReturn(chats)
+		viewModel.applyIntent(ChatIntent.LoadInitialData)
+
+		viewModel.applyIntent(ChatIntent.Retry)
+
+		assertEquals(
+			ChatState.Content(
+				corporate = true,
+				section = ChatSection.ALL,
+				corporateChats = chats,
+				externalTabChats = emptyList(),
+				corporateDiscussions = emptyList(),
+				externalTabDiscussions = emptyList(),
+				createOpen = false,
+			),
+			viewModel.state.value,
+		)
+	}
+
+	@Test
+	fun `change server EXPECT workspace`() = runTest {
+		viewModel.applyIntent(ChatIntent.ChangeServer)
+
+		verify(router).navigateToWorkspace()
 	}
 
 	@Test
 	fun `load again EXPECT single refresh`() = runTest {
-		whenever(realtime.chatIds) doReturn MutableSharedFlow()
 		whenever(loadChatsUseCase.invoke()) doReturn chats
 		viewModel.applyIntent(ChatIntent.LoadInitialData)
 
@@ -110,7 +178,6 @@ class ChatViewModelTest {
 
 	@Test
 	fun `change corporate EXPECT external space`() = runTest {
-		whenever(realtime.chatIds) doReturn MutableSharedFlow()
 		whenever(loadChatsUseCase.invoke()) doReturn chats
 		viewModel.applyIntent(ChatIntent.LoadInitialData)
 
@@ -120,99 +187,27 @@ class ChatViewModelTest {
 			ChatState.Content(
 				corporate = false,
 				section = ChatSection.ALL,
-				chats = chats,
-				search = "",
-				searchOpen = false,
+				corporateChats = chats,
+				externalTabChats = emptyList(),
+				corporateDiscussions = emptyList(),
+				externalTabDiscussions = emptyList(),
 				createOpen = false,
-				title = DisplayNameValidationItem(),
-				username = UsernameValidationItem(),
-				creating = false,
 			),
 			viewModel.state.value,
 		)
 	}
 
 	@Test
-	fun `change section EXPECT personal`() = runTest {
-		whenever(realtime.chatIds) doReturn MutableSharedFlow()
-		whenever(loadChatsUseCase.invoke()) doReturn chats
-		viewModel.applyIntent(ChatIntent.LoadInitialData)
+	fun `open search EXPECT router`() = runTest {
+		viewModel.applyIntent(ChatIntent.OpenSearch)
 
-		viewModel.applyIntent(ChatIntent.ChangeSection(section = ChatSection.PERSONAL))
-
-		assertEquals(
-			ChatState.Content(
-				corporate = true,
-				section = ChatSection.PERSONAL,
-				chats = chats,
-				search = "",
-				searchOpen = false,
-				createOpen = false,
-				title = DisplayNameValidationItem(),
-				username = UsernameValidationItem(),
-				creating = false,
-			),
-			viewModel.state.value,
-		)
+		verify(router).navigateToSearch()
 	}
 
 	@Test
-	fun `change search EXPECT query`() = runTest {
-		whenever(realtime.chatIds) doReturn MutableSharedFlow()
+	fun `open create EXPECT menu`() = runTest {
 		whenever(loadChatsUseCase.invoke()) doReturn chats
 		viewModel.applyIntent(ChatIntent.LoadInitialData)
-
-		viewModel.applyIntent(ChatIntent.ChangeSearch(search = "анна"))
-
-		assertEquals(
-			ChatState.Content(
-				corporate = true,
-				section = ChatSection.ALL,
-				chats = chats,
-				search = "анна",
-				searchOpen = false,
-				createOpen = false,
-				title = DisplayNameValidationItem(),
-				username = UsernameValidationItem(),
-				creating = false,
-			),
-			viewModel.state.value,
-		)
-	}
-
-	@Test
-	fun `close search EXPECT empty query`() = runTest {
-		whenever(realtime.chatIds) doReturn MutableSharedFlow()
-		whenever(loadChatsUseCase.invoke()) doReturn chats
-		viewModel.applyIntent(ChatIntent.LoadInitialData)
-		viewModel.applyIntent(ChatIntent.ChangeSearchOpen)
-		viewModel.applyIntent(ChatIntent.ChangeSearch(search = "анна"))
-
-		viewModel.applyIntent(ChatIntent.ChangeSearchOpen)
-
-		assertEquals(
-			ChatState.Content(
-				corporate = true,
-				section = ChatSection.ALL,
-				chats = chats,
-				search = "",
-				searchOpen = false,
-				createOpen = false,
-				title = DisplayNameValidationItem(),
-				username = UsernameValidationItem(),
-				creating = false,
-			),
-			viewModel.state.value,
-		)
-	}
-
-	@Test
-	fun `open create EXPECT empty fields`() = runTest {
-		whenever(realtime.chatIds) doReturn MutableSharedFlow()
-		whenever(loadChatsUseCase.invoke()) doReturn chats
-		whenever(validateUsernameUseCase.invoke("member")) doReturn validUsername
-		viewModel.applyIntent(ChatIntent.LoadInitialData)
-		viewModel.applyIntent(ChatIntent.ChangeUsername(username = "member"))
 
 		viewModel.applyIntent(ChatIntent.ChangeCreate(open = true))
 
@@ -220,38 +215,11 @@ class ChatViewModelTest {
 			ChatState.Content(
 				corporate = true,
 				section = ChatSection.ALL,
-				chats = chats,
-				search = "",
-				searchOpen = false,
+				corporateChats = chats,
+				externalTabChats = emptyList(),
+				corporateDiscussions = emptyList(),
+				externalTabDiscussions = emptyList(),
 				createOpen = true,
-				title = DisplayNameValidationItem(),
-				username = UsernameValidationItem(),
-				creating = false,
-			),
-			viewModel.state.value,
-		)
-	}
-
-	@Test
-	fun `change username EXPECT validated username`() = runTest {
-		whenever(realtime.chatIds) doReturn MutableSharedFlow()
-		whenever(loadChatsUseCase.invoke()) doReturn chats
-		whenever(validateUsernameUseCase.invoke("member")) doReturn validUsername
-		viewModel.applyIntent(ChatIntent.LoadInitialData)
-
-		viewModel.applyIntent(ChatIntent.ChangeUsername(username = "member"))
-
-		assertEquals(
-			ChatState.Content(
-				corporate = true,
-				section = ChatSection.ALL,
-				chats = chats,
-				search = "",
-				searchOpen = false,
-				createOpen = false,
-				title = DisplayNameValidationItem(),
-				username = validUsername,
-				creating = false,
 			),
 			viewModel.state.value,
 		)
@@ -261,82 +229,24 @@ class ChatViewModelTest {
 	fun `open chat EXPECT conversation`() = runTest {
 		viewModel.applyIntent(ChatIntent.OpenChat(chat = chats.first()))
 
-		verify(router).openConversation("1", "Анна")
+		verify(router).navigateToConversation(
+			chatId = "1",
+			title = "Анна",
+			corporate = true,
+			personId = "member",
+		)
 	}
 
 	@Test
 	fun `open bot EXPECT bot conversation`() = runTest {
 		viewModel.applyIntent(ChatIntent.OpenBot(id = "review", title = "Code Review Bot"))
 
-		verify(router).openConversation("bot:review", "Code Review Bot")
-	}
-
-	@Test
-	fun `submit invalid login EXPECT invalid username`() = runTest {
-		whenever(realtime.chatIds) doReturn MutableSharedFlow()
-		whenever(loadChatsUseCase.invoke()) doReturn chats
-		whenever(validateUsernameUseCase.invoke("a")) doReturn invalidUsername
-		viewModel.applyIntent(ChatIntent.LoadInitialData)
-		viewModel.applyIntent(ChatIntent.ChangeUsername(username = "a"))
-
-		viewModel.applyIntent(ChatIntent.Submit)
-
-		assertEquals(
-			ChatState.Content(
-				corporate = true,
-				section = ChatSection.ALL,
-				chats = chats,
-				search = "",
-				searchOpen = false,
-				createOpen = false,
-				title = DisplayNameValidationItem(),
-				username = invalidUsername,
-				creating = false,
-			),
-			viewModel.state.value,
+		verify(router).navigateToConversation(
+			chatId = "bot:review",
+			title = "Code Review Bot",
+			corporate = false,
+			personId = "",
 		)
-	}
-
-	@Test
-	fun `submit direct chat EXPECT created chat`() = runTest {
-		whenever(realtime.chatIds) doReturn MutableSharedFlow()
-		whenever(loadChatsUseCase.invoke()) doReturn chats
-		whenever(validateUsernameUseCase.invoke("member")) doReturn validUsername
-		whenever(createChatUseCase.invoke(ChatType.DIRECT, "", "member")) doReturn CreatedChat(id = "2", title = "Анна")
-		viewModel.applyIntent(ChatIntent.LoadInitialData)
-		viewModel.applyIntent(ChatIntent.ChangeUsername(username = "member"))
-
-		viewModel.applyIntent(ChatIntent.Submit)
-
-		verify(createChatUseCase).invoke(ChatType.DIRECT, "", "member")
-	}
-
-	@Test
-	fun `submit direct chat EXPECT opened conversation`() = runTest {
-		whenever(realtime.chatIds) doReturn MutableSharedFlow()
-		whenever(loadChatsUseCase.invoke()) doReturn chats
-		whenever(validateUsernameUseCase.invoke("member")) doReturn validUsername
-		whenever(createChatUseCase.invoke(ChatType.DIRECT, "", "member")) doReturn CreatedChat(id = "2", title = "Анна")
-		viewModel.applyIntent(ChatIntent.LoadInitialData)
-		viewModel.applyIntent(ChatIntent.ChangeUsername(username = "member"))
-
-		viewModel.applyIntent(ChatIntent.Submit)
-
-		verify(router).openConversation("2", "Анна")
-	}
-
-	@Test
-	fun `submit failure EXPECT error`() = runTest {
-		whenever(realtime.chatIds) doReturn MutableSharedFlow()
-		whenever(loadChatsUseCase.invoke()) doReturn chats
-		whenever(validateUsernameUseCase.invoke("member")) doReturn validUsername
-		whenever(createChatUseCase.invoke(ChatType.DIRECT, "", "member")) doThrowSafe IOException("down")
-		viewModel.applyIntent(ChatIntent.LoadInitialData)
-		viewModel.applyIntent(ChatIntent.ChangeUsername(username = "member"))
-
-		viewModel.applyIntent(ChatIntent.Submit)
-
-		assertEquals(ChatState.Error(message = R.string.error_no_connection), viewModel.state.value)
 	}
 
 	@Test
@@ -344,5 +254,52 @@ class ChatViewModelTest {
 		viewModel.applyIntent(ChatIntent.NavigateBack)
 
 		verify(router).navigateBack()
+	}
+
+	@Test
+	fun `load EXPECT discussion is the thread`() = runTest {
+		val threadChat = chats.first().copy(
+			preview = "комментарий",
+			sentAt = "2026-10-22T12:00:00Z",
+			discussionRoot = "root",
+			discussionText = "тема обсуждения",
+		)
+		whenever(loadChatsUseCase.invoke()) doReturn listOf(threadChat)
+
+		viewModel.applyIntent(ChatIntent.LoadInitialData)
+
+		assertEquals(
+			ChatState.Content(
+				corporate = true,
+				section = ChatSection.ALL,
+				corporateChats = listOf(threadChat),
+				externalTabChats = emptyList(),
+				corporateDiscussions = listOf(threadChat).discussions(),
+				externalTabDiscussions = emptyList(),
+				createOpen = false,
+			),
+			viewModel.state.value,
+		)
+	}
+
+	@Test
+	fun `open discussion EXPECT person`() = runTest {
+		viewModel.applyIntent(
+			ChatIntent.OpenDiscussion(
+				chatId = "1",
+				messageId = "root",
+				title = "Анна",
+				corporate = true,
+				personId = "member",
+			),
+		)
+
+		verify(router).navigateToDiscussion(
+			chatId = "1",
+			title = "Анна",
+			corporate = true,
+			messageId = "root",
+			personId = "member",
+		)
 	}
 }

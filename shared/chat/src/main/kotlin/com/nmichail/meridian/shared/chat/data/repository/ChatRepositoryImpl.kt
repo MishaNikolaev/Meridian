@@ -1,87 +1,133 @@
+@file:Suppress("TooManyFunctions")
+
 package com.nmichail.meridian.shared.chat.data.repository
 
+import com.nmichail.meridian.core.network.error.GatewayCode
 import com.nmichail.meridian.core.network.error.GatewayException
 import com.nmichail.meridian.core.network.session.SessionRepository
 import com.nmichail.meridian.shared.chat.data.api.ChatApi
-import com.nmichail.meridian.shared.chat.data.cipher.MessageCipher
-import com.nmichail.meridian.shared.chat.data.model.CipherEnvelopeDto
-import com.nmichail.meridian.shared.chat.data.model.CreateChatDto
-import com.nmichail.meridian.shared.chat.data.model.PostMessageDto
-import com.nmichail.meridian.shared.chat.data.model.ReceiptDto
-import com.nmichail.meridian.shared.chat.data.model.ReceiptKindDto
-import com.nmichail.meridian.shared.chat.domain.entity.ChatType
-import com.nmichail.meridian.shared.chat.domain.entity.ChatSummary
+import com.nmichail.meridian.shared.chat.data.datasource.DeletionDataSource
+import com.nmichail.meridian.shared.chat.data.datasource.MemberDataSource
+import com.nmichail.meridian.shared.chat.data.datasource.ReactionDataSource
+import com.nmichail.meridian.shared.chat.data.dto.CreateChatDto
+import com.nmichail.meridian.shared.chat.data.dto.UserCardDto
+import com.nmichail.meridian.shared.chat.data.dto.ReactionRequestDto
+import com.nmichail.meridian.shared.chat.data.dto.ReadKindDto
+import com.nmichail.meridian.shared.chat.data.dto.ReadRequestDto
+import com.nmichail.meridian.shared.chat.data.mapper.toDto
+import com.nmichail.meridian.shared.chat.data.mapper.toEntity
+import com.nmichail.meridian.shared.chat.data.chat.toChats
+import com.nmichail.meridian.shared.chat.data.chat.toCreatedChat
+import com.nmichail.meridian.shared.chat.data.message.postMessage
+import com.nmichail.meridian.shared.chat.data.message.toThread
+import com.nmichail.meridian.shared.chat.domain.entity.Chat
+import com.nmichail.meridian.shared.chat.domain.entity.ChatPerson
 import com.nmichail.meridian.shared.chat.domain.entity.ChatThread
+import com.nmichail.meridian.shared.chat.domain.entity.ChatType
 import com.nmichail.meridian.shared.chat.domain.entity.CreatedChat
 import com.nmichail.meridian.shared.chat.domain.repository.ChatRepository
-import java.util.UUID
 import javax.inject.Inject
 
 class ChatRepositoryImpl @Inject constructor(
 	private val api: ChatApi,
 	private val sessionRepository: SessionRepository,
+	private val memberDataSource: MemberDataSource,
+	private val reactionDataSource: ReactionDataSource,
+	private val deletionDataSource: DeletionDataSource,
 ) : ChatRepository {
 
-	override suspend fun loadChats(): List<ChatSummary> {
-		val self = sessionRepository.getUserId()
-		return api.getChats().items.map { item -> item.toSummary(api, self) }
-	}
+	override suspend fun loadChats(): List<Chat> =
+		api.getChats().toChats(
+			api = api,
+			self = sessionRepository.getUserId(),
+		)
 
-	override suspend fun create(type: ChatType, title: String, username: String): CreatedChat {
-		val member = memberId(username)
-		val details = api.create(
+	override suspend fun create(type: ChatType, title: String, usernames: List<String>): CreatedChat {
+		val memberIds = usernames.mapNotNull { name ->
+			if (name.isBlank()) {
+				null
+			} else {
+				member(name).userId
+			}
+		}
+
+		return api.createChat(
 			CreateChatDto(
 				type = type.toDto(),
 				title = title.ifBlank { null },
-				memberIds = listOfNotNull(member),
+				memberIds = memberIds,
 			),
-		)
-		val members = details.members.map { it.userId to it.displayName }
-		val name = details.chat.title ?: peerName(sessionRepository.getUserId(), members, details.chat.peerUserId)
-		return CreatedChat(id = details.chat.chatId, title = name)
+		).toCreatedChat(self = sessionRepository.getUserId())
 	}
 
-	override suspend fun loadMessages(chatId: String): ChatThread {
-		val self = sessionRepository.getUserId()
-		val details = api.getChat(chatId)
-		val names = details.members.associate { member -> member.userId to member.displayName }
-		val page = api.getMessages(chatId)
-		val lines = page.items.map { item -> item.toLine(self, names[item.senderUserId]) }
-		val readUpTo = page.items.lastOrNull { item -> !item.deleted }?.messageId
-		return ChatThread(lines = lines, members = details.members.size, readUpTo = readUpTo)
+	override suspend fun findPerson(username: String): ChatPerson = member(username).toEntity()
+
+	private suspend fun member(username: String): UserCardDto {
+		val login = username.trim()
+		if (login.isEmpty()) {
+			throw GatewayException(code = GatewayCode.USER_NOT_FOUND)
+		}
+
+		return memberDataSource.getUsers(login)
+			.firstOrNull { user -> user.username.equals(login, ignoreCase = true) }
+			?: throw GatewayException(code = GatewayCode.USER_NOT_FOUND)
+	}
+
+	override suspend fun loadMessages(chatId: String): ChatThread =
+		api.toThread(
+			chatId = chatId,
+			self = sessionRepository.getUserId(),
+			reactions = reactionDataSource,
+			deletions = deletionDataSource,
+		)
+
+	override fun readReactions(): Map<String, String> =
+		reactionDataSource.getReactions()
+
+	override fun saveReaction(messageId: String, reaction: String) {
+		reactionDataSource.saveReaction(messageId, reaction)
+	}
+
+	override suspend fun react(messageId: String, reaction: String) {
+		reactionDataSource.saveReaction(messageId, reaction)
+		api.setReaction(
+			messageId,
+			ReactionRequestDto(reaction = reaction),
+		).execute()
+	}
+
+	override suspend fun delete(messageId: String) {
+		api.deleteMessages(messageId).execute()
+		deletionDataSource.saveDeleted(messageId)
 	}
 
 	override suspend fun markRead(messageId: String) {
-		api.sendReceipt(messageId, ReceiptDto(kind = ReceiptKindDto.READ)).execute { response ->
-			response
-		}
+		api.markRead(
+			messageId,
+			ReadRequestDto(kind = ReadKindDto.READ),
+		).execute()
 	}
 
-	override suspend fun send(chatId: String, text: String) {
-		val body = MessageCipher.seal(chatId, text)
-		val envelopes = targets(chatId).map { deviceId -> CipherEnvelopeDto(recipientDeviceId = deviceId, body = body) }
-		api.send(
+	override suspend fun send(
+		chatId: String,
+		text: String,
+		replyAuthor: String,
+		replyText: String,
+		threadRoot: String,
+	) {
+		api.sendMessages(
 			chatId,
-			PostMessageDto(clientMessageId = UUID.randomUUID().toString(), envelopes = envelopes),
+			postMessage(
+				api = api,
+				members = memberDataSource,
+				chatId = chatId,
+				text = text,
+				replyAuthor = replyAuthor,
+				replyText = replyText,
+				threadRoot = threadRoot,
+				self = sessionRepository.getUserId(),
+				deviceId = sessionRepository.getDeviceId(),
+			),
 		)
-	}
-
-	private suspend fun memberId(username: String): String? {
-		val needle = username.trim()
-		if (needle.isEmpty()) {
-			return null
-		}
-		val found = api.getUsers(needle).firstOrNull { it.username.equals(needle, ignoreCase = true) }
-		return found?.userId ?: throw GatewayException("USER_NOT_FOUND", "Пользователь не зарегистрирован")
-	}
-
-	private suspend fun targets(chatId: String): List<String> {
-		val self = sessionRepository.getUserId()
-		val mine = sessionRepository.getDeviceId() ?: throw GatewayException("DEVICE_NOT_FOUND", "Устройство не зарегистрировано")
-		val details = api.getChat(chatId)
-		val others = details.members.filter { it.userId != self }.flatMap { member ->
-			api.getBundle(member.userId).devices.map { it.deviceId }
-		}
-		return (others + mine).distinct()
 	}
 }

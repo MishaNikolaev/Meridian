@@ -15,7 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.nmichail.meridian.component.ui.control.model.MUiRadioModel
 import com.nmichail.meridian.component.ui.control.model.MUiSwitchModel
-import com.nmichail.meridian.component.ui.theme.MeridianThemeTokens
+import com.nmichail.meridian.component.ui.theme.palette
 
 @Composable
 fun MUiSwitch(
@@ -23,7 +23,6 @@ fun MUiSwitch(
 	onClick: () -> Unit,
 	modifier: Modifier = Modifier,
 ) {
-	val palette = MeridianThemeTokens.palette
 	val track = if (model.checked) palette.accentPrimary else palette.borderStrong
 	Box(
 		modifier = modifier
@@ -49,7 +48,6 @@ fun MUiRadio(
 	onClick: () -> Unit,
 	modifier: Modifier = Modifier,
 ) {
-	val palette = MeridianThemeTokens.palette
 	Box(
 		modifier = modifier
 			.size(22.dp)

@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.dp
 import com.nmichail.meridian.component.ui.R
 import com.nmichail.meridian.component.ui.bar.model.MUiBottomDestination
 import com.nmichail.meridian.component.ui.text.MUiLabelBadgeText
-import com.nmichail.meridian.component.ui.theme.MeridianThemeTokens
+import com.nmichail.meridian.component.ui.theme.palette
 
 @Composable
 fun MUiBottomBar(
@@ -44,7 +44,6 @@ fun MUiBottomBar(
 	onSelect: (MUiBottomDestination) -> Unit,
 	modifier: Modifier = Modifier,
 ) {
-	val palette = MeridianThemeTokens.palette
 	Column(
 		modifier = modifier
 			.fillMaxWidth()
@@ -81,7 +80,6 @@ private fun BottomTab(
 	onClick: () -> Unit,
 	modifier: Modifier = Modifier,
 ) {
-	val palette = MeridianThemeTokens.palette
 	val interactionSource = remember { MutableInteractionSource() }
 	val pressed by interactionSource.collectIsPressedAsState()
 	Column(
@@ -136,13 +134,11 @@ private fun ContentDrawScope.drawPressedIcon() {
 	}
 	drawContent()
 	drawRect(
-		color = Color.Black.copy(alpha = ICON_PRESS_OVERLAY_ALPHA),
+		color = Color.Black.copy(alpha = 0.28f),
 		blendMode = BlendMode.SrcAtop,
 	)
 	drawIntoCanvas { canvas -> canvas.restore() }
 }
-
-private const val ICON_PRESS_OVERLAY_ALPHA = 0.28f
 
 private data class BottomTabSpec(
 	val destination: MUiBottomDestination,

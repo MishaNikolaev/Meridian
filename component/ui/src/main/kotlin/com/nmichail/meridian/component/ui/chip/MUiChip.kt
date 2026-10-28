@@ -17,8 +17,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.nmichail.meridian.component.ui.chip.model.MUiChipModel
-import com.nmichail.meridian.component.ui.theme.MeridianThemeTokens
 import com.nmichail.meridian.component.ui.theme.MeridianType
+import com.nmichail.meridian.component.ui.theme.palette
 
 @Composable
 fun MUiChip(
@@ -29,7 +29,6 @@ fun MUiChip(
 	horizontalPadding: Dp = 13.dp,
 	verticalPadding: Dp = 10.dp,
 ) {
-	val palette = MeridianThemeTokens.palette
 	val container = if (model.selected) palette.accentButton else palette.field
 	val content = if (model.selected) palette.textOnAccent else palette.textPrimary
 

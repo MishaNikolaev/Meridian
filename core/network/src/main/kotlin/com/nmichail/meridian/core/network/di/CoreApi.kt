@@ -1,11 +1,12 @@
 package com.nmichail.meridian.core.network.di
 
+import android.content.Context
 import com.nmichail.meridian.core.network.config.NetworkConfig
 import com.nmichail.meridian.core.network.device.DeviceIdentityRepository
 import com.nmichail.meridian.core.network.session.SessionEvents
 import com.nmichail.meridian.core.network.session.SessionRefresher
 import com.nmichail.meridian.core.network.session.SessionRepository
-import com.nmichail.meridian.core.storage.LocalPreferences
+import com.nmichail.meridian.core.storage.ApplicationContext
 import de.jensklingenberg.ktorfit.Ktorfit
 import kotlinx.serialization.json.Json
 
@@ -25,5 +26,6 @@ interface CoreApi {
 
 	fun deviceIdentityRepository(): DeviceIdentityRepository
 
-	fun localPreferences(): LocalPreferences
+	@ApplicationContext
+	fun context(): Context
 }
