@@ -7,16 +7,14 @@ import com.nmichail.meridian.core.testutils.TestCoroutineExtension
 import com.nmichail.meridian.core.testutils.doThrowSafe
 import com.nmichail.meridian.shared.chat.data.realtime.ChatRealtime
 import com.nmichail.meridian.shared.chat.domain.entity.Chat
-import com.nmichail.meridian.shared.chat.domain.entity.ChatDiscussion
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType
 import com.nmichail.meridian.shared.chat.domain.usecase.LoadChatsUseCase
-import com.nmichail.meridian.shared.chat.domain.usecase.LoadDiscussionsUseCase
 import java.io.IOException
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
@@ -27,14 +25,14 @@ import org.mockito.kotlin.whenever
 class ChatViewModelTest {
 
 	private val loadChatsUseCase: LoadChatsUseCase = mock()
-	private val loadDiscussionsUseCase: LoadDiscussionsUseCase = mock()
-	private val realtime: ChatRealtime = mock()
+	private val realtime: ChatRealtime = mock {
+		on { chatIds } doReturn MutableSharedFlow()
+	}
 	private val errorStateConverter = ErrorStateConverter()
 	private val router: ChatRouter = mock()
 	private val eventObserver: Observer<ChatEvent> = mock()
 	private val viewModel = ChatViewModel(
 		loadChatsUseCase,
-		loadDiscussionsUseCase,
 		realtime,
 		errorStateConverter,
 		router,
@@ -48,7 +46,11 @@ class ChatViewModelTest {
 			preview = "",
 			sentAt = null,
 			unread = 0,
+			corporate = true,
+			mentioned = false,
 			personId = "member",
+			discussionRoot = null,
+			discussionText = null,
 		),
 	)
 
@@ -60,19 +62,10 @@ class ChatViewModelTest {
 		sentAt = null,
 		unread = 0,
 		corporate = false,
+		mentioned = false,
 		personId = "guest",
-	)
-
-	private val discussion = ChatDiscussion(
-		chatId = "1",
-		messageId = "root",
-		title = "Анна",
-		text = "тема обсуждения",
-		comment = "Анна: комментарий",
-		sentAt = "2026-10-22T12:00:00Z",
-		corporate = true,
-		type = ChatType.DIRECT,
-		personId = null,
+		discussionRoot = null,
+		discussionText = null,
 	)
 
 	private val ioException = IOException()
@@ -81,8 +74,6 @@ class ChatViewModelTest {
 	@Test
 	fun `load initial data EXPECT content`() = runTest {
 		whenever(loadChatsUseCase.invoke()) doReturn chats
-		whenever(loadDiscussionsUseCase.invoke(any())) doReturn emptyList()
-
 		viewModel.applyIntent(ChatIntent.LoadInitialData)
 
 		assertEquals(
@@ -102,8 +93,6 @@ class ChatViewModelTest {
 	@Test
 	fun `external direct chat EXPECT external list`() = runTest {
 		whenever(loadChatsUseCase.invoke()) doReturn chats + externalChat
-		whenever(loadDiscussionsUseCase.invoke(any())) doReturn emptyList()
-
 		viewModel.applyIntent(ChatIntent.LoadInitialData)
 
 		assertEquals(
@@ -150,19 +139,8 @@ class ChatViewModelTest {
 	}
 
 	@Test
-	fun `messages failure EXPECT error`() = runTest {
-		whenever(loadChatsUseCase.invoke()) doReturn chats
-		whenever(loadDiscussionsUseCase.invoke(any())).doThrowSafe(ioException)
-
-		viewModel.applyIntent(ChatIntent.LoadInitialData)
-
-		assertEquals(ChatState.Error, viewModel.state.value)
-	}
-
-	@Test
 	fun `retry EXPECT chats`() = runTest {
 		whenever(loadChatsUseCase.invoke()).doThrowSafe(ioException).doReturn(chats)
-		whenever(loadDiscussionsUseCase.invoke(any())) doReturn emptyList()
 		viewModel.applyIntent(ChatIntent.LoadInitialData)
 
 		viewModel.applyIntent(ChatIntent.Retry)
@@ -191,7 +169,6 @@ class ChatViewModelTest {
 	@Test
 	fun `load again EXPECT single refresh`() = runTest {
 		whenever(loadChatsUseCase.invoke()) doReturn chats
-		whenever(loadDiscussionsUseCase.invoke(any())) doReturn emptyList()
 		viewModel.applyIntent(ChatIntent.LoadInitialData)
 
 		viewModel.applyIntent(ChatIntent.LoadInitialData)
@@ -202,7 +179,6 @@ class ChatViewModelTest {
 	@Test
 	fun `change corporate EXPECT external space`() = runTest {
 		whenever(loadChatsUseCase.invoke()) doReturn chats
-		whenever(loadDiscussionsUseCase.invoke(any())) doReturn emptyList()
 		viewModel.applyIntent(ChatIntent.LoadInitialData)
 
 		viewModel.applyIntent(ChatIntent.ChangeCorporate(corporate = false))
@@ -224,7 +200,6 @@ class ChatViewModelTest {
 	@Test
 	fun `change section EXPECT catalog`() = runTest {
 		whenever(loadChatsUseCase.invoke()) doReturn chats
-		whenever(loadDiscussionsUseCase.invoke(any())) doReturn emptyList()
 		viewModel.applyIntent(ChatIntent.LoadInitialData)
 
 		viewModel.applyIntent(ChatIntent.ChangeSection(section = ChatSection.CATALOG))
@@ -253,7 +228,6 @@ class ChatViewModelTest {
 	@Test
 	fun `open create EXPECT menu`() = runTest {
 		whenever(loadChatsUseCase.invoke()) doReturn chats
-		whenever(loadDiscussionsUseCase.invoke(any())) doReturn emptyList()
 		viewModel.applyIntent(ChatIntent.LoadInitialData)
 
 		viewModel.applyIntent(ChatIntent.ChangeCreate(open = true))
@@ -305,8 +279,13 @@ class ChatViewModelTest {
 
 	@Test
 	fun `load EXPECT discussion is the thread`() = runTest {
-		whenever(loadChatsUseCase.invoke()) doReturn chats
-		whenever(loadDiscussionsUseCase.invoke(any())) doReturn listOf(discussion)
+		val threadChat = chats.first().copy(
+			preview = "комментарий",
+			sentAt = "2026-10-22T12:00:00Z",
+			discussionRoot = "root",
+			discussionText = "тема обсуждения",
+		)
+		whenever(loadChatsUseCase.invoke()) doReturn listOf(threadChat)
 
 		viewModel.applyIntent(ChatIntent.LoadInitialData)
 
@@ -314,9 +293,9 @@ class ChatViewModelTest {
 			ChatState.Content(
 				corporate = true,
 				section = ChatSection.ALL,
-				corporateChats = chats,
+				corporateChats = listOf(threadChat),
 				externalTabChats = emptyList(),
-				corporateDiscussions = listOf(discussion),
+				corporateDiscussions = listOf(threadChat).discussions(),
 				externalTabDiscussions = emptyList(),
 				createOpen = false,
 			),

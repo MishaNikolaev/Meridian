@@ -9,13 +9,11 @@ import com.nmichail.meridian.shared.chat.domain.entity.Chat
 import com.nmichail.meridian.shared.chat.domain.entity.ChatDiscussion
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType
 import com.nmichail.meridian.shared.chat.domain.usecase.LoadChatsUseCase
-import com.nmichail.meridian.shared.chat.domain.usecase.LoadDiscussionsUseCase
 import javax.inject.Inject
 import kotlinx.coroutines.Job
 
 class ChatViewModel @Inject constructor(
 	private val loadChatsUseCase: LoadChatsUseCase,
-	private val loadDiscussionsUseCase: LoadDiscussionsUseCase,
 	private val realtime: ChatRealtime,
 	private val errorStateConverter: ErrorStateConverter,
 	private val router: ChatRouter,
@@ -162,8 +160,8 @@ class ChatViewModel @Inject constructor(
 		realtime.ensureStarted()
 
 		updatesJob = launchTry {
-			realtime.collectChats { chatId ->
-				handleReload(chatId)
+			realtime.chatIds.collect { _ ->
+				handleReload()
 			}
 		} catch ::handleError
 	}
@@ -174,23 +172,16 @@ class ChatViewModel @Inject constructor(
 		}
 
 		launchTry {
-			handleReload(chatId = null)
+			handleReload()
 		} catch ::handleError
 	}
 
-	private suspend fun handleReload(chatId: String?) {
+	private suspend fun handleReload() {
 		val chats = loadChatsUseCase()
-		val current = state.value as? ChatState.Content
-		val discussions = when {
-			chatId == null || current == null -> loadDiscussionsUseCase(chats)
-
-			else                              -> loadDiscussionsUseCase.replaceChat(
-				chatId = chatId,
-				chats = chats,
-				discussions = current.corporateDiscussions + current.externalTabDiscussions,
-			)
-		}
-		handlePublish(chats, discussions)
+		handlePublish(
+			chats = chats,
+			discussions = chats.discussions(),
+		)
 	}
 
 	private fun handlePublish(chats: List<Chat>, discussions: List<ChatDiscussion>) {
