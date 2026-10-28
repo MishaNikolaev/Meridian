@@ -8,10 +8,10 @@ import javax.inject.Singleton
 class NetworkConfig @Inject constructor() {
 
 	private companion object {
-
+		//TODO Заменить айпишник после миграции на хост
 		const val PORT = 8080
 		const val EMULATOR_HOST = "10.0.2.2"
-		const val DEVICE_HOST = "127.0.0.1"
+		const val DEVICE_HOST = "192.168.0.11"
 
 		fun isEmulator(): Boolean {
 			val fingerprint = Build.FINGERPRINT
