@@ -4,6 +4,7 @@ import com.nmichail.meridian.core.network.config.NetworkConfig
 import com.nmichail.meridian.core.network.error.ApiErrorBody
 import com.nmichail.meridian.core.network.error.GatewayCode
 import com.nmichail.meridian.core.network.error.GatewayException
+import com.nmichail.meridian.core.network.okhttp.interceptor.LoggingInterceptor
 import com.nmichail.meridian.core.network.session.SessionRefresher
 import com.nmichail.meridian.core.network.session.SessionRepository
 import com.nmichail.meridian.core.network.session.installSessionRefresh
@@ -45,6 +46,9 @@ object NetworkModule {
 		json: Json,
 		refresher: SessionRefresher,
 	): HttpClient = HttpClient(OkHttp) {
+		engine {
+			addInterceptor(LoggingInterceptor())
+		}
 		expectSuccess = false
 		install(ContentNegotiation) {
 			json(json)
