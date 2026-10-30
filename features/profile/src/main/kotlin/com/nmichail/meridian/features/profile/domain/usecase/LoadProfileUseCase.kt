@@ -6,4 +6,4 @@ import javax.inject.Inject
 
 class LoadProfileUseCase @Inject constructor(
 	private val repository: ProfileRepository,
-) : suspend () -> ProfileAccount by repository::account
+) : suspend () -> ProfileAccount by repository::loadAccount

@@ -1,5 +1,7 @@
 package com.nmichail.meridian.features.groups.presentation
 
+import com.nmichail.meridian.core.network.error.presentation.ErrorDelegate
+import com.nmichail.meridian.core.network.error.presentation.NonBlockingErrorProcessResult
 import com.nmichail.meridian.core.network.error.userMessage
 import com.nmichail.meridian.core.presentation.BaseViewModel
 import com.nmichail.meridian.core.validation.displayName.DisplayNameValidationItem
@@ -19,6 +21,7 @@ class GroupViewModel @Inject constructor(
 	private val createChatUseCase: CreateChatUseCase,
 	private val validateUsernameUseCase: ValidateUsernameUseCase,
 	private val validateDisplayNameUseCase: ValidateDisplayNameUseCase,
+	private val errorDelegate: ErrorDelegate,
 	private val router: GroupRouter,
 ) : BaseViewModel<GroupState, GroupIntent, Nothing>() {
 
@@ -240,7 +243,7 @@ class GroupViewModel @Inject constructor(
 					members = opened.members + person,
 				),
 			)
-		} catch ::handleError
+		} catch ::handleAddFailure
 	}
 
 	private fun handleSubmit() {
@@ -287,6 +290,7 @@ class GroupViewModel @Inject constructor(
 			)
 			return
 		}
+
 		setState(
 			GroupState.Loading(
 				title = checked,
@@ -296,24 +300,50 @@ class GroupViewModel @Inject constructor(
 				members = members,
 			),
 		)
+
 		launchTry {
 			val chat = createChatUseCase(
 				ChatType.GROUP,
 				checked.data,
 				members.map { person -> person.username },
 			)
+
 			router.navigateBack()
+
 			router.navigateToConversation(
 				chatId = chat.id,
 				title = chat.title,
 				corporate = false,
 				personId = "",
 			)
-		} catch ::handleError
+		} catch ::handleCreateFailure
 	}
 
-	private fun handleError(error: Exception) {
+	private fun handleAddFailure(error: Exception) {
+		handleRequestFailure(error)
+	}
+
+	private fun handleCreateFailure(error: Exception) {
+		handleRequestFailure(error)
+	}
+
+	private fun handleRequestFailure(error: Exception) {
 		val failed = state.value as? GroupState.Loading ?: return
+		val result = errorDelegate.processNonBlockingError(error)
+
+		if (result is NonBlockingErrorProcessResult.Handled) {
+			setState(
+				GroupState.Content(
+					title = failed.title,
+					description = failed.description,
+					login = failed.login,
+					adding = failed.adding,
+					members = failed.members,
+				),
+			)
+			return
+		}
+
 		setState(
 			GroupState.Error(
 				title = failed.title,

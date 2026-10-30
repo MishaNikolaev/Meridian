@@ -1,8 +1,12 @@
 package com.nmichail.meridian.features.groups.presentation
 
 import com.nmichail.meridian.core.network.R
-import com.nmichail.meridian.core.testutils.TestCoroutineExtension
-import com.nmichail.meridian.core.testutils.doThrowSafe
+import com.nmichail.meridian.core.network.error.presentation.DefaultErrorEventConverter
+import com.nmichail.meridian.core.network.error.presentation.DefaultErrorReactionConverter
+import com.nmichail.meridian.core.network.error.presentation.ErrorDelegate
+import com.nmichail.meridian.core.network.error.presentation.ErrorLogger
+import com.nmichail.meridian.testutils.TestCoroutineExtension
+import com.nmichail.meridian.testutils.doThrowSafe
 import com.nmichail.meridian.core.validation.DefaultValidationState
 import com.nmichail.meridian.core.validation.displayName.DisplayNameInvalidState
 import com.nmichail.meridian.core.validation.displayName.DisplayNameValidationItem
@@ -40,6 +44,11 @@ class GroupViewModelTest {
 		createChatUseCase,
 		validateUsernameUseCase,
 		validateDisplayNameUseCase,
+		ErrorDelegate(
+			errorLogger = ErrorLogger(),
+			defaultErrorReactionConverter = DefaultErrorReactionConverter(),
+			defaultErrorEventConverter = DefaultErrorEventConverter(),
+		),
 		router,
 	)
 	private val title = DisplayNameValidationItem(
