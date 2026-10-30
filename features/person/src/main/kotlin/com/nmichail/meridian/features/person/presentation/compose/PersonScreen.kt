@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.profile.presentation.compose
+package com.nmichail.meridian.features.person.presentation.compose
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -36,9 +36,9 @@ import com.nmichail.meridian.component.ui.R as UiR
 import com.nmichail.meridian.component.ui.text.MUiLinkedText
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
-import com.nmichail.meridian.features.profile.R
-import com.nmichail.meridian.features.profile.presentation.PersonIntent
-import com.nmichail.meridian.features.profile.presentation.PersonState
+import com.nmichail.meridian.features.person.R
+import com.nmichail.meridian.features.person.presentation.PersonIntent
+import com.nmichail.meridian.features.person.presentation.PersonState
 import kotlinx.coroutines.flow.StateFlow
 
 @Composable
@@ -49,6 +49,7 @@ fun PersonScreen(
 	onIntent: (PersonIntent) -> Unit,
 ) {
 	val uiState by state.collectAsStateWithLifecycle()
+
 	LaunchedEffect(Unit) {
 		onIntent(
 			PersonIntent.Load(
@@ -93,6 +94,7 @@ private fun PersonContent(
 			.verticalScroll(rememberScrollState()),
 	) {
 		PersonToolbar(onIntent)
+
 		Column(
 			modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
 			verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -134,7 +136,9 @@ private fun PersonToolbar(onIntent: (PersonIntent) -> Unit) {
 				modifier = Modifier.size(16.dp),
 			)
 		}
+
 		Box(modifier = Modifier.weight(1f))
+
 		Box(
 			modifier = Modifier.size(24.dp),
 			contentAlignment = Alignment.Center,
@@ -159,12 +163,14 @@ private fun PersonIdentity(card: PersonState.Content) {
 			name = card.name,
 			corporate = card.corporate,
 		)
+
 		Text(
 			text = card.name,
 			style = MeridianType.titleSection,
 			color = palette.textPrimary,
 			textAlign = TextAlign.Center,
 		)
+
 		if (card.position.isNotEmpty()) {
 			Text(
 				text = card.position,
@@ -173,6 +179,7 @@ private fun PersonIdentity(card: PersonState.Content) {
 				textAlign = TextAlign.Center,
 			)
 		}
+
 		PersonStatus(
 			status = card.status,
 			corporate = card.corporate,
@@ -188,8 +195,10 @@ private fun PersonMark(name: String, corporate: Boolean) {
 	} else {
 		name.take(2)
 	}
+
 	val fill = if (corporate) palette.accentPrimarySoft else palette.accentExternal
 	val ink = if (corporate) palette.accentPrimary else palette.textOnAccent
+
 	Box(
 		modifier = Modifier
 			.size(96.dp)
@@ -233,6 +242,7 @@ private fun PersonStatus(status: String, corporate: Boolean) {
 						.clip(CircleShape)
 						.background(palette.statusOnline),
 				)
+
 				Text(
 					text = status,
 					style = MeridianType.captionDefault,
@@ -240,6 +250,7 @@ private fun PersonStatus(status: String, corporate: Boolean) {
 				)
 			}
 		}
+
 		if (!corporate) {
 			Text(
 				text = stringResource(R.string.person_external),
@@ -267,6 +278,7 @@ private fun PersonActions(onIntent: (PersonIntent) -> Unit) {
 			onClick = { onIntent(PersonIntent.Write) },
 			modifier = Modifier.weight(1f),
 		)
+
 		PersonButton(
 			icon = R.drawable.ic_person_phone,
 			label = R.string.person_call,
@@ -274,6 +286,7 @@ private fun PersonActions(onIntent: (PersonIntent) -> Unit) {
 			onClick = null,
 			modifier = Modifier.weight(1f),
 		)
+
 		PersonButton(
 			icon = R.drawable.ic_person_video,
 			label = R.string.person_video,
@@ -294,6 +307,7 @@ private fun PersonButton(
 ) {
 	val tint = if (filled) palette.textOnAccent else palette.accentPrimary
 	val ink = if (filled) palette.textOnAccent else palette.textPrimary
+
 	Column(
 		modifier = modifier
 			.clip(RoundedCornerShape(16.dp))
@@ -309,6 +323,7 @@ private fun PersonButton(
 			colorFilter = ColorFilter.tint(tint),
 			modifier = Modifier.size(22.dp),
 		)
+
 		Text(
 			text = stringResource(label),
 			style = MeridianType.captionSmall,

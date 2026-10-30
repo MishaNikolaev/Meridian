@@ -1,10 +1,14 @@
-package com.nmichail.meridian.features.profile.presentation
+package com.nmichail.meridian.features.person.presentation
 
 import com.nmichail.meridian.core.network.R
-import com.nmichail.meridian.core.testutils.TestCoroutineExtension
-import com.nmichail.meridian.core.testutils.doThrowSafe
-import com.nmichail.meridian.features.profile.domain.entity.PersonCard
-import com.nmichail.meridian.features.profile.domain.usecase.LoadPersonUseCase
+import com.nmichail.meridian.core.network.error.presentation.DefaultErrorEventConverter
+import com.nmichail.meridian.core.network.error.presentation.DefaultErrorReactionConverter
+import com.nmichail.meridian.core.network.error.presentation.ErrorDelegate
+import com.nmichail.meridian.core.network.error.presentation.ErrorLogger
+import com.nmichail.meridian.testutils.TestCoroutineExtension
+import com.nmichail.meridian.testutils.doThrowSafe
+import com.nmichail.meridian.features.person.domain.entity.PersonProfile
+import com.nmichail.meridian.features.person.domain.usecase.LoadPersonUseCase
 import java.io.IOException
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -21,12 +25,17 @@ import org.mockito.kotlin.whenever
 class PersonViewModelTest {
 
 	private val loadPersonUseCase: LoadPersonUseCase = mock()
-	private val router: ProfileRouter = mock()
+	private val router: PersonRouter = mock()
 	private val viewModel = PersonViewModel(
 		loadPersonUseCase,
+		ErrorDelegate(
+			errorLogger = ErrorLogger(),
+			defaultErrorReactionConverter = DefaultErrorReactionConverter(),
+			defaultErrorEventConverter = DefaultErrorEventConverter(),
+		),
 		router,
 	)
-	private val card = PersonCard(
+	private val card = PersonProfile(
 		name = "Волков Сергей Андреевич",
 		position = "ведущий инженер-программист мобильных приложений",
 		department = "Мобильная разработка",
@@ -50,7 +59,22 @@ class PersonViewModelTest {
 			),
 		)
 
-		assertEquals(content(), viewModel.state.value)
+		assertEquals(
+			PersonState.Content(
+				name = card.name,
+				position = card.position,
+				department = card.department,
+				office = card.office,
+				server = card.server,
+				status = card.status,
+				manager = card.manager,
+				managerId = card.managerId,
+				email = card.email,
+				phone = card.phone,
+				corporate = true,
+			),
+			viewModel.state.value,
+		)
 	}
 
 	@Test
@@ -108,7 +132,22 @@ class PersonViewModelTest {
 			),
 		)
 
-		assertEquals(content(), viewModel.state.value)
+		assertEquals(
+			PersonState.Content(
+				name = card.name,
+				position = card.position,
+				department = card.department,
+				office = card.office,
+				server = card.server,
+				status = card.status,
+				manager = card.manager,
+				managerId = card.managerId,
+				email = card.email,
+				phone = card.phone,
+				corporate = true,
+			),
+			viewModel.state.value,
+		)
 	}
 
 	@Test
@@ -160,18 +199,4 @@ class PersonViewModelTest {
 			corporate = true,
 		)
 	}
-
-	private fun content(): PersonState.Content = PersonState.Content(
-		name = card.name,
-		position = card.position,
-		department = card.department,
-		office = card.office,
-		server = card.server,
-		status = card.status,
-		manager = card.manager,
-		managerId = card.managerId,
-		email = card.email,
-		phone = card.phone,
-		corporate = true,
-	)
 }

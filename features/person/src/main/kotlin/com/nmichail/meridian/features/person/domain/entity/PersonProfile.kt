@@ -1,6 +1,6 @@
-package com.nmichail.meridian.features.profile.domain.entity
+package com.nmichail.meridian.features.person.domain.entity
 
-data class PersonCard(
+data class PersonProfile(
 	val name: String,
 	val position: String,
 	val department: String,

@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.profile.presentation
+package com.nmichail.meridian.features.person.presentation
 
 sealed interface PersonIntent {
 

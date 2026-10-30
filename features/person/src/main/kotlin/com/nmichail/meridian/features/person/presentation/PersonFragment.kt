@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.profile.presentation
+package com.nmichail.meridian.features.person.presentation
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -11,8 +11,8 @@ import androidx.fragment.app.viewModels
 import com.nmichail.meridian.component.ui.compose.Screen
 import com.nmichail.meridian.core.navigation.screen.FullScreen
 import com.nmichail.meridian.core.navigation.screen.FullScreenFragment
-import com.nmichail.meridian.features.profile.di.ProfileComponentHolder
-import com.nmichail.meridian.features.profile.presentation.compose.PersonScreen
+import com.nmichail.meridian.features.person.di.PersonComponentHolder
+import com.nmichail.meridian.features.person.presentation.compose.PersonScreen
 
 fun getPersonScreen(userId: String, corporate: Boolean): FullScreen = object : FullScreen(
 	key = "person-$userId",
@@ -29,7 +29,7 @@ fun getPersonScreen(userId: String, corporate: Boolean): FullScreen = object : F
 class PersonFragment : FullScreenFragment() {
 
 	private val viewModel: PersonViewModel by viewModels {
-		ProfileComponentHolder.get().viewModelFactory()
+		PersonComponentHolder.get().viewModelFactory()
 	}
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
