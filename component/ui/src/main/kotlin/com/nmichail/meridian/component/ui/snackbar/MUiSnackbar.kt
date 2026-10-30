@@ -56,11 +56,13 @@ fun MUiSnackbar(
 	modifier: Modifier = Modifier,
 ) {
 	MUiSnackbarTimer(model = model, onDismiss = onDismiss)
+
 	val icon = when (model.tone) {
 		MUiSnackbarTone.Error -> R.drawable.ic_snackbar_error
 		MUiSnackbarTone.Info -> R.drawable.ic_snackbar_info
 		MUiSnackbarTone.Success -> R.drawable.ic_snackbar_success
 	}
+
 	val tint = when (model.tone) {
 		MUiSnackbarTone.Error -> palette.snackbarError
 		MUiSnackbarTone.Info -> palette.snackbarInfo
@@ -89,12 +91,14 @@ fun MUiSnackbar(
 			colorFilter = ColorFilter.tint(tint),
 			modifier = Modifier.size(22.dp),
 		)
+
 		Text(
 			text = model.message,
 			style = MeridianType.snackbar,
 			color = palette.snackbarText,
 			modifier = Modifier.weight(1f),
 		)
+
 		if (model.action != null) {
 			Text(
 				text = model.action,
@@ -111,7 +115,9 @@ private fun MUiSnackbarTimer(
 	model: MUiSnackbarModel,
 	onDismiss: () -> Unit,
 ) {
-	LaunchedEffect(model.message, model.duration) {
+	LaunchedEffect(model.message,
+		model.duration
+	) {
 		when (model.duration) {
 			MUiSnackbarDuration.Short -> delay(timeMillis = 4_000L)
 			MUiSnackbarDuration.Long -> delay(timeMillis = 10_000L)

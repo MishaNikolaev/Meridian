@@ -51,11 +51,11 @@ class SessionRefresher @Inject constructor(
 		session
 	}
 
-	fun expire() {
+	fun expire(notify: Boolean = true) {
 		val signedIn = sessionRepository.getAccessToken() != null || sessionRepository.getRefreshToken() != null
 		sessionRepository.clear()
 		deviceIdentityRepository.reset()
-		if (signedIn) {
+		if (signedIn && notify) {
 			events.notifyExpired()
 		}
 	}

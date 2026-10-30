@@ -2,8 +2,8 @@ package com.nmichail.meridian.core.network.di
 
 import com.nmichail.meridian.core.network.config.NetworkConfig
 import com.nmichail.meridian.core.network.error.ApiErrorBody
-import com.nmichail.meridian.core.network.error.GatewayCode
 import com.nmichail.meridian.core.network.error.GatewayException
+import com.nmichail.meridian.core.network.error.NetworkErrorConverter
 import com.nmichail.meridian.core.network.okhttp.interceptor.LoggingInterceptor
 import com.nmichail.meridian.core.network.session.SessionRefresher
 import com.nmichail.meridian.core.network.session.SessionRepository
@@ -45,6 +45,7 @@ object NetworkModule {
 		sessionRepository: SessionRepository,
 		json: Json,
 		refresher: SessionRefresher,
+		errors: NetworkErrorConverter,
 	): HttpClient = HttpClient(OkHttp) {
 		engine {
 			addInterceptor(LoggingInterceptor())
@@ -63,7 +64,13 @@ object NetworkModule {
 		HttpResponseValidator {
 			validateResponse { response ->
 				if (!response.status.isSuccess()) {
-					throw response.toGatewayException()
+					throw response.toGatewayException(errors)
+				}
+			}
+			handleResponseExceptionWithRequest { cause, _ ->
+				val converted = errors.convertTransport(cause)
+				if (converted != null) {
+					throw converted
 				}
 			}
 		}
@@ -83,12 +90,7 @@ object NetworkModule {
 		.build()
 }
 
-private suspend fun HttpResponse.toGatewayException(): GatewayException {
+private suspend fun HttpResponse.toGatewayException(errors: NetworkErrorConverter): GatewayException {
 	val error = runCatching { body<ApiErrorBody>() }.getOrNull()
-	val raw = error?.code
-	return GatewayException(
-		code = raw?.let(GatewayCode::from) ?: GatewayCode.UNKNOWN,
-		message = error?.message ?: status.description,
-		httpStatus = raw?.toIntOrNull() ?: status.value,
-	)
+	return errors.fromResponse(status.value, error)
 }

@@ -1,7 +1,7 @@
 package com.nmichail.meridian.shared.session.domain.usecase
 
 import com.nmichail.meridian.core.network.session.AuthSession
-import com.nmichail.meridian.core.testutils.TestCoroutineExtension
+import com.nmichail.meridian.testutils.TestCoroutineExtension
 import com.nmichail.meridian.shared.session.domain.repository.AuthorizationRepository
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals

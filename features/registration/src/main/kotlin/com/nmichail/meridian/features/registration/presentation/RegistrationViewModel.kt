@@ -28,13 +28,13 @@ class RegistrationViewModel @Inject constructor(
 
 	override fun applyIntent(intent: RegistrationIntent) {
 		when (intent) {
-			is RegistrationIntent.ChangeUsername -> handleChangeUsername(intent.value)
+			is RegistrationIntent.ChangeUsername    -> handleChangeUsername(intent.value)
 			is RegistrationIntent.ChangeDisplayName -> handleChangeDisplayName(intent.value)
-			is RegistrationIntent.ChangePassword -> handleChangePassword(intent.value)
-			is RegistrationIntent.Submit -> handleSubmit()
-			is RegistrationIntent.OpenSignIn -> handleOpenSignIn()
-			is RegistrationIntent.OpenWorkspace -> handleOpenWorkspace()
-			is RegistrationIntent.NavigateBack -> handleNavigateBack()
+			is RegistrationIntent.ChangePassword    -> handleChangePassword(intent.value)
+			is RegistrationIntent.Submit            -> handleSubmit()
+			is RegistrationIntent.OpenSignIn        -> handleOpenSignIn()
+			is RegistrationIntent.OpenWorkspace     -> handleOpenWorkspace()
+			is RegistrationIntent.NavigateBack      -> handleNavigateBack()
 		}
 	}
 
@@ -42,7 +42,7 @@ class RegistrationViewModel @Inject constructor(
 		when (val current = state.value) {
 			is RegistrationState.Loading -> return
 
-			RegistrationState.Initial -> setState(
+			RegistrationState.Initial    -> setState(
 				RegistrationState.Content(
 					username = validateUsernameUseCase(value),
 					displayName = DisplayNameValidationItem(),
@@ -54,7 +54,7 @@ class RegistrationViewModel @Inject constructor(
 				current.copy(username = validateUsernameUseCase(value)),
 			)
 
-			is RegistrationState.Error -> setState(
+			is RegistrationState.Error   -> setState(
 				RegistrationState.Content(
 					username = validateUsernameUseCase(value),
 					displayName = current.displayName,
@@ -68,7 +68,7 @@ class RegistrationViewModel @Inject constructor(
 		when (val current = state.value) {
 			is RegistrationState.Loading -> return
 
-			RegistrationState.Initial -> setState(
+			RegistrationState.Initial    -> setState(
 				RegistrationState.Content(
 					username = UsernameValidationItem(),
 					displayName = validateDisplayNameUseCase(value),
@@ -80,7 +80,7 @@ class RegistrationViewModel @Inject constructor(
 				current.copy(displayName = validateDisplayNameUseCase(value)),
 			)
 
-			is RegistrationState.Error -> setState(
+			is RegistrationState.Error   -> setState(
 				RegistrationState.Content(
 					username = current.username,
 					displayName = validateDisplayNameUseCase(value),
@@ -95,7 +95,7 @@ class RegistrationViewModel @Inject constructor(
 		when (val current = state.value) {
 			is RegistrationState.Loading -> return
 
-			RegistrationState.Initial -> setState(
+			RegistrationState.Initial    -> setState(
 				RegistrationState.Content(
 					username = UsernameValidationItem(),
 					displayName = DisplayNameValidationItem(),
@@ -107,7 +107,7 @@ class RegistrationViewModel @Inject constructor(
 				current.copy(password = password),
 			)
 
-			is RegistrationState.Error -> setState(
+			is RegistrationState.Error   -> setState(
 				RegistrationState.Content(
 					username = current.username,
 					displayName = current.displayName,
@@ -121,7 +121,7 @@ class RegistrationViewModel @Inject constructor(
 		when (val current = state.value) {
 			is RegistrationState.Loading -> return
 
-			RegistrationState.Initial -> register(
+			RegistrationState.Initial    -> register(
 				usernameData = "",
 				displayNameData = "",
 				passwordData = "",
@@ -133,7 +133,7 @@ class RegistrationViewModel @Inject constructor(
 				passwordData = current.password.data,
 			)
 
-			is RegistrationState.Error -> register(
+			is RegistrationState.Error   -> register(
 				usernameData = current.username.data,
 				displayNameData = current.displayName.data,
 				passwordData = current.password.data,
@@ -173,10 +173,10 @@ class RegistrationViewModel @Inject constructor(
 				),
 			)
 			router.navigateToHome()
-		} catch ::handleError
+		} catch ::handleRegistrationFailure
 	}
 
-	private fun handleError(error: Exception) {
+	private fun handleRegistrationFailure(error: Exception) {
 		val current = state.value as? RegistrationState.Loading ?: return
 		setState(
 			RegistrationState.Error(

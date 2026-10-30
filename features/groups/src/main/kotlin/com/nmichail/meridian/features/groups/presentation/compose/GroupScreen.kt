@@ -35,8 +35,8 @@ import kotlinx.coroutines.flow.StateFlow
 import com.nmichail.meridian.component.ui.button.MUiButton
 import com.nmichail.meridian.component.ui.button.model.MUiButtonModel
 import com.nmichail.meridian.component.ui.button.model.MUiButtonStyle
-import com.nmichail.meridian.component.ui.compose.displayNameErrorMessage
-import com.nmichail.meridian.component.ui.compose.usernameErrorMessage
+import com.nmichail.meridian.component.ui.validation.displayNameErrorMessage
+import com.nmichail.meridian.component.ui.validation.usernameErrorMessage
 import com.nmichail.meridian.component.ui.field.MUiTextField
 import com.nmichail.meridian.component.ui.field.model.MUiFieldIcon
 import com.nmichail.meridian.component.ui.field.model.MUiTextFieldModel

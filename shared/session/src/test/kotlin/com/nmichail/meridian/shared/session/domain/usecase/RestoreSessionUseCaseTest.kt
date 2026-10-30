@@ -4,8 +4,8 @@ import com.nmichail.meridian.core.network.device.DeviceIdentityRepository
 import com.nmichail.meridian.core.network.session.AuthSession
 import com.nmichail.meridian.core.network.session.SessionRefresher
 import com.nmichail.meridian.core.network.session.SessionRepository
-import com.nmichail.meridian.core.testutils.TestCoroutineExtension
-import com.nmichail.meridian.core.testutils.doThrowSafe
+import com.nmichail.meridian.testutils.TestCoroutineExtension
+import com.nmichail.meridian.testutils.doThrowSafe
 import java.io.IOException
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals

@@ -1,10 +1,18 @@
 package com.nmichail.meridian.features.chat.presentation
 
 import androidx.lifecycle.Observer
-import com.nmichail.meridian.core.network.error.ErrorStateConverter
-import com.nmichail.meridian.core.testutils.InstantExecutorExtension
-import com.nmichail.meridian.core.testutils.TestCoroutineExtension
-import com.nmichail.meridian.core.testutils.doThrowSafe
+import com.nmichail.meridian.core.network.device.DeviceIdentityRepository
+import com.nmichail.meridian.core.network.error.GatewayCode
+import com.nmichail.meridian.core.network.error.GatewayException
+import com.nmichail.meridian.core.network.error.presentation.DefaultErrorEventConverter
+import com.nmichail.meridian.core.network.error.presentation.DefaultErrorReactionConverter
+import com.nmichail.meridian.core.network.error.presentation.ErrorDelegate
+import com.nmichail.meridian.core.network.error.presentation.ErrorLogger
+import com.nmichail.meridian.core.network.error.presentation.ErrorRouter
+import com.nmichail.meridian.core.network.session.SessionRepository
+import com.nmichail.meridian.testutils.InstantExecutorExtension
+import com.nmichail.meridian.testutils.TestCoroutineExtension
+import com.nmichail.meridian.testutils.doThrowSafe
 import com.nmichail.meridian.shared.chat.data.realtime.ChatRealtime
 import com.nmichail.meridian.shared.chat.domain.entity.Chat
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType
@@ -28,13 +36,20 @@ class ChatViewModelTest {
 	private val realtime: ChatRealtime = mock {
 		on { chatIds } doReturn MutableSharedFlow()
 	}
-	private val errorStateConverter = ErrorStateConverter()
+	private val errorDelegate = ErrorDelegate(
+		errorLogger = ErrorLogger(),
+		defaultErrorReactionConverter = DefaultErrorReactionConverter(),
+		defaultErrorEventConverter = DefaultErrorEventConverter(),
+		errorRouter = mock<ErrorRouter>(),
+		sessionRepository = mock<SessionRepository>(),
+		deviceIdentityRepository = mock<DeviceIdentityRepository>(),
+	)
 	private val router: ChatRouter = mock()
 	private val eventObserver: Observer<ChatEvent> = mock()
 	private val viewModel = ChatViewModel(
 		loadChatsUseCase,
 		realtime,
-		errorStateConverter,
+		errorDelegate,
 		router,
 	)
 
@@ -119,23 +134,55 @@ class ChatViewModelTest {
 	}
 
 	@Test
-	fun `load failure EXPECT no connection event`() = runTest {
-		whenever(loadChatsUseCase.invoke()).doThrowSafe(ioException)
-		viewModel.event.observeForever(eventObserver)
+	fun `session ended EXPECT loading`() = runTest {
+		whenever(loadChatsUseCase.invoke()).doThrowSafe(GatewayException(code = GatewayCode.UNAUTHORIZED))
 
 		viewModel.applyIntent(ChatIntent.LoadInitialData)
+
+		assertEquals(ChatState.Loading, viewModel.state.value)
+	}
+
+	@Test
+	fun `refresh failure EXPECT no connection event`() = runTest {
+		whenever(loadChatsUseCase.invoke()).doReturn(chats).doThrowSafe(ioException)
+		viewModel.event.observeForever(eventObserver)
+		viewModel.applyIntent(ChatIntent.LoadInitialData)
+
+		viewModel.applyIntent(ChatIntent.Retry)
 
 		verify(eventObserver).onChanged(ChatEvent.NoConnection)
 	}
 
 	@Test
-	fun `load failure EXPECT unknown event`() = runTest {
-		whenever(loadChatsUseCase.invoke()).doThrowSafe(illegalStateException)
+	fun `refresh failure EXPECT unknown event`() = runTest {
+		whenever(loadChatsUseCase.invoke()).doReturn(chats).doThrowSafe(illegalStateException)
 		viewModel.event.observeForever(eventObserver)
-
 		viewModel.applyIntent(ChatIntent.LoadInitialData)
 
+		viewModel.applyIntent(ChatIntent.Retry)
+
 		verify(eventObserver).onChanged(ChatEvent.Error)
+	}
+
+	@Test
+	fun `refresh failure EXPECT content`() = runTest {
+		whenever(loadChatsUseCase.invoke()).doReturn(chats).doThrowSafe(ioException)
+		viewModel.applyIntent(ChatIntent.LoadInitialData)
+
+		viewModel.applyIntent(ChatIntent.Retry)
+
+		assertEquals(
+			ChatState.Content(
+				corporate = true,
+				section = ChatSection.ALL,
+				corporateChats = chats,
+				externalTabChats = emptyList(),
+				corporateDiscussions = emptyList(),
+				externalTabDiscussions = emptyList(),
+				createOpen = false,
+			),
+			viewModel.state.value,
+		)
 	}
 
 	@Test

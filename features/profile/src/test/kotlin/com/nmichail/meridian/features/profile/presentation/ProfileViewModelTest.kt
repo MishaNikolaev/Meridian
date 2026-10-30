@@ -1,7 +1,15 @@
 package com.nmichail.meridian.features.profile.presentation
 
-import com.nmichail.meridian.core.testutils.TestCoroutineExtension
-import com.nmichail.meridian.core.testutils.doThrowSafe
+import com.nmichail.meridian.core.network.R as NetworkR
+import com.nmichail.meridian.core.network.device.DeviceIdentityRepository
+import com.nmichail.meridian.core.network.error.presentation.DefaultErrorEventConverter
+import com.nmichail.meridian.core.network.error.presentation.DefaultErrorReactionConverter
+import com.nmichail.meridian.core.network.error.presentation.ErrorDelegate
+import com.nmichail.meridian.core.network.error.presentation.ErrorLogger
+import com.nmichail.meridian.core.network.error.presentation.ErrorRouter
+import com.nmichail.meridian.core.network.session.SessionRepository
+import com.nmichail.meridian.testutils.TestCoroutineExtension
+import com.nmichail.meridian.testutils.doThrowSafe
 import com.nmichail.meridian.features.profile.domain.entity.ProfileAccount
 import com.nmichail.meridian.features.profile.domain.usecase.LoadProfileUseCase
 import com.nmichail.meridian.shared.session.domain.usecase.LogoutUseCase
@@ -25,6 +33,14 @@ class ProfileViewModelTest {
 	private val viewModel = ProfileViewModel(
 		loadProfileUseCase,
 		logoutUseCase,
+		ErrorDelegate(
+			errorLogger = ErrorLogger(),
+			defaultErrorReactionConverter = DefaultErrorReactionConverter(),
+			defaultErrorEventConverter = DefaultErrorEventConverter(),
+			errorRouter = mock<ErrorRouter>(),
+			sessionRepository = mock<SessionRepository>(),
+			deviceIdentityRepository = mock<DeviceIdentityRepository>(),
+		),
 		router,
 	)
 	private val account = ProfileAccount(
@@ -53,7 +69,10 @@ class ProfileViewModelTest {
 
 		viewModel.applyIntent(ProfileIntent.LoadInitialData)
 
-		assertEquals(ProfileState.Error, viewModel.state.value)
+		assertEquals(
+			ProfileState.Error(message = NetworkR.string.error_no_connection),
+			viewModel.state.value,
+		)
 	}
 
 	@Test

@@ -14,9 +14,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.nmichail.meridian.component.ui.R as UiR
 import com.nmichail.meridian.component.ui.button.MUiButton
 import com.nmichail.meridian.component.ui.button.model.MUiButtonModel
 import com.nmichail.meridian.component.ui.button.model.MUiButtonStyle
+import com.nmichail.meridian.component.ui.error.MUiErrorInPlace
 import com.nmichail.meridian.component.ui.text.MUiTitleScreenText
 import com.nmichail.meridian.features.profile.R
 import com.nmichail.meridian.features.profile.presentation.ProfileIntent
@@ -37,15 +39,17 @@ fun ProfileScreen(
 	when (val current = uiState) {
 		ProfileState.Initial, ProfileState.Loading -> Unit
 
-		ProfileState.Error                         -> ProfileColumn(
+		is ProfileState.Error                      -> ProfileColumn(
 			name = null,
 			email = null,
+			message = current.message,
 			onIntent = onIntent,
 		)
 
 		is ProfileState.Content                    -> ProfileColumn(
 			name = current.name,
 			email = current.email,
+			message = null,
 			onIntent = onIntent,
 		)
 	}
@@ -55,6 +59,7 @@ fun ProfileScreen(
 private fun ProfileColumn(
 	name: String?,
 	email: String?,
+	message: Int?,
 	onIntent: (ProfileIntent) -> Unit,
 ) {
 	Column(
@@ -75,6 +80,14 @@ private fun ProfileColumn(
 			Text(
 				text = email,
 				modifier = Modifier.padding(top = 8.dp),
+			)
+		}
+		if (message != null) {
+			MUiErrorInPlace(
+				message = stringResource(message),
+				retry = stringResource(UiR.string.error_retry),
+				onRetry = { onIntent(ProfileIntent.LoadInitialData) },
+				modifier = Modifier.padding(top = 24.dp),
 			)
 		}
 

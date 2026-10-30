@@ -48,6 +48,7 @@ fun MUiSwipeReply(
 	val density = LocalDensity.current
 	val trigger = with(density) { 64.dp.toPx() }
 	val limit = with(density) { 80.dp.toPx() }
+
 	Box(modifier = modifier.fillMaxWidth()) {
 		ReplyMark(progress = (-drag / trigger).coerceIn(0f, 1f))
 
@@ -61,10 +62,12 @@ fun MUiSwipeReply(
 					onMove = { next, crossed ->
 						settle?.cancel()
 						drag = next
+
 						if (crossed && !armed) {
 							armed = true
 							haptic.performHapticFeedback(HapticFeedbackType.LongPress)
 						}
+
 						if (!crossed) {
 							armed = false
 						}
@@ -75,6 +78,7 @@ fun MUiSwipeReply(
 						settle = scope.launch {
 							Animatable(from).animateTo(0f) { drag = value }
 						}
+
 						if (reply) {
 							onReply()
 						}
@@ -110,6 +114,7 @@ private fun Modifier.dragReply(
 	if (!enabled) {
 		return@pointerInput
 	}
+
 	var offset = 0f
 	detectHorizontalDragGestures(
 		onDragCancel = {

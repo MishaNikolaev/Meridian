@@ -8,7 +8,7 @@ import com.nmichail.meridian.core.network.error.GatewayException
 import com.nmichail.meridian.core.network.session.AuthSession
 import com.nmichail.meridian.core.network.session.SessionRefresher
 import com.nmichail.meridian.core.network.session.SessionRepository
-import com.nmichail.meridian.core.testutils.doThrowSafe
+import com.nmichail.meridian.testutils.doThrowSafe
 import com.nmichail.meridian.shared.session.data.api.AuthorizationApi
 import com.nmichail.meridian.shared.session.data.mapper.toRequest
 import com.nmichail.meridian.shared.session.data.model.LogoutRequest

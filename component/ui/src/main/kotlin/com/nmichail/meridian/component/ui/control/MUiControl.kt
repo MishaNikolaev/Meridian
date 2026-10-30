@@ -24,6 +24,7 @@ fun MUiSwitch(
 	modifier: Modifier = Modifier,
 ) {
 	val track = if (model.checked) palette.accentPrimary else palette.borderStrong
+
 	Box(
 		modifier = modifier
 			.size(width = 46.dp, height = 28.dp)

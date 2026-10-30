@@ -2,12 +2,13 @@ package com.nmichail.meridian.shared.session.data.datasource
 
 import android.content.Context
 import androidx.core.content.edit
+import com.nmichail.meridian.core.di.ApplicationContext
 import com.nmichail.meridian.core.network.device.DeviceIdentity
 import com.nmichail.meridian.core.network.device.DevicePreKey
 import com.nmichail.meridian.core.network.device.DevicePreKeys
-import com.nmichail.meridian.core.storage.ApplicationContext
 import com.nmichail.meridian.core.storage.SecretCipher
 import com.nmichail.meridian.core.storage.openSecret
+import com.nmichail.meridian.core.storage.putSecret
 import javax.inject.Inject
 
 interface DeviceIdentityDataSource {
@@ -56,7 +57,7 @@ class DeviceIdentityDataSourceImpl @Inject constructor(
 		preferences.edit {
 			putString(DEVICE_ID, identity.deviceId)
 			putString(PUBLIC_KEY, identity.publicKey)
-			putString(PRIVATE_KEY, secrets.seal(identity.exportPrivateKey()))
+			putSecret(secrets, PRIVATE_KEY, identity.exportPrivateKey())
 		}
 	}
 
@@ -84,11 +85,11 @@ class DeviceIdentityDataSourceImpl @Inject constructor(
 		preferences.edit {
 			putString(SIGNED_PREKEY_ID, preKeys.signedPreKey.id.toString())
 			putString(SIGNED_PREKEY_PUBLIC, preKeys.signedPreKey.publicKey)
-			putString(SIGNED_PREKEY_PRIVATE, secrets.seal(preKeys.signedPreKey.privateKey))
+			putSecret(secrets, SIGNED_PREKEY_PRIVATE, preKeys.signedPreKey.privateKey)
 			putString(SIGNED_PREKEY_SIGNATURE, preKeys.signedPreKeySignature)
 			putString(ONE_TIME_PREKEY_ID, preKeys.oneTimePreKey.id.toString())
 			putString(ONE_TIME_PREKEY_PUBLIC, preKeys.oneTimePreKey.publicKey)
-			putString(ONE_TIME_PREKEY_PRIVATE, secrets.seal(preKeys.oneTimePreKey.privateKey))
+			putSecret(secrets, ONE_TIME_PREKEY_PRIVATE, preKeys.oneTimePreKey.privateKey)
 		}
 	}
 

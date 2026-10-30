@@ -23,7 +23,7 @@ dependencies {
 	implementation(projects.shared.chat)
 	implementation(projects.shared.session)
 
-	testImplementation(projects.core.testutils)
+	testImplementation(projects.testutils)
 	testImplementation(libs.bundles.test.junit5)
 	testImplementation(libs.bundles.test.mockito)
 	testImplementation(libs.test.coroutines)

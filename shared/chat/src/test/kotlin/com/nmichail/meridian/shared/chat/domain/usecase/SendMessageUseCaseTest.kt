@@ -1,6 +1,6 @@
 package com.nmichail.meridian.shared.chat.domain.usecase
 
-import com.nmichail.meridian.core.testutils.TestCoroutineExtension
+import com.nmichail.meridian.testutils.TestCoroutineExtension
 import com.nmichail.meridian.shared.chat.domain.repository.ChatRepository
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test

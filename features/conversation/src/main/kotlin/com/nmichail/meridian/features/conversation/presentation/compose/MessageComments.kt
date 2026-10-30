@@ -31,7 +31,7 @@ import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.features.conversation.R
 import com.nmichail.meridian.features.conversation.presentation.ConversationIntent
-import com.nmichail.meridian.features.conversation.presentation.reactionGlyph
+import com.nmichail.meridian.features.conversation.presentation.compose.component.reactionGlyph
 import com.nmichail.meridian.shared.chat.domain.entity.ChatReaction
 
 @Composable

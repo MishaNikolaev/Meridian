@@ -6,6 +6,6 @@ plugins {
 dependencies {
 	implementation(libs.androidx.core.ktx)
 	implementation(libs.dagger)
-	implementation(libs.bouncycastle)
+	implementation(projects.core.di)
 	kapt(libs.dagger.compiler)
 }

@@ -20,7 +20,7 @@ class SplashViewModel @Inject constructor(
 	private fun handleLoadInitialData() {
 		launchTry {
 			handleRestore()
-		} catch ::handleError
+		} catch ::handleRestoreFailure
 	}
 
 	private suspend fun handleRestore() {
@@ -31,7 +31,7 @@ class SplashViewModel @Inject constructor(
 		}
 	}
 
-	private fun handleError(error: Exception) {
+	private fun handleRestoreFailure(error: Exception) {
 		router.navigateToSignIn()
 	}
 }

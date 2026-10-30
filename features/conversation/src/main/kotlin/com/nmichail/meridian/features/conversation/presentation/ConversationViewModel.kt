@@ -1,5 +1,9 @@
 package com.nmichail.meridian.features.conversation.presentation
 
+import com.nmichail.meridian.core.network.error.presentation.BlockingErrorProcessResult
+import com.nmichail.meridian.core.network.error.presentation.DefaultErrorEvent
+import com.nmichail.meridian.core.network.error.presentation.ErrorDelegate
+import com.nmichail.meridian.core.network.error.presentation.NonBlockingErrorProcessResult
 import com.nmichail.meridian.core.network.error.userMessage
 import com.nmichail.meridian.core.presentation.BaseViewModel
 import com.nmichail.meridian.core.validation.initials.InitialsUseCase
@@ -7,6 +11,8 @@ import com.nmichail.meridian.core.validation.mention.ApplyMentionUseCase
 import com.nmichail.meridian.core.validation.mention.EveryoneMentionUseCase
 import com.nmichail.meridian.core.validation.mention.MatchMentionUseCase
 import com.nmichail.meridian.core.validation.mention.MentionQueryUseCase
+import com.nmichail.meridian.features.conversation.domain.entity.toMention
+import com.nmichail.meridian.features.conversation.presentation.compose.component.days
 import com.nmichail.meridian.features.conversation.presentation.compose.component.keepingEdits
 import com.nmichail.meridian.features.conversation.presentation.compose.component.markDeleted
 import com.nmichail.meridian.features.conversation.presentation.compose.component.mergeReactionViewers
@@ -25,6 +31,7 @@ import com.nmichail.meridian.shared.chat.domain.usecase.SaveReactionUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.SendMessageUseCase
 import java.time.Instant
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 
 class ConversationViewModel @Inject constructor(
 	private val loadMessagesUseCase: LoadMessagesUseCase,
@@ -41,8 +48,9 @@ class ConversationViewModel @Inject constructor(
 	private val everyoneMentionUseCase: EveryoneMentionUseCase,
 	private val initialsUseCase: InitialsUseCase,
 	private val realtime: ChatRealtime,
+	private val errorDelegate: ErrorDelegate,
 	private val router: ConversationRouter,
-) : BaseViewModel<ConversationState, ConversationIntent, Nothing>() {
+) : BaseViewModel<ConversationState, ConversationIntent, ConversationEvent>() {
 
 	private var markedChatId: String? = null
 
@@ -192,7 +200,7 @@ class ConversationViewModel @Inject constructor(
 					)
 				}
 			}
-		} catch { _ -> }
+		} catch ::handleRefreshFailure
 	}
 
 	private fun handleChangeDraft(value: String) {
@@ -291,7 +299,7 @@ class ConversationViewModel @Inject constructor(
 			val sent = state.value as? ConversationState.Content ?: return@launchTry
 			setState(sent.copy(sending = false))
 			handleLoadMessages(chatId)
-		} catch ::handleError
+		} catch ::handleSendFailure
 	}
 
 	private fun handleSendBot(text: String, replyAuthor: String, replyText: String) {
@@ -371,7 +379,7 @@ class ConversationViewModel @Inject constructor(
 		saveReactionUseCase(lineId, reaction)
 		launchTry {
 			reactUseCase(lineId, reaction)
-		} catch { _ -> }
+		} catch ::handleRefreshFailure
 	}
 
 	private fun handlePin(lineId: String) {
@@ -451,9 +459,7 @@ class ConversationViewModel @Inject constructor(
 		}
 		launchTry {
 			ids.forEach { id -> deleteMessageUseCase(id) }
-		} catch { _ ->
-			handleLoadMessages(currentState.chatId)
-		}
+		} catch ::handleDeleteFailure
 	}
 
 	private fun handleApplyEdit(text: String) {
@@ -495,6 +501,7 @@ class ConversationViewModel @Inject constructor(
 		rootId: String?,
 		personId: String,
 	) {
+		val failure = if (state.value is ConversationState.Content) ::handleRefreshFailure else ::handleLoadFailure
 		launchTry {
 			val thread = loadMessagesUseCase(chatId)
 			val contentState = state.value as? ConversationState.Content
@@ -512,7 +519,7 @@ class ConversationViewModel @Inject constructor(
 				reactionViewers = thread.reactionViewers,
 			)
 			handleMarkRead(chatId, thread.readUpTo)
-		} catch ::handleError
+		} catch failure
 	}
 
 	private suspend fun handleMarkRead(chatId: String, messageId: String?) {
@@ -523,17 +530,54 @@ class ConversationViewModel @Inject constructor(
 		if (messageId == null || messageId == markedMessageId) {
 			return
 		}
-		markReadUseCase(messageId)
+		try {
+			markReadUseCase(messageId)
+		} catch (error: CancellationException) {
+			throw error
+		} catch (error: Exception) {
+			handleRefreshFailure(error)
+			return
+		}
 		markedMessageId = messageId
 	}
 
-	private fun handleError(error: Exception) {
-		val current = state.value as? ConversationState.Content
-		if (current != null && !current.sending) {
+	private fun handleSendFailure(error: Exception) {
+		(state.value as? ConversationState.Content)?.let { current -> setState(current.copy(sending = false)) }
+		handleRefreshFailure(error)
+	}
+
+	private fun handleDeleteFailure(error: Exception) {
+		handleRefreshFailure(error)
+		(state.value as? ConversationState.Content)?.let { current -> handleLoadMessages(current.chatId) }
+	}
+
+	private fun handleRefreshFailure(error: Exception) {
+		val result = errorDelegate.processNonBlockingError(error)
+		val recommended = (result as? NonBlockingErrorProcessResult.NotHandled)?.recommended ?: return
+		setEvent(recommended.toEvent())
+	}
+
+	private fun handleLoadFailure(error: Exception) {
+		val result = errorDelegate.processBlockingError(
+			exception = error,
+			retryIntent = ConversationIntent.NavigateBack,
+			backIntent = ConversationIntent.NavigateBack,
+		)
+
+		if (result is BlockingErrorProcessResult.Handled) {
 			return
 		}
-		setState(ConversationState.Error(message = error.userMessage()))
+
+		setState(
+			ConversationState.Error(message = error.userMessage())
+		)
 	}
+
+	private fun DefaultErrorEvent.toEvent(): ConversationEvent =
+		when (this) {
+			DefaultErrorEvent.NoConnection -> ConversationEvent.NoConnection
+			DefaultErrorEvent.Default -> ConversationEvent.Error
+		}
 
 	private fun handlePublish(
 		chatId: String,
@@ -612,12 +656,7 @@ class ConversationViewModel @Inject constructor(
 				)
 			}.map { person ->
 				val title = person.displayName.ifBlank { person.username }
-				Mention(
-					token = person.username,
-					title = title,
-					note = "@${person.username}",
-					initials = initialsUseCase(title),
-				)
+				person.toMention(initialsUseCase(title))
 			}
 		}
 		setState(

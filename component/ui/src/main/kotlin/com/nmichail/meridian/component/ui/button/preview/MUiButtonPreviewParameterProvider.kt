@@ -42,6 +42,7 @@ private fun MUiButtonPreview(
 			MUiButtonStyle.Icon, MUiButtonStyle.Fab, MUiButtonStyle.Text -> Modifier
 			else -> Modifier.width(328.dp)
 		}
+
 		MUiButton(
 			model = data.model,
 			onClick = {},

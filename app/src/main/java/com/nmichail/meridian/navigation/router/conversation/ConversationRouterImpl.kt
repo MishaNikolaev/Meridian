@@ -3,7 +3,7 @@ package com.nmichail.meridian.navigation.router.conversation
 import com.nmichail.meridian.core.navigation.router.GlobalRouter
 import com.nmichail.meridian.features.conversation.presentation.ConversationRouter
 import com.nmichail.meridian.features.conversation.presentation.getConversationScreen
-import com.nmichail.meridian.features.profile.presentation.getPersonScreen
+import com.nmichail.meridian.features.person.presentation.getPersonScreen
 import javax.inject.Inject
 
 class ConversationRouterImpl @Inject constructor(

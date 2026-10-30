@@ -19,9 +19,8 @@ dependencies {
 	implementation(projects.core.presentation)
 	implementation(projects.core.navigation)
 	implementation(projects.core.network)
-	implementation(projects.core.storage)
 
-	testImplementation(projects.core.testutils)
+	testImplementation(projects.testutils)
 	testImplementation(libs.bundles.test.junit5)
 	testImplementation(libs.bundles.test.mockito)
 	testImplementation(libs.test.coroutines)

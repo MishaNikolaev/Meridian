@@ -1,14 +1,12 @@
 package com.nmichail.meridian.features.authorization.workspace.presentation
 
-import com.nmichail.meridian.core.network.error.ErrorStateConverter
-import com.nmichail.meridian.core.network.error.GatewayCode
-import com.nmichail.meridian.core.network.error.GatewayException
-import com.nmichail.meridian.core.network.error.StatusCodes
+import com.nmichail.meridian.core.network.error.NoConnectionException
+import com.nmichail.meridian.core.network.error.PasswordMismatchException
 import com.nmichail.meridian.core.network.session.AuthSession
 import androidx.lifecycle.Observer
-import com.nmichail.meridian.core.testutils.InstantExecutorExtension
-import com.nmichail.meridian.core.testutils.TestCoroutineExtension
-import com.nmichail.meridian.core.testutils.doThrowSafe
+import com.nmichail.meridian.testutils.InstantExecutorExtension
+import com.nmichail.meridian.testutils.TestCoroutineExtension
+import com.nmichail.meridian.testutils.doThrowSafe
 import com.nmichail.meridian.core.validation.DefaultValidationState
 import com.nmichail.meridian.core.validation.email.EmailValidationItem
 import com.nmichail.meridian.core.validation.email.ValidateEmailUseCase
@@ -19,7 +17,6 @@ import com.nmichail.meridian.core.validation.password.PasswordInvalidState
 import com.nmichail.meridian.core.validation.password.PasswordValidationItem
 import com.nmichail.meridian.core.validation.password.ValidatePasswordUseCase
 import com.nmichail.meridian.shared.session.domain.usecase.SignInWorkspaceUseCase
-import java.io.IOException
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -36,7 +33,6 @@ class WorkspaceViewModelTest {
 	private val validateNotEmptyUseCase: ValidateNotEmptyUseCase = mock()
 	private val validateEmailUseCase: ValidateEmailUseCase = mock()
 	private val validatePasswordUseCase: ValidatePasswordUseCase = mock()
-	private val errorStateConverter = ErrorStateConverter()
 	private val router: WorkspaceRouter = mock()
 	private val eventObserver: Observer<WorkspaceEvent> = mock()
 	private val viewModel = WorkspaceViewModel(
@@ -44,7 +40,6 @@ class WorkspaceViewModelTest {
 		validateNotEmptyUseCase,
 		validateEmailUseCase,
 		validatePasswordUseCase,
-		errorStateConverter,
 		router,
 	)
 	private val session = AuthSession(
@@ -141,10 +136,7 @@ class WorkspaceViewModelTest {
 			validationState = DefaultValidationState.Valid,
 		)
 		whenever(signInWorkspaceUseCase.invoke("meridian.name.ru", "chief@name.ru", "meridian1")) doThrowSafe
-			GatewayException(
-				code = GatewayCode.PASSWORD_MISMATCH,
-				httpStatus = StatusCodes.NEEDS_AUTHORIZATION.statusCode,
-			)
+			PasswordMismatchException(httpStatus = 401)
 		viewModel.applyIntent(WorkspaceIntent.ChangeHost(value = "meridian.name.ru"))
 		viewModel.applyIntent(WorkspaceIntent.ChangeEmail(value = "chief@name.ru"))
 		viewModel.applyIntent(WorkspaceIntent.ChangePassword(value = "meridian1"))
@@ -169,8 +161,7 @@ class WorkspaceViewModelTest {
 			data = "meridian1",
 			validationState = DefaultValidationState.Valid,
 		)
-		whenever(signInWorkspaceUseCase.invoke("meridian.name.ru", "chief@name.ru", "meridian1")) doThrowSafe
-			IOException()
+		whenever(signInWorkspaceUseCase.invoke("meridian.name.ru", "chief@name.ru", "meridian1")) doThrowSafe NoConnectionException()
 		viewModel.applyIntent(WorkspaceIntent.ChangeHost(value = "meridian.name.ru"))
 		viewModel.applyIntent(WorkspaceIntent.ChangeEmail(value = "chief@name.ru"))
 		viewModel.applyIntent(WorkspaceIntent.ChangePassword(value = "meridian1"))

@@ -12,7 +12,7 @@ import com.nmichail.meridian.core.navigation.router.FullScreenRouter
 import com.nmichail.meridian.core.navigation.router.GlobalRouter
 import com.nmichail.meridian.core.navigation.router.SectionRouter
 import com.nmichail.meridian.core.navigation.section.SectionNames
-import com.nmichail.meridian.core.storage.ApplicationContext
+import com.nmichail.meridian.core.di.ApplicationContext
 import com.nmichail.meridian.features.authorization.signin.presentation.SignInRouter
 import com.nmichail.meridian.features.authorization.workspace.presentation.WorkspaceRouter
 import com.nmichail.meridian.features.conversation.presentation.ConversationRouter
@@ -36,7 +36,15 @@ import dagger.Module
 import dagger.Provides
 import javax.inject.Singleton
 
-@Module(includes = [GroupRoutersModule::class, SearchRoutersModule::class, SplashRoutersModule::class])
+@Module(
+	includes = [
+		GroupRoutersModule::class,
+		SearchRoutersModule::class,
+		SplashRoutersModule::class,
+		PersonRoutersModule::class,
+		ErrorRoutersModule::class,
+	],
+)
 abstract class RoutersModule {
 
 	companion object {

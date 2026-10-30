@@ -2,8 +2,8 @@ package com.nmichail.meridian.features.authorization.signin.presentation
 
 import com.nmichail.meridian.core.network.R
 import com.nmichail.meridian.core.network.session.AuthSession
-import com.nmichail.meridian.core.testutils.TestCoroutineExtension
-import com.nmichail.meridian.core.testutils.doThrowSafe
+import com.nmichail.meridian.testutils.TestCoroutineExtension
+import com.nmichail.meridian.testutils.doThrowSafe
 import com.nmichail.meridian.core.validation.DefaultValidationState
 import com.nmichail.meridian.core.validation.password.PasswordInvalidState
 import com.nmichail.meridian.core.validation.password.PasswordValidationItem

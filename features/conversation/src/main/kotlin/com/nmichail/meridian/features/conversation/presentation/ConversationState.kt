@@ -1,5 +1,7 @@
 package com.nmichail.meridian.features.conversation.presentation
 
+import com.nmichail.meridian.features.conversation.domain.entity.Mention
+import com.nmichail.meridian.features.conversation.presentation.compose.component.DayLine
 import com.nmichail.meridian.shared.chat.domain.entity.ChatLine
 import com.nmichail.meridian.shared.chat.domain.entity.ChatPerson
 import com.nmichail.meridian.shared.chat.domain.entity.ChatReaction
@@ -41,10 +43,3 @@ sealed interface ConversationState {
 		val message: Int,
 	) : ConversationState
 }
-
-data class Mention(
-	val token: String,
-	val title: String,
-	val note: String,
-	val initials: String,
-)

@@ -30,10 +30,10 @@ import com.nmichail.meridian.component.ui.sheet.MUiSheet
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.features.conversation.R
-import com.nmichail.meridian.features.conversation.presentation.messageClock
-import com.nmichail.meridian.features.conversation.presentation.messageDay
-import com.nmichail.meridian.features.conversation.presentation.reactionGlyph
-import com.nmichail.meridian.features.conversation.presentation.reactionToday
+import com.nmichail.meridian.features.conversation.presentation.compose.component.messageClock
+import com.nmichail.meridian.features.conversation.presentation.compose.component.messageDay
+import com.nmichail.meridian.features.conversation.presentation.compose.component.reactionGlyph
+import com.nmichail.meridian.features.conversation.presentation.compose.component.reactionToday
 import com.nmichail.meridian.shared.chat.domain.entity.ChatReaction
 
 @Composable

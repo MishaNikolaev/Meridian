@@ -48,12 +48,14 @@ fun MUiLinkedText(
 			textDecoration = TextDecoration.Underline,
 		),
 	)
+
 	val annotatedString = rememberLinkedString(
 		text = text,
 		linkText = linkText,
 		linkStyles = linkStyles,
 		onLinkClick = currentOnLinkClick,
 	)
+
 	Text(
 		text = annotatedString,
 		style = style,

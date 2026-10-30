@@ -11,5 +11,7 @@ sealed interface ProfileState {
 		val email: String,
 	) : ProfileState
 
-	data object Error : ProfileState
+	data class Error(
+		val message: Int,
+	) : ProfileState
 }

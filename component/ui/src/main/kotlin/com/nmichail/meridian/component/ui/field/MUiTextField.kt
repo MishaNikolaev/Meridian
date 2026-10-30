@@ -52,6 +52,7 @@ fun MUiTextField(
 	val shape = RoundedCornerShape(14.dp)
 	var focused by remember { mutableStateOf(false) }
 	var revealed by remember { mutableStateOf(false) }
+
 	val borderColor = fieldBorder(
 		error = model.error,
 		focused = focused,
@@ -59,6 +60,7 @@ fun MUiTextField(
 		outlined = model.outlined,
 		palette = palette,
 	)
+
 	Column(
 		modifier = modifier.fillMaxWidth(),
 		verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -80,6 +82,7 @@ fun MUiTextField(
 			horizontalArrangement = Arrangement.spacedBy(10.dp),
 		) {
 			MUiTextFieldIcon(model.icon)
+
 			MUiTextFieldInput(
 				model = model,
 				revealed = revealed,
@@ -88,8 +91,12 @@ fun MUiTextField(
 				onDone = onDone,
 				modifier = Modifier.weight(1f),
 			)
+
 			if (model.secret) {
-				MUiPasswordReveal(revealed = revealed, onClick = { revealed = !revealed })
+				MUiPasswordReveal(
+					revealed = revealed,
+					onClick = { revealed = !revealed }
+				)
 			}
 		}
 		if (model.error.isNotEmpty()) {

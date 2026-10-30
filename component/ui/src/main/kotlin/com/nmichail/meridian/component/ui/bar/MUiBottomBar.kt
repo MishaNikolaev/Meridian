@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.nmichail.meridian.component.ui.R
 import com.nmichail.meridian.component.ui.bar.model.MUiBottomDestination
+import com.nmichail.meridian.component.ui.bar.model.MUiBottomTab
 import com.nmichail.meridian.component.ui.text.MUiLabelBadgeText
 import com.nmichail.meridian.component.ui.theme.palette
 
@@ -56,10 +57,16 @@ fun MUiBottomBar(
 				.height(1.dp)
 				.background(palette.borderDefault),
 		)
+
 		Row(
 			modifier = Modifier
 				.fillMaxWidth()
-				.padding(start = 8.dp, top = 8.dp, end = 8.dp, bottom = 10.dp),
+				.padding(
+					start = 8.dp,
+					top = 8.dp,
+					end = 8.dp,
+					bottom = 10.dp
+				),
 		) {
 			tabs.forEach { tab ->
 				BottomTab(
@@ -75,13 +82,14 @@ fun MUiBottomBar(
 
 @Composable
 private fun BottomTab(
-	tab: BottomTabSpec,
+	tab: MUiBottomTab,
 	selected: Boolean,
 	onClick: () -> Unit,
 	modifier: Modifier = Modifier,
 ) {
 	val interactionSource = remember { MutableInteractionSource() }
 	val pressed by interactionSource.collectIsPressedAsState()
+
 	Column(
 		modifier = modifier.clickable(
 			interactionSource = interactionSource,
@@ -97,6 +105,7 @@ private fun BottomTab(
 			pressed = pressed,
 			tint = palette.textPrimary,
 		)
+
 		MUiLabelBadgeText(
 			text = stringResource(tab.label),
 			color = if (selected) palette.textPrimary else palette.textSecondary,
@@ -140,15 +149,9 @@ private fun ContentDrawScope.drawPressedIcon() {
 	drawIntoCanvas { canvas -> canvas.restore() }
 }
 
-private data class BottomTabSpec(
-	val destination: MUiBottomDestination,
-	val icon: Int,
-	val label: Int,
-)
-
 private val tabs = listOf(
-	BottomTabSpec(MUiBottomDestination.HOME, R.drawable.ic_tab_chat, R.string.tab_home),
-	BottomTabSpec(MUiBottomDestination.CONTACTS, R.drawable.ic_tab_people, R.string.tab_contacts),
-	BottomTabSpec(MUiBottomDestination.CALLS, R.drawable.ic_tab_call, R.string.tab_calls),
-	BottomTabSpec(MUiBottomDestination.PROFILE, R.drawable.ic_tab_profile, R.string.tab_profile),
+	MUiBottomTab(MUiBottomDestination.HOME, R.drawable.ic_tab_chat, R.string.tab_home),
+	MUiBottomTab(MUiBottomDestination.CONTACTS, R.drawable.ic_tab_people, R.string.tab_contacts),
+	MUiBottomTab(MUiBottomDestination.CALLS, R.drawable.ic_tab_call, R.string.tab_calls),
+	MUiBottomTab(MUiBottomDestination.PROFILE, R.drawable.ic_tab_profile, R.string.tab_profile),
 )
