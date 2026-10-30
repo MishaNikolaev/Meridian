@@ -2,10 +2,11 @@ package com.nmichail.meridian.shared.session.data.datasource
 
 import android.content.Context
 import androidx.core.content.edit
+import com.nmichail.meridian.core.di.ApplicationContext
 import com.nmichail.meridian.core.network.session.AuthSession
-import com.nmichail.meridian.core.storage.ApplicationContext
 import com.nmichail.meridian.core.storage.SecretCipher
 import com.nmichail.meridian.core.storage.openSecret
+import com.nmichail.meridian.core.storage.putSecret
 import javax.inject.Inject
 
 interface SessionLocalDataSource {
@@ -95,8 +96,8 @@ class SessionLocalDataSourceImpl @Inject constructor(
 		preferences.edit {
 			putString(USER_ID, session.userId)
 			putString(DEVICE_ID, session.deviceId)
-			putString(ACCESS_TOKEN, secrets.seal(session.accessToken))
-			putString(REFRESH_TOKEN, secrets.seal(session.refreshToken))
+			putSecret(secrets, ACCESS_TOKEN, session.accessToken)
+			putSecret(secrets, REFRESH_TOKEN, session.refreshToken)
 			putString(EXPIRES_AT, expiresAt.toString())
 		}
 	}

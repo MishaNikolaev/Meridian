@@ -38,7 +38,6 @@ class SessionLocalDataSourceImplTest {
 		whenever(editor.putString(any(), any())) doReturn editor
 		whenever(editor.remove(any())) doReturn editor
 		whenever(secrets.isSealed(any())) doReturn true
-		whenever(secrets.isCurrent(any())) doReturn true
 		whenever(secrets.open(any())) doAnswer { it.getArgument<String>(0) }
 		whenever(secrets.seal(any())) doAnswer { it.getArgument<String>(0) }
 		dataSource = SessionLocalDataSourceImpl(context, secrets)

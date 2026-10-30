@@ -2,7 +2,7 @@ package com.nmichail.meridian.shared.chat.domain.usecase
 
 import com.nmichail.meridian.shared.chat.data.memory.MessageMemory
 import com.nmichail.meridian.shared.chat.domain.entity.ChatThread
-import com.nmichail.meridian.core.testutils.TestCoroutineExtension
+import com.nmichail.meridian.testutils.TestCoroutineExtension
 import com.nmichail.meridian.shared.chat.domain.repository.ChatRepository
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals

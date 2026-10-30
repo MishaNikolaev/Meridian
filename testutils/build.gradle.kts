@@ -3,8 +3,8 @@ plugins {
 }
 
 dependencies {
-	implementation(libs.test.coroutines)
 	implementation(libs.test.junit.api)
+	implementation(libs.test.coroutines)
 	implementation(libs.test.mockito.kotlin)
 	implementation(libs.androidx.arch.core)
 }

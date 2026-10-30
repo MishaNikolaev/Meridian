@@ -127,10 +127,10 @@ class SignInViewModel @Inject constructor(
 		launchTry {
 			signInUseCase(username.data.trim(), password.data)
 			router.navigateToHome()
-		} catch ::handleError
+		} catch ::handleSignInFailure
 	}
 
-	private fun handleError(error: Exception) {
+	private fun handleSignInFailure(error: Exception) {
 		val current = state.value as? SignInState.Loading ?: return
 		setState(
 			SignInState.Error(
