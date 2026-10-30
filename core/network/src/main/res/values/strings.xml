@@ -2,6 +2,8 @@
 <resources>
 	<string name="error_no_connection">Нет соединения с сервером</string>
 	<string name="error_unknown">Не получилось выполнить запрос</string>
+	<string name="error_event_title">Не получилось</string>
+	<string name="error_event_connection_title">Нет соединения</string>
 	<string name="error_username_taken">Логин уже занят</string>
 	<string name="error_device_taken">Это устройство уже привязано к аккаунту</string>
 	<string name="error_user_not_found">Пользователь не зарегистрирован</string>

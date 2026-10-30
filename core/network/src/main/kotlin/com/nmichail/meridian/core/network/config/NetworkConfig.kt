@@ -7,7 +7,17 @@ import javax.inject.Singleton
 @Singleton
 class NetworkConfig @Inject constructor() {
 
+	val host: String = deviceHost
+
+	val port: Int
+		get() = PORT
+
+	val baseUrl: String = "http://$host:$port/"
+
 	private companion object {
+
+		val deviceHost: String = if (isEmulator()) EMULATOR_HOST else DEVICE_HOST
+
 		//TODO Заменить айпишник после миграции на хост
 		const val PORT = 8080
 		const val EMULATOR_HOST = "10.0.2.2"
@@ -25,10 +35,4 @@ class NetworkConfig @Inject constructor() {
 				|| Build.HARDWARE.contains("ranchu")
 		}
 	}
-
-	val host: String = if (isEmulator()) EMULATOR_HOST else DEVICE_HOST
-
-	val port: Int = PORT
-
-	val baseUrl: String = "http://$host:$port/"
 }
