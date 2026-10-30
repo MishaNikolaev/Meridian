@@ -33,16 +33,24 @@ fun MUiButton(
 	modifier: Modifier = Modifier,
 ) {
 	when (model.style) {
-		MUiButtonStyle.Icon -> MUiIconButton(icon = R.drawable.ic_search, onClick = onClick, modifier = modifier)
-		MUiButtonStyle.Fab -> MUiFabButton(onClick, modifier)
-		MUiButtonStyle.Text -> MUiTextButton(model.label, onClick, modifier)
-		MUiButtonStyle.Primary -> MUiFilledButton(
+		MUiButtonStyle.Icon      -> MUiIconButton(
+			icon = R.drawable.ic_search,
+			onClick = onClick,
+			modifier = modifier
+		)
+
+		MUiButtonStyle.Fab       -> MUiFabButton(onClick, modifier)
+
+		MUiButtonStyle.Text      -> MUiTextButton(model.label, onClick, modifier)
+
+		MUiButtonStyle.Primary   -> MUiFilledButton(
 			label = model.label,
 			container = palette.accentButton,
 			content = palette.textOnAccent,
 			onClick = onClick,
 			modifier = modifier,
 		)
+
 		MUiButtonStyle.Secondary -> MUiFilledButton(
 			label = model.label,
 			container = palette.field,
@@ -50,8 +58,10 @@ fun MUiButton(
 			onClick = onClick,
 			modifier = modifier,
 		)
-		MUiButtonStyle.Outline -> MUiOutlineButton(model.label, onClick, modifier)
-		MUiButtonStyle.Danger -> MUiFilledButton(
+
+		MUiButtonStyle.Outline   -> MUiOutlineButton(model.label, onClick, modifier)
+
+		MUiButtonStyle.Danger    -> MUiFilledButton(
 			label = model.label,
 			container = palette.statusError,
 			content = palette.textOnAccent,
@@ -79,7 +89,11 @@ private fun MUiFilledButton(
 			.padding(horizontal = 24.dp, vertical = 16.dp),
 		contentAlignment = Alignment.Center,
 	) {
-		Text(text = label, style = MeridianType.labelButton, color = content)
+		Text(
+			text = label,
+			style = MeridianType.labelButton,
+			color = content
+		)
 	}
 }
 
@@ -99,7 +113,11 @@ private fun MUiOutlineButton(
 			.padding(horizontal = 24.dp, vertical = 16.dp),
 		contentAlignment = Alignment.Center,
 	) {
-		Text(text = label, style = MeridianType.labelButton, color = palette.textSecondary)
+		Text(
+			text = label,
+			style = MeridianType.labelButton,
+			color = palette.textSecondary
+		)
 	}
 }
 

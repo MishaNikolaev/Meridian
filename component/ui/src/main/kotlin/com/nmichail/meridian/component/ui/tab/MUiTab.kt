@@ -37,8 +37,12 @@ fun MUiTab(
 ) {
 	val labelColor = if (model.selected) palette.textPrimary else palette.textTertiary
 	CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
-			Layout(
-			modifier = modifier.padding(start = 10.dp, end = 10.dp, bottom = 9.dp),
+		Layout(
+			modifier = modifier.padding(
+				start = 10.dp,
+				end = 10.dp,
+				bottom = 9.dp
+			),
 			content = {
 				Text(
 					text = model.label,
@@ -46,13 +50,19 @@ fun MUiTab(
 					color = labelColor,
 					modifier = Modifier.pressText(onClick),
 				)
+
 				Box(
 					modifier = Modifier
 						.height(3.dp)
 						.then(
 							if (model.selected && indicator) {
 								Modifier
-									.clip(RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp))
+									.clip(
+										RoundedCornerShape(
+											topStart = 2.dp,
+											topEnd = 2.dp
+										)
+									)
 									.background(palette.textPrimary)
 							} else {
 								Modifier
@@ -64,9 +74,11 @@ fun MUiTab(
 			val label = measurables[0].measure(
 				constraints.copy(minWidth = 0, maxWidth = Constraints.Infinity),
 			)
+
 			val indicator = measurables[1].measure(
 				Constraints.fixed(width = label.width, height = 3.dp.roundToPx()),
 			)
+
 			layout(width = label.width, height = label.height + indicator.height) {
 				label.place(x = 0, y = 0)
 				indicator.place(x = 0, y = label.height)
@@ -92,6 +104,7 @@ fun MUiTitleSwitch(
 			selected = model.leadingSelected,
 			onClick = onLeadingClick,
 		)
+
 		MUiTitleOption(
 			title = model.trailingTitle,
 			count = model.trailingCount,
@@ -110,6 +123,7 @@ private fun MUiTitleOption(
 ) {
 	val titleColor = if (selected) palette.textPrimary else palette.textTertiary
 	val countColor = if (selected) palette.accentPrimary else palette.textTertiary
+
 	CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
 		Row(
 			horizontalArrangement = Arrangement.spacedBy(3.dp),
@@ -121,6 +135,7 @@ private fun MUiTitleOption(
 				color = titleColor,
 				modifier = Modifier.pressText(onClick),
 			)
+
 			if (count > 0) {
 				Text(
 					text = count.toString(),
@@ -159,6 +174,7 @@ fun MUiHeader(
 			onTrailingClick = onTrailingClick,
 			modifier = Modifier.weight(1f),
 		)
+
 		actions()
 	}
 }

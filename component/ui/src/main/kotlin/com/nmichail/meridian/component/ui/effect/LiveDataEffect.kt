@@ -11,12 +11,16 @@ import kotlinx.coroutines.CoroutineScope
 @Composable
 fun <T> LiveDataEffect(liveData: LiveData<T>, action: CoroutineScope.(T) -> Unit) {
 	val lifecycleOwner = LocalLifecycleOwner.current
+
 	val scope = rememberCoroutineScope()
+
 	DisposableEffect(lifecycleOwner, liveData) {
 		val observer = Observer<T> { value ->
 			scope.action(value)
 		}
+
 		liveData.observe(lifecycleOwner, observer)
+
 		onDispose {
 			liveData.removeObserver(observer)
 		}

@@ -37,6 +37,7 @@ internal class MUiTabPreviewParameterProvider : PreviewParameterProvider<MUiTabP
 					title = title,
 				),
 			)
+
 			yield(
 				MUiTabPreviewData(
 					dark = dark,

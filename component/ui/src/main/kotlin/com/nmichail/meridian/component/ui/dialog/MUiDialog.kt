@@ -107,8 +107,17 @@ fun MUiDialogCard(
 			modifier = Modifier.fillMaxWidth(),
 			horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
 		) {
-			MUiDialogAction(text = model.cancel, color = palette.accentPrimary, onClick = onCancel)
-			MUiDialogAction(text = model.confirm, color = confirmColor, onClick = onConfirm)
+			MUiDialogAction(
+				text = model.cancel,
+				color = palette.accentPrimary,
+				onClick = onCancel
+			)
+
+			MUiDialogAction(
+				text = model.confirm,
+				color = confirmColor,
+				onClick = onConfirm
+			)
 		}
 	}
 }
@@ -125,6 +134,7 @@ private fun MUiDialogIcon(model: MUiDialogModel) {
 	} else {
 		palette.accentPrimary
 	}
+
 	Image(
 		painter = painterResource(icon),
 		contentDescription = null,
@@ -199,6 +209,7 @@ private fun MUiDialogOption(
 				)
 			}
 		}
+
 		Text(
 			text = label,
 			style = MeridianType.bodyRegular,
@@ -221,6 +232,7 @@ private fun MUiDialogField(
 			style = MeridianType.captionSmall,
 			color = palette.textSecondary,
 		)
+
 		Box(
 			modifier = Modifier
 				.fillMaxWidth()

@@ -19,6 +19,7 @@ fun MUiSheet(
 	if (!open) {
 		return
 	}
+
 	Box(modifier = modifier.fillMaxSize()) {
 		Box(
 			modifier = Modifier
@@ -26,6 +27,7 @@ fun MUiSheet(
 				.background(Color.Black.copy(alpha = 0.32f))
 				.clickable(onClick = onDismiss),
 		)
+
 		Box(modifier = Modifier.align(Alignment.BottomCenter)) {
 			content()
 		}

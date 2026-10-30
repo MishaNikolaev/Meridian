@@ -31,6 +31,7 @@ fun MUiSnackbarHost(
 		modifier = modifier,
 		snackbar = { data ->
 			val visuals = data.visuals as? MUiSnackbarVisuals
+
 			MUiSnackbar(
 				model = MUiSnackbarModel(
 					tone = visuals?.tone ?: MUiSnackbarTone.Error,

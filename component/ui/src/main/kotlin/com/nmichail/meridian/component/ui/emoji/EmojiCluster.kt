@@ -7,6 +7,7 @@ import androidx.compose.ui.text.font.FontFamily
 fun withSystemEmoji(text: String): AnnotatedString {
 	val builder = AnnotatedString.Builder()
 	var index = 0
+
 	while (index < text.length) {
 		val start = index
 		val emoji = text.codePointAt(index).isEmojiPiece()
@@ -14,6 +15,7 @@ fun withSystemEmoji(text: String): AnnotatedString {
 			index += Character.charCount(text.codePointAt(index))
 		}
 		val slice = text.substring(start, index)
+
 		if (emoji) {
 			builder.pushStyle(SpanStyle(fontFamily = FontFamily.Default))
 			builder.append(slice)
@@ -30,17 +32,22 @@ fun emojiCluster(text: String): Int {
 	if (value.isEmpty()) {
 		return 0
 	}
+
 	var count = 0
 	var index = 0
+
 	while (index < value.length) {
 		val code = value.codePointAt(index)
+
 		index += Character.charCount(code)
 		if (Character.isWhitespace(code)) {
 			continue
 		}
+
 		if (!code.isEmojiPiece()) {
 			return 0
 		}
+
 		if (Character.getType(code) == Character.OTHER_SYMBOL.toInt()) {
 			count += 1
 		}

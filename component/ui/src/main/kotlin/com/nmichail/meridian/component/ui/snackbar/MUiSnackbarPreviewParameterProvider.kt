@@ -20,6 +20,7 @@ internal class MUiSnackbarPreviewParameterProvider : PreviewParameterProvider<MU
 					dark = dark,
 				),
 			)
+
 			yield(
 				MUiSnackbarModel(
 					tone = MUiSnackbarTone.Info,
@@ -27,6 +28,7 @@ internal class MUiSnackbarPreviewParameterProvider : PreviewParameterProvider<MU
 					dark = dark,
 				),
 			)
+
 			yield(
 				MUiSnackbarModel(
 					tone = MUiSnackbarTone.Success,
