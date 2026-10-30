@@ -1,8 +1,9 @@
 package com.nmichail.meridian.features.chat.presentation
 
-import com.nmichail.meridian.core.network.error.ErrorStateConverter
-import com.nmichail.meridian.core.network.error.StatusCodes
-import com.nmichail.meridian.core.network.error.messageIdOrNull
+import com.nmichail.meridian.core.network.error.presentation.BlockingErrorProcessResult
+import com.nmichail.meridian.core.network.error.presentation.DefaultErrorEvent
+import com.nmichail.meridian.core.network.error.presentation.ErrorDelegate
+import com.nmichail.meridian.core.network.error.presentation.NonBlockingErrorProcessResult
 import com.nmichail.meridian.core.presentation.BaseViewModel
 import com.nmichail.meridian.shared.chat.data.realtime.ChatRealtime
 import com.nmichail.meridian.shared.chat.domain.entity.Chat
@@ -15,7 +16,7 @@ import kotlinx.coroutines.Job
 class ChatViewModel @Inject constructor(
 	private val loadChatsUseCase: LoadChatsUseCase,
 	private val realtime: ChatRealtime,
-	private val errorStateConverter: ErrorStateConverter,
+	private val errorDelegate: ErrorDelegate,
 	private val router: ChatRouter,
 ) : BaseViewModel<ChatState, ChatIntent, ChatEvent>() {
 
@@ -163,17 +164,22 @@ class ChatViewModel @Inject constructor(
 			realtime.chatIds.collect { _ ->
 				handleReload()
 			}
-		} catch ::handleError
+		} catch ::handleRefreshFailure
 	}
 
 	private fun handleRefresh() {
+		if (state.value is ChatState.Content) {
+			launchTry {
+				handleReload()
+			} catch ::handleRefreshFailure
+			return
+		}
 		if (state.value is ChatState.Initial) {
 			setState(ChatState.Loading)
 		}
-
 		launchTry {
 			handleReload()
-		} catch ::handleError
+		} catch ::handleLoadFailure
 	}
 
 	private suspend fun handleReload() {
@@ -214,17 +220,26 @@ class ChatViewModel @Inject constructor(
 		}
 	}
 
-	private fun handleError(error: Exception) {
-		val networkError = errorStateConverter.convert(error)
-		when (networkError.messageIdOrNull()) {
-			StatusCodes.NO_CONNECTION.statusCode -> {
-				setEvent(ChatEvent.NoConnection)
-			}
-
-			else                                 -> {
-				setEvent(ChatEvent.Error)
-			}
+	private fun handleLoadFailure(error: Exception) {
+		val result = errorDelegate.processBlockingError(
+			exception = error,
+			retryIntent = ChatIntent.Retry,
+			backIntent = null,
+		)
+		if (result is BlockingErrorProcessResult.NotHandled<*>) {
+			setState(ChatState.Error)
 		}
-		setState(ChatState.Error)
 	}
+
+	private fun handleRefreshFailure(error: Exception) {
+		val result = errorDelegate.processNonBlockingError(error)
+		val recommended = (result as? NonBlockingErrorProcessResult.NotHandled)?.recommended ?: return
+		setEvent(recommended.toEvent())
+	}
+
+	private fun DefaultErrorEvent.toEvent(): ChatEvent =
+		when (this) {
+			DefaultErrorEvent.NoConnection -> ChatEvent.NoConnection
+			DefaultErrorEvent.Default -> ChatEvent.Error
+		}
 }

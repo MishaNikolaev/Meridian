@@ -1,6 +1,5 @@
-package com.nmichail.meridian.features.conversation.presentation
+package com.nmichail.meridian.features.conversation.presentation.compose.component
 
-import com.nmichail.meridian.features.conversation.presentation.compose.component.messageDay
 import com.nmichail.meridian.shared.chat.domain.entity.ChatLine
 
 data class DayLine(
