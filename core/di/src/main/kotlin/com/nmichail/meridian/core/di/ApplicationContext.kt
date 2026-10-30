@@ -1,4 +1,4 @@
-package com.nmichail.meridian.core.storage
+package com.nmichail.meridian.core.di
 
 import javax.inject.Qualifier
 
