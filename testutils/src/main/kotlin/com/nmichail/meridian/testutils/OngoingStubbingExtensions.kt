@@ -1,4 +1,4 @@
-package com.nmichail.meridian.core.testutils
+package com.nmichail.meridian.testutils
 
 import kotlinx.coroutines.awaitCancellation
 import org.mockito.kotlin.doSuspendableAnswer

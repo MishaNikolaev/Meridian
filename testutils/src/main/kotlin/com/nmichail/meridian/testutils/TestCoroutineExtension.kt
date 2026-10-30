@@ -1,4 +1,4 @@
-package com.nmichail.meridian.core.testutils
+package com.nmichail.meridian.testutils
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
