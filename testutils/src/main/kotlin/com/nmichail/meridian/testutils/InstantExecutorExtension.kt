@@ -1,4 +1,4 @@
-package com.nmichail.meridian.core.testutils
+package com.nmichail.meridian.testutils
 
 import android.annotation.SuppressLint
 import androidx.arch.core.executor.ArchTaskExecutor
