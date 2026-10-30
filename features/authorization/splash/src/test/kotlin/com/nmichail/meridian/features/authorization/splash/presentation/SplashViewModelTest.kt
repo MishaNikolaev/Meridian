@@ -1,7 +1,7 @@
 package com.nmichail.meridian.features.authorization.splash.presentation
 
-import com.nmichail.meridian.core.testutils.TestCoroutineExtension
-import com.nmichail.meridian.core.testutils.doThrowSafe
+import com.nmichail.meridian.testutils.TestCoroutineExtension
+import com.nmichail.meridian.testutils.doThrowSafe
 import com.nmichail.meridian.shared.session.domain.usecase.RestoreSessionUseCase
 import java.io.IOException
 import kotlinx.coroutines.test.runTest
