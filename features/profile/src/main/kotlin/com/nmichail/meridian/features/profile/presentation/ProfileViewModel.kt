@@ -1,5 +1,8 @@
 package com.nmichail.meridian.features.profile.presentation
 
+import com.nmichail.meridian.core.network.error.presentation.BlockingErrorProcessResult
+import com.nmichail.meridian.core.network.error.presentation.ErrorDelegate
+import com.nmichail.meridian.core.network.error.userMessage
 import com.nmichail.meridian.core.presentation.BaseViewModel
 import com.nmichail.meridian.features.profile.domain.usecase.LoadProfileUseCase
 import com.nmichail.meridian.shared.session.domain.usecase.LogoutUseCase
@@ -8,6 +11,7 @@ import javax.inject.Inject
 class ProfileViewModel @Inject constructor(
 	private val loadProfileUseCase: LoadProfileUseCase,
 	private val logoutUseCase: LogoutUseCase,
+	private val errorDelegate: ErrorDelegate,
 	private val router: ProfileRouter,
 ) : BaseViewModel<ProfileState, ProfileIntent, Nothing>() {
 
@@ -29,7 +33,7 @@ class ProfileViewModel @Inject constructor(
 		setState(ProfileState.Loading)
 		launchTry {
 			handleProfile()
-		} catch ::handleError
+		} catch ::handleLoadFailure
 	}
 
 	private suspend fun handleProfile() {
@@ -61,7 +65,14 @@ class ProfileViewModel @Inject constructor(
 		handleNavigateToWorkspace()
 	}
 
-	private fun handleError(error: Exception) {
-		setState(ProfileState.Error)
+	private fun handleLoadFailure(error: Exception) {
+		val result = errorDelegate.processBlockingError(
+			exception = error,
+			retryIntent = ProfileIntent.LoadInitialData,
+			backIntent = null,
+		)
+		if (result is BlockingErrorProcessResult.NotHandled<*>) {
+			setState(ProfileState.Error(message = error.userMessage()))
+		}
 	}
 }

@@ -37,15 +37,17 @@ fun ProfileScreen(
 	when (val current = uiState) {
 		ProfileState.Initial, ProfileState.Loading -> Unit
 
-		ProfileState.Error                         -> ProfileColumn(
+		is ProfileState.Error                      -> ProfileColumn(
 			name = null,
 			email = null,
+			message = current.message,
 			onIntent = onIntent,
 		)
 
 		is ProfileState.Content                    -> ProfileColumn(
 			name = current.name,
 			email = current.email,
+			message = null,
 			onIntent = onIntent,
 		)
 	}
@@ -55,6 +57,7 @@ fun ProfileScreen(
 private fun ProfileColumn(
 	name: String?,
 	email: String?,
+	message: Int?,
 	onIntent: (ProfileIntent) -> Unit,
 ) {
 	Column(
@@ -75,6 +78,12 @@ private fun ProfileColumn(
 			Text(
 				text = email,
 				modifier = Modifier.padding(top = 8.dp),
+			)
+		}
+		if (message != null) {
+			Text(
+				text = stringResource(message),
+				modifier = Modifier.padding(top = 24.dp),
 			)
 		}
 

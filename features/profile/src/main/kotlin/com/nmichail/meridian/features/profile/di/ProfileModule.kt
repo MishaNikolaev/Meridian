@@ -7,7 +7,6 @@ import com.nmichail.meridian.features.profile.data.api.ProfileApi
 import com.nmichail.meridian.features.profile.data.api.createProfileApi
 import com.nmichail.meridian.features.profile.data.repository.ProfileRepositoryImpl
 import com.nmichail.meridian.features.profile.domain.repository.ProfileRepository
-import com.nmichail.meridian.features.profile.presentation.PersonViewModel
 import com.nmichail.meridian.features.profile.presentation.ProfileViewModel
 import com.nmichail.meridian.shared.session.di.AuthorizationModule
 import dagger.Binds
@@ -34,9 +33,4 @@ abstract class ProfileModule {
 	@IntoMap
 	@ViewModelKey(ProfileViewModel::class)
 	abstract fun bindProfileViewModel(viewModel: ProfileViewModel): ViewModel
-
-	@Binds
-	@IntoMap
-	@ViewModelKey(PersonViewModel::class)
-	abstract fun bindPersonViewModel(viewModel: PersonViewModel): ViewModel
 }
