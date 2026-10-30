@@ -2,7 +2,7 @@ package com.nmichail.meridian.shared.chat.data.datasource
 
 import android.content.Context
 import androidx.core.content.edit
-import com.nmichail.meridian.core.storage.ApplicationContext
+import com.nmichail.meridian.core.di.ApplicationContext
 import javax.inject.Inject
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json

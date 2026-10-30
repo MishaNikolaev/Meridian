@@ -1,7 +1,7 @@
 package com.nmichail.meridian.features.search.presentation
 
-import com.nmichail.meridian.core.testutils.InstantExecutorExtension
-import com.nmichail.meridian.core.testutils.TestCoroutineExtension
+import com.nmichail.meridian.testutils.InstantExecutorExtension
+import com.nmichail.meridian.testutils.TestCoroutineExtension
 import com.nmichail.meridian.features.search.domain.usecase.ForgetRecentQueryUseCase
 import com.nmichail.meridian.features.search.domain.usecase.ReadRecentQueriesUseCase
 import com.nmichail.meridian.features.search.domain.usecase.RememberRecentQueryUseCase
