@@ -168,6 +168,12 @@ private fun WorkspaceEvent.messageId(): Int = when (this) {
 	WorkspaceEvent.PasswordLength  -> UiR.string.validation_error_password_length
 	WorkspaceEvent.WrongPassword   -> NetworkR.string.error_password_mismatch
 	WorkspaceEvent.NoConnection    -> NetworkR.string.error_no_connection
+	WorkspaceEvent.ServerNotFound  -> NetworkR.string.error_server_not_found
+	WorkspaceEvent.NotOnServer     -> NetworkR.string.error_not_on_server
+	WorkspaceEvent.DeviceTaken     -> NetworkR.string.error_device_taken
+	WorkspaceEvent.Forbidden       -> NetworkR.string.error_forbidden
+	WorkspaceEvent.TooManyRequests -> NetworkR.string.error_too_many_requests
+	WorkspaceEvent.PasswordNotSet  -> NetworkR.string.error_password_not_set
 	WorkspaceEvent.NotHandledError -> NetworkR.string.error_unknown
 }
 

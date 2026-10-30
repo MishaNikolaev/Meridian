@@ -10,5 +10,17 @@ sealed interface WorkspaceEvent {
 
 	data object NoConnection : WorkspaceEvent
 
+	data object ServerNotFound : WorkspaceEvent
+
+	data object NotOnServer : WorkspaceEvent
+
+	data object DeviceTaken : WorkspaceEvent
+
+	data object Forbidden : WorkspaceEvent
+
+	data object TooManyRequests : WorkspaceEvent
+
+	data object PasswordNotSet : WorkspaceEvent
+
 	data object NotHandledError : WorkspaceEvent
 }

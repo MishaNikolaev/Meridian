@@ -1,8 +1,13 @@
 package com.nmichail.meridian.features.authorization.workspace.presentation
 
-import com.nmichail.meridian.core.network.error.ErrorStateConverter
-import com.nmichail.meridian.core.network.error.StatusCodes
-import com.nmichail.meridian.core.network.error.messageIdOrNull
+import com.nmichail.meridian.core.network.error.DeviceTakenException
+import com.nmichail.meridian.core.network.error.ForbiddenException
+import com.nmichail.meridian.core.network.error.NoConnectionException
+import com.nmichail.meridian.core.network.error.NotOnServerException
+import com.nmichail.meridian.core.network.error.PasswordMismatchException
+import com.nmichail.meridian.core.network.error.PasswordNotSetException
+import com.nmichail.meridian.core.network.error.ServerNotFoundException
+import com.nmichail.meridian.core.network.error.TooManyRequestsException
 import com.nmichail.meridian.core.presentation.BaseViewModel
 import com.nmichail.meridian.core.validation.email.ValidateEmailUseCase
 import com.nmichail.meridian.core.validation.email.isValid
@@ -18,7 +23,6 @@ class WorkspaceViewModel @Inject constructor(
 	private val validateNotEmptyUseCase: ValidateNotEmptyUseCase,
 	private val validateEmailUseCase: ValidateEmailUseCase,
 	private val validatePasswordUseCase: ValidatePasswordUseCase,
-	private val errorStateConverter: ErrorStateConverter,
 	private val router: WorkspaceRouter,
 ) : BaseViewModel<WorkspaceState, WorkspaceIntent, WorkspaceEvent>() {
 
@@ -196,12 +200,24 @@ class WorkspaceViewModel @Inject constructor(
 			),
 		)
 		setEvent(
-			when (errorStateConverter.convert(error).messageIdOrNull()) {
-				StatusCodes.NO_CONNECTION.statusCode       -> WorkspaceEvent.NoConnection
+			when (error) {
+				is NoConnectionException -> WorkspaceEvent.NoConnection
 
-				StatusCodes.NEEDS_AUTHORIZATION.statusCode -> WorkspaceEvent.WrongPassword
+				is PasswordMismatchException -> WorkspaceEvent.WrongPassword
 
-				else                                       -> WorkspaceEvent.NotHandledError
+				is ServerNotFoundException -> WorkspaceEvent.ServerNotFound
+
+				is NotOnServerException -> WorkspaceEvent.NotOnServer
+
+				is DeviceTakenException -> WorkspaceEvent.DeviceTaken
+
+				is ForbiddenException -> WorkspaceEvent.Forbidden
+
+				is TooManyRequestsException -> WorkspaceEvent.TooManyRequests
+
+				is PasswordNotSetException -> WorkspaceEvent.PasswordNotSet
+
+				else -> WorkspaceEvent.NotHandledError
 			},
 		)
 	}
