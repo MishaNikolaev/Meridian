@@ -14,9 +14,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.nmichail.meridian.component.ui.R as UiR
 import com.nmichail.meridian.component.ui.button.MUiButton
 import com.nmichail.meridian.component.ui.button.model.MUiButtonModel
 import com.nmichail.meridian.component.ui.button.model.MUiButtonStyle
+import com.nmichail.meridian.component.ui.error.MUiErrorInPlace
 import com.nmichail.meridian.component.ui.text.MUiTitleScreenText
 import com.nmichail.meridian.features.profile.R
 import com.nmichail.meridian.features.profile.presentation.ProfileIntent
@@ -81,8 +83,10 @@ private fun ProfileColumn(
 			)
 		}
 		if (message != null) {
-			Text(
-				text = stringResource(message),
+			MUiErrorInPlace(
+				message = stringResource(message),
+				retry = stringResource(UiR.string.error_retry),
+				onRetry = { onIntent(ProfileIntent.LoadInitialData) },
 				modifier = Modifier.padding(top = 24.dp),
 			)
 		}

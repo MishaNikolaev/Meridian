@@ -1,9 +1,12 @@
 package com.nmichail.meridian.features.conversation.presentation
 
+import com.nmichail.meridian.core.network.device.DeviceIdentityRepository
 import com.nmichail.meridian.core.network.error.presentation.DefaultErrorEventConverter
 import com.nmichail.meridian.core.network.error.presentation.DefaultErrorReactionConverter
 import com.nmichail.meridian.core.network.error.presentation.ErrorDelegate
 import com.nmichail.meridian.core.network.error.presentation.ErrorLogger
+import com.nmichail.meridian.core.network.error.presentation.ErrorRouter
+import com.nmichail.meridian.core.network.session.SessionRepository
 import com.nmichail.meridian.testutils.InstantExecutorExtension
 import com.nmichail.meridian.testutils.TestCoroutineExtension
 import com.nmichail.meridian.core.validation.initials.InitialsUseCase
@@ -74,6 +77,9 @@ class ConversationViewModelTest {
 			errorLogger = ErrorLogger(),
 			defaultErrorReactionConverter = DefaultErrorReactionConverter(),
 			defaultErrorEventConverter = DefaultErrorEventConverter(),
+			errorRouter = mock<ErrorRouter>(),
+			sessionRepository = mock<SessionRepository>(),
+			deviceIdentityRepository = mock<DeviceIdentityRepository>(),
 		),
 		router,
 	)

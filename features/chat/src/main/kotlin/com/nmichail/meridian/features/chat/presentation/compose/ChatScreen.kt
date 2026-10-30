@@ -78,8 +78,14 @@ private fun EventObserver(
 	val context = LocalContext.current
 
 	LiveDataEffect(event) { value ->
+		val title = when (value) {
+			ChatEvent.NoConnection -> NetworkR.string.error_event_connection_title
+
+			ChatEvent.Error -> NetworkR.string.error_event_title
+		}
 		showErrorSnackBar(
 			snackBarHostState = snackBarHostState,
+			title = context.getString(title),
 			message = context.getString(value.messageId()),
 		)
 	}

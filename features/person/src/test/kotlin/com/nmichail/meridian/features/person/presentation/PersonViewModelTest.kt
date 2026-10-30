@@ -1,10 +1,13 @@
 package com.nmichail.meridian.features.person.presentation
 
 import com.nmichail.meridian.core.network.R
+import com.nmichail.meridian.core.network.device.DeviceIdentityRepository
 import com.nmichail.meridian.core.network.error.presentation.DefaultErrorEventConverter
 import com.nmichail.meridian.core.network.error.presentation.DefaultErrorReactionConverter
 import com.nmichail.meridian.core.network.error.presentation.ErrorDelegate
 import com.nmichail.meridian.core.network.error.presentation.ErrorLogger
+import com.nmichail.meridian.core.network.error.presentation.ErrorRouter
+import com.nmichail.meridian.core.network.session.SessionRepository
 import com.nmichail.meridian.testutils.TestCoroutineExtension
 import com.nmichail.meridian.testutils.doThrowSafe
 import com.nmichail.meridian.features.person.domain.entity.PersonProfile
@@ -32,6 +35,9 @@ class PersonViewModelTest {
 			errorLogger = ErrorLogger(),
 			defaultErrorReactionConverter = DefaultErrorReactionConverter(),
 			defaultErrorEventConverter = DefaultErrorEventConverter(),
+			errorRouter = mock<ErrorRouter>(),
+			sessionRepository = mock<SessionRepository>(),
+			deviceIdentityRepository = mock<DeviceIdentityRepository>(),
 		),
 		router,
 	)

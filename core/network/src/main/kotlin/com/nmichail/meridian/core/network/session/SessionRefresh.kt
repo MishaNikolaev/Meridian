@@ -2,6 +2,7 @@ package com.nmichail.meridian.core.network.session
 
 import com.nmichail.meridian.core.network.error.GatewayCode
 import com.nmichail.meridian.core.network.error.GatewayException
+import com.nmichail.meridian.core.network.error.SessionRefreshException
 import io.ktor.client.HttpClient
 import io.ktor.client.call.HttpClientCall
 import io.ktor.client.plugins.HttpSend
@@ -19,7 +20,7 @@ fun HttpClient.installSessionRefresh(refresher: SessionRefresher) {
 			if (error.code != GatewayCode.UNAUTHORIZED || !request.canRefresh()) {
 				throw error
 			}
-			retry(request, refresher, error)
+			retry(request, refresher)
 		}
 	}
 }
@@ -29,10 +30,7 @@ private suspend fun HttpRequestBuilder.useFreshAccess(refresher: SessionRefreshe
 	if (!accessTokenExpired(token)) {
 		return
 	}
-	val session = refresher.refresh() ?: run {
-		refresher.expire()
-		return
-	}
+	val session = refresher.refresh() ?: refresher.refreshFailed()
 	headers.remove(HttpHeaders.Authorization)
 	headers.append(HttpHeaders.Authorization, "Bearer ${session.accessToken}")
 }
@@ -40,22 +38,23 @@ private suspend fun HttpRequestBuilder.useFreshAccess(refresher: SessionRefreshe
 private suspend fun Sender.retry(
 	request: HttpRequestBuilder,
 	refresher: SessionRefresher,
-	error: GatewayException,
 ): HttpClientCall {
-	val session = refresher.refresh() ?: run {
-		refresher.expire()
-		throw error
-	}
+	val session = refresher.refresh() ?: refresher.refreshFailed()
 	request.headers.remove(HttpHeaders.Authorization)
 	request.headers.append(HttpHeaders.Authorization, "Bearer ${session.accessToken}")
 	return try {
 		execute(request)
 	} catch (retry: GatewayException) {
 		if (retry.code == GatewayCode.UNAUTHORIZED) {
-			refresher.expire()
+			refresher.refreshFailed()
 		}
 		throw retry
 	}
+}
+
+private fun SessionRefresher.refreshFailed(): Nothing {
+	expire(notify = false)
+	throw SessionRefreshException()
 }
 
 private fun HttpRequestBuilder.canRefresh(): Boolean {

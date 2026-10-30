@@ -17,6 +17,8 @@ import com.nmichail.meridian.features.authorization.splash.di.SplashComponentHol
 import com.nmichail.meridian.features.authorization.splash.presentation.SplashRouter
 import com.nmichail.meridian.features.authorization.workspace.di.WorkspaceComponentHolder
 import com.nmichail.meridian.features.authorization.workspace.presentation.WorkspaceRouter
+import com.nmichail.meridian.features.person.di.PersonComponentHolder
+import com.nmichail.meridian.features.person.presentation.PersonRouter
 import com.nmichail.meridian.features.profile.di.ProfileComponentHolder
 import com.nmichail.meridian.features.mainhost.presentation.MainHostRouter
 import com.nmichail.meridian.features.profile.presentation.ProfileRouter
@@ -35,6 +37,7 @@ class FeatureComponents @Inject constructor(
 	private val splashRouter: SplashRouter,
 	private val workspaceRouter: WorkspaceRouter,
 	private val profileRouter: ProfileRouter,
+	private val personRouter: PersonRouter,
 	private val mainHostRouter: MainHostRouter,
 ) {
 
@@ -48,6 +51,7 @@ class FeatureComponents @Inject constructor(
 		SignInComponentHolder.init(core = core, router = signInRouter)
 		SplashComponentHolder.init(core = core, router = splashRouter)
 		ProfileComponentHolder.init(core = core, router = profileRouter)
+		PersonComponentHolder.init(core = core, router = personRouter)
 		MainHostRouterHolder.init(mainHostRouter)
 	}
 }

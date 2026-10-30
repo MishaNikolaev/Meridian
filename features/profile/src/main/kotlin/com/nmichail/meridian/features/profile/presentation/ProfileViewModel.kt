@@ -27,7 +27,8 @@ class ProfileViewModel @Inject constructor(
 	}
 
 	private fun handleLoadInitialData() {
-		if (state.value != ProfileState.Initial) {
+		val current = state.value
+		if (current is ProfileState.Loading || current is ProfileState.Content) {
 			return
 		}
 		setState(ProfileState.Loading)
