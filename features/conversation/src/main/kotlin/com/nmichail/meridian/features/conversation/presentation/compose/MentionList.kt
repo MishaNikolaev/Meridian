@@ -29,7 +29,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.features.conversation.R
-import com.nmichail.meridian.features.conversation.presentation.Mention
+import com.nmichail.meridian.features.conversation.domain.entity.Mention
 
 @Composable
 internal fun MentionList(

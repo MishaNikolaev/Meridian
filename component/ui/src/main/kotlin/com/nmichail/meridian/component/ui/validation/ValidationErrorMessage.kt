@@ -1,4 +1,4 @@
-package com.nmichail.meridian.component.ui.compose
+package com.nmichail.meridian.component.ui.validation
 
 import androidx.compose.runtime.Composable
 import com.nmichail.meridian.component.ui.R

@@ -2,7 +2,7 @@ package com.nmichail.meridian.features.search.data.datasource
 
 import android.content.Context
 import androidx.core.content.edit
-import com.nmichail.meridian.core.storage.ApplicationContext
+import com.nmichail.meridian.core.di.ApplicationContext
 import com.nmichail.meridian.features.search.domain.repository.RecentQueryRepository
 import javax.inject.Inject
 

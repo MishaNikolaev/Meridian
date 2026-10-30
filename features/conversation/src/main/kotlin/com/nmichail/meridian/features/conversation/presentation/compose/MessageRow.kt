@@ -31,7 +31,7 @@ import com.nmichail.meridian.component.ui.R as UiR
 import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.features.conversation.R
 import com.nmichail.meridian.features.conversation.presentation.ConversationIntent
-import com.nmichail.meridian.features.conversation.presentation.messageClock
+import com.nmichail.meridian.features.conversation.presentation.compose.component.messageClock
 import com.nmichail.meridian.shared.chat.domain.entity.ChatLine
 import com.nmichail.meridian.shared.chat.domain.entity.ChatReaction
 
