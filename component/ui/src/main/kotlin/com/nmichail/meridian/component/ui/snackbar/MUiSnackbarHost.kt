@@ -49,12 +49,18 @@ fun MUiSnackbarHost(
 fun CoroutineScope.showErrorSnackBar(
 	snackBarHostState: SnackbarHostState,
 	message: String,
+	title: String? = null,
 ) {
+	val text = if (title == null) {
+		message
+	} else {
+		"$title\n$message"
+	}
 	snackBarHostState.currentSnackbarData?.dismiss()
 	launch {
 		snackBarHostState.showSnackbar(
 			MUiSnackbarVisuals(
-				message = message,
+				message = text,
 				tone = MUiSnackbarTone.Error,
 			),
 		)

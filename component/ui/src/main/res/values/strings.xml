@@ -12,6 +12,9 @@
 	<string name="tab_contacts">Контакты</string>
 	<string name="tab_calls">Звонки</string>
 	<string name="tab_profile">Профиль</string>
+	<string name="error_title">Ошибка</string>
+	<string name="error_retry">Повторить</string>
+	<string name="error_back">Назад</string>
 	<string name="password_show">Показать пароль</string>
 	<string name="password_hide">Скрыть пароль</string>
 </resources>
