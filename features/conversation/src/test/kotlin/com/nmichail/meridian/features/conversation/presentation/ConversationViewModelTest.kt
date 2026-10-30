@@ -1,6 +1,11 @@
 package com.nmichail.meridian.features.conversation.presentation
 
-import com.nmichail.meridian.core.testutils.TestCoroutineExtension
+import com.nmichail.meridian.core.network.error.presentation.DefaultErrorEventConverter
+import com.nmichail.meridian.core.network.error.presentation.DefaultErrorReactionConverter
+import com.nmichail.meridian.core.network.error.presentation.ErrorDelegate
+import com.nmichail.meridian.core.network.error.presentation.ErrorLogger
+import com.nmichail.meridian.testutils.InstantExecutorExtension
+import com.nmichail.meridian.testutils.TestCoroutineExtension
 import com.nmichail.meridian.core.validation.initials.InitialsUseCase
 import com.nmichail.meridian.core.validation.mention.ApplyMentionUseCase
 import com.nmichail.meridian.core.validation.mention.EveryoneMentionUseCase
@@ -32,7 +37,7 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
-@ExtendWith(TestCoroutineExtension::class)
+@ExtendWith(TestCoroutineExtension::class, InstantExecutorExtension::class)
 class ConversationViewModelTest {
 
 	private val loadMessagesUseCase: LoadMessagesUseCase = mock()
@@ -65,6 +70,11 @@ class ConversationViewModelTest {
 		EveryoneMentionUseCase(),
 		InitialsUseCase(),
 		realtime,
+		ErrorDelegate(
+			errorLogger = ErrorLogger(),
+			defaultErrorReactionConverter = DefaultErrorReactionConverter(),
+			defaultErrorEventConverter = DefaultErrorEventConverter(),
+		),
 		router,
 	)
 	private val ownLine = ChatLine(

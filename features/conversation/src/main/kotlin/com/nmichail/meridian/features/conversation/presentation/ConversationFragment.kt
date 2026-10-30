@@ -53,6 +53,7 @@ class ConversationFragment : FullScreenFragment() {
 						rootId = arguments.getString("messageId"),
 						personId = arguments.getString("personId").orEmpty(),
 						state = viewModel.state,
+						event = viewModel.event,
 						onIntent = viewModel::applyIntent,
 					)
 				}
