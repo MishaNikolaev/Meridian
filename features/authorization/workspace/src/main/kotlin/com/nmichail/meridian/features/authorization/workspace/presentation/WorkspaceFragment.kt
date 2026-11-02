@@ -18,18 +18,18 @@ fun getWorkspaceScreen(): FullScreen = FullScreen(
 )
 
 class WorkspaceFragment : FullScreenFragment() {
-
 	private val viewModel: WorkspaceViewModel by viewModel()
 
 	override fun onAttach(context: Context) {
 		super.onAttach(context)
+
 		WorkspaceComponentHolder.get().inject(this)
 	}
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
 		ComposeView(requireContext()).apply {
 			setContent {
-				Screen {
+				Screen(canvas = true) {
 					WorkspaceScreen(
 						state = viewModel.state,
 						onIntent = viewModel::applyIntent,

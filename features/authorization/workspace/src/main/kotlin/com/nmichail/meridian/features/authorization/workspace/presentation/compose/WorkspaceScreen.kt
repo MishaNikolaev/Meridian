@@ -2,11 +2,13 @@ package com.nmichail.meridian.features.authorization.workspace.presentation.comp
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -49,17 +51,17 @@ fun WorkspaceScreen(
 	event: LiveData<WorkspaceEvent>,
 ) {
 	val uiState by state.collectAsStateWithLifecycle()
+
 	val snackBarHostState = remember { SnackbarHostState() }
 
 	EventObserver(
 		event = event,
 		snackBarHostState = snackBarHostState,
 	)
+
 	DismissKeyboardOnDispose()
-	Box(
-		modifier = Modifier
-			.fillMaxSize(),
-	) {
+
+	Box(modifier = Modifier.fillMaxSize()) {
 		WorkspaceForm(
 			host = when (val current = uiState) {
 				WorkspaceState.Initial    -> ""
@@ -81,6 +83,7 @@ fun WorkspaceScreen(
 			},
 			onIntent = onIntent,
 		)
+
 		MUiSnackbarHost(
 			snackBarHostState = snackBarHostState,
 			modifier = Modifier
@@ -96,6 +99,7 @@ private fun EventObserver(
 	snackBarHostState: SnackbarHostState,
 ) {
 	val context = LocalContext.current
+
 	LiveDataEffect(event) { value ->
 		showErrorSnackBar(
 			snackBarHostState = snackBarHostState,
@@ -111,54 +115,91 @@ private fun WorkspaceForm(
 	password: String,
 	onIntent: (WorkspaceIntent) -> Unit,
 ) {
+	BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+		val formHeight = maxHeight
+
+		Column(
+			modifier = Modifier
+				.fillMaxSize()
+				.verticalScroll(rememberScrollState()),
+		) {
+			Column(
+				modifier = Modifier
+					.fillMaxWidth()
+					.heightIn(min = formHeight)
+					.padding(horizontal = 24.dp)
+					.padding(top = 40.dp, bottom = 24.dp),
+				verticalArrangement = Arrangement.spacedBy(16.dp),
+			) {
+				WorkspaceHeading()
+
+				Spacer(modifier = Modifier.height(12.dp))
+
+				WorkspaceFields(host = host, email = email, password = password, onIntent = onIntent)
+
+				Spacer(modifier = Modifier.weight(1f))
+
+				WorkspaceActions(onIntent = onIntent)
+			}
+		}
+	}
+}
+
+@Composable
+private fun WorkspaceFields(
+	host: String,
+	email: String,
+	password: String,
+	onIntent: (WorkspaceIntent) -> Unit,
+) {
+	MUiTextField(
+		model = MUiTextFieldModel(
+			icon = MUiFieldIcon.Building,
+			label = stringResource(R.string.workspace_host),
+			value = host,
+			outlined = true,
+		),
+		onValueChange = { onIntent(WorkspaceIntent.ChangeHost(it)) },
+	)
+
+	MUiTextField(
+		model = MUiTextFieldModel(
+			icon = MUiFieldIcon.Mail,
+			label = stringResource(R.string.workspace_email),
+			value = email,
+			email = true,
+			outlined = true,
+		),
+		onValueChange = { onIntent(WorkspaceIntent.ChangeEmail(it)) },
+	)
+
+	MUiTextField(
+		model = MUiTextFieldModel(
+			icon = MUiFieldIcon.None,
+			label = stringResource(R.string.workspace_password),
+			value = password,
+			secret = true,
+			outlined = true,
+		),
+		onValueChange = { onIntent(WorkspaceIntent.ChangePassword(it)) },
+	)
+}
+
+@Composable
+private fun WorkspaceActions(
+	onIntent: (WorkspaceIntent) -> Unit,
+	modifier: Modifier = Modifier,
+) {
 	Column(
-		modifier = Modifier
-			.fillMaxSize()
-			.verticalScroll(rememberScrollState())
-			.padding(horizontal = 24.dp)
-			.padding(top = 40.dp, bottom = 24.dp),
+		modifier = modifier.fillMaxWidth(),
+		horizontalAlignment = Alignment.CenterHorizontally,
 		verticalArrangement = Arrangement.spacedBy(16.dp),
 	) {
-		WorkspaceHeading()
-
-		Spacer(modifier = Modifier.height(12.dp))
-
-		MUiTextField(
-			model = MUiTextFieldModel(
-				icon = MUiFieldIcon.Building,
-				label = stringResource(R.string.workspace_host),
-				value = host,
-				outlined = true,
-			),
-			onValueChange = { onIntent(WorkspaceIntent.ChangeHost(it)) },
-		)
-
-		MUiTextField(
-			model = MUiTextFieldModel(
-				icon = MUiFieldIcon.Mail,
-				label = stringResource(R.string.workspace_email),
-				value = email,
-				email = true,
-				outlined = true,
-			),
-			onValueChange = { onIntent(WorkspaceIntent.ChangeEmail(it)) },
-		)
-
-		MUiTextField(
-			model = MUiTextFieldModel(
-				icon = MUiFieldIcon.None,
-				label = stringResource(R.string.workspace_password),
-				value = password,
-				secret = true,
-				outlined = true,
-			),
-			onValueChange = { onIntent(WorkspaceIntent.ChangePassword(it)) },
-		)
-
 		MUiButton(
 			model = MUiButtonModel(style = MUiButtonStyle.Primary, label = stringResource(R.string.workspace_submit)),
 			onClick = { onIntent(WorkspaceIntent.Submit) },
 		)
+
 		ExternalAccountLinks(onIntent = onIntent)
 	}
 }
@@ -194,8 +235,10 @@ private fun ExternalAccountLinks(onIntent: (WorkspaceIntent) -> Unit) {
 @Composable
 private fun WorkspaceHeading() {
 	val secondary = palette.textSecondary
+
 	Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
 		MUiDisplayAuthText(text = stringResource(R.string.workspace_title))
+
 		MUiBodyRegularText(
 			text = stringResource(R.string.workspace_hint),
 			color = secondary,

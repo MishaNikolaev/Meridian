@@ -42,7 +42,6 @@ class WorkspaceViewModel @Inject constructor(
 	private fun handleChangeHost(value: String) {
 		when (val current = state.value) {
 			is WorkspaceState.Loading -> return
-
 			WorkspaceState.Initial    -> setState(
 				WorkspaceState.Content(
 					host = value,
@@ -68,7 +67,6 @@ class WorkspaceViewModel @Inject constructor(
 	private fun handleChangeEmail(value: String) {
 		when (val current = state.value) {
 			is WorkspaceState.Loading -> return
-
 			WorkspaceState.Initial    -> setState(
 				WorkspaceState.Content(
 					host = "",
@@ -94,7 +92,6 @@ class WorkspaceViewModel @Inject constructor(
 	private fun handleChangePassword(value: String) {
 		when (val current = state.value) {
 			is WorkspaceState.Loading -> return
-
 			WorkspaceState.Initial    -> setState(
 				WorkspaceState.Content(
 					host = "",
@@ -120,7 +117,6 @@ class WorkspaceViewModel @Inject constructor(
 	private fun handleSubmit() {
 		when (val current = state.value) {
 			is WorkspaceState.Loading -> return
-
 			WorkspaceState.Initial    -> signIn(
 				hostData = "",
 				emailData = "",
@@ -202,21 +198,13 @@ class WorkspaceViewModel @Inject constructor(
 		setEvent(
 			when (error) {
 				is NoConnectionException -> WorkspaceEvent.NoConnection
-
 				is PasswordMismatchException -> WorkspaceEvent.WrongPassword
-
 				is ServerNotFoundException -> WorkspaceEvent.ServerNotFound
-
 				is NotOnServerException -> WorkspaceEvent.NotOnServer
-
 				is DeviceTakenException -> WorkspaceEvent.DeviceTaken
-
 				is ForbiddenException -> WorkspaceEvent.Forbidden
-
 				is TooManyRequestsException -> WorkspaceEvent.TooManyRequests
-
 				is PasswordNotSetException -> WorkspaceEvent.PasswordNotSet
-
 				else -> WorkspaceEvent.NotHandledError
 			},
 		)
