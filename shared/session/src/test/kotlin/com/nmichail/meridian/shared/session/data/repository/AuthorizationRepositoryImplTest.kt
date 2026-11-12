@@ -60,7 +60,10 @@ class AuthorizationRepositoryImplTest {
 
 	@Test
 	fun `sign in EXPECT trimmed password request`() = runTest {
-		stubKeys()
+		whenever(deviceIdentityRepository.getIdentity()) doReturn identity
+		whenever(deviceIdentityRepository.getDeviceName()) doReturn "phone"
+		whenever(deviceIdentityRepository.getPreKeys()) doReturn preKeys
+		whenever(identity.deviceKeys("phone", preKeys)) doReturn keys
 		val request = PasswordAuthorizationRequest(
 			username = "chief",
 			password = "meridian1",
@@ -75,7 +78,10 @@ class AuthorizationRepositoryImplTest {
 
 	@Test
 	fun `sign in EXPECT saved session`() = runTest {
-		stubKeys()
+		whenever(deviceIdentityRepository.getIdentity()) doReturn identity
+		whenever(deviceIdentityRepository.getDeviceName()) doReturn "phone"
+		whenever(deviceIdentityRepository.getPreKeys()) doReturn preKeys
+		whenever(identity.deviceKeys("phone", preKeys)) doReturn keys
 		whenever(api.authorizeByPassword(any())) doReturn session
 
 		repository.signIn("chief", "meridian1")
@@ -85,7 +91,10 @@ class AuthorizationRepositoryImplTest {
 
 	@Test
 	fun `sign in workspace EXPECT trimmed request`() = runTest {
-		stubKeys()
+		whenever(deviceIdentityRepository.getIdentity()) doReturn identity
+		whenever(deviceIdentityRepository.getDeviceName()) doReturn "phone"
+		whenever(deviceIdentityRepository.getPreKeys()) doReturn preKeys
+		whenever(identity.deviceKeys("phone", preKeys)) doReturn keys
 		val request = WorkspaceAuthorizationRequest(
 			host = "meridian.name.ru",
 			email = "chief@name.ru",
@@ -97,7 +106,31 @@ class AuthorizationRepositoryImplTest {
 		repository.signInWorkspace(" meridian.name.ru ", " chief@name.ru ", "meridian1")
 
 		verify(api).authorizeWorkspace(request)
+	}
+
+	@Test
+	fun `sign in workspace EXPECT saved host`() = runTest {
+		whenever(deviceIdentityRepository.getIdentity()) doReturn identity
+		whenever(deviceIdentityRepository.getDeviceName()) doReturn "phone"
+		whenever(deviceIdentityRepository.getPreKeys()) doReturn preKeys
+		whenever(identity.deviceKeys("phone", preKeys)) doReturn keys
+		whenever(api.authorizeWorkspace(any())) doReturn session
+
+		repository.signInWorkspace(" meridian.name.ru ", " chief@name.ru ", "meridian1")
+
 		verify(sessionRepository).saveHost("meridian.name.ru")
+	}
+
+	@Test
+	fun `sign in workspace EXPECT saved email`() = runTest {
+		whenever(deviceIdentityRepository.getIdentity()) doReturn identity
+		whenever(deviceIdentityRepository.getDeviceName()) doReturn "phone"
+		whenever(deviceIdentityRepository.getPreKeys()) doReturn preKeys
+		whenever(identity.deviceKeys("phone", preKeys)) doReturn keys
+		whenever(api.authorizeWorkspace(any())) doReturn session
+
+		repository.signInWorkspace(" meridian.name.ru ", " chief@name.ru ", "meridian1")
+
 		verify(sessionRepository).email("chief@name.ru")
 	}
 
@@ -166,12 +199,5 @@ class AuthorizationRepositoryImplTest {
 		}
 
 		verify(sessionRepository).clear()
-	}
-
-	private suspend fun stubKeys() {
-		whenever(deviceIdentityRepository.getIdentity()) doReturn identity
-		whenever(deviceIdentityRepository.getDeviceName()) doReturn "phone"
-		whenever(deviceIdentityRepository.getPreKeys()) doReturn preKeys
-		whenever(identity.deviceKeys("phone", preKeys)) doReturn keys
 	}
 }

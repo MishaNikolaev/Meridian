@@ -18,6 +18,7 @@ dependencies {
 	implementation(libs.bundles.compose)
 
 	implementation(projects.component.ui)
+	implementation(projects.component.photopicker)
 	api(projects.core.di)
 	implementation(projects.core.presentation)
 	implementation(projects.core.navigation)

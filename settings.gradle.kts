@@ -19,6 +19,7 @@ rootProject.name = "Meridian"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 include(":component:ui")
+include(":component:photopicker")
 
 include(":core:di")
 include(":core:presentation")

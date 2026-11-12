@@ -16,6 +16,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
+import com.nmichail.meridian.component.ui.theme.select
 import com.nmichail.meridian.features.search.R
 import com.nmichail.meridian.features.search.presentation.SearchIntent
 import com.nmichail.meridian.features.search.presentation.SearchSection
@@ -47,16 +48,18 @@ private fun SearchChip(
 	selected: Boolean,
 	onClick: () -> Unit,
 ) {
-	val background = if (selected) {
-		palette.accentButton
-	} else {
-		palette.field
-	}
-	val color = if (selected) {
-		palette.textOnAccent
-	} else {
-		palette.textPrimary
-	}
+	val background = select(
+		active = selected,
+		on = palette.accentButton,
+		off = palette.field,
+	)
+
+	val color = select(
+		active = selected,
+		on = palette.textOnAccent,
+		off = palette.textPrimary,
+	)
+
 	Text(
 		text = title,
 		modifier = Modifier
@@ -71,12 +74,8 @@ private fun SearchChip(
 
 private fun SearchSection.label(): Int = when (this) {
 	SearchSection.ALL -> R.string.search_section_all
-
 	SearchSection.CHATS -> R.string.search_section_chats
-
 	SearchSection.PEOPLE -> R.string.search_section_people
-
 	SearchSection.TEXT -> R.string.search_section_text
-
 	SearchSection.FILES -> R.string.search_section_files
 }

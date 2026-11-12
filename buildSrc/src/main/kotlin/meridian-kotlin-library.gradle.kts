@@ -21,6 +21,11 @@ kotlin {
 	}
 }
 
+val kotlinVersion = libs.findVersion("kotlin").get().requiredVersion
+configurations.configureEach {
+	resolutionStrategy.force("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
+}
+
 dependencies {
 	implementation(libs.findLibrary("kotlin-stdlib").get())
 	add("testRuntimeOnly", libs.findLibrary("test-junit-platform").get())

@@ -7,6 +7,7 @@ data class Mention(
 	val title: String,
 	val note: String,
 	val initials: String,
+	val userId: String,
 )
 
 fun ChatPerson.toMention(initials: String): Mention {
@@ -16,5 +17,6 @@ fun ChatPerson.toMention(initials: String): Mention {
 		title = title,
 		note = "@$username",
 		initials = initials,
+		userId = userId,
 	)
 }

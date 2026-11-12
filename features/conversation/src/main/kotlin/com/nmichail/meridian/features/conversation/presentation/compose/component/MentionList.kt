@@ -26,8 +26,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.shape.RoundedCornerShape
+import com.nmichail.meridian.component.photopicker.compose.PhotoFace
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
+import com.nmichail.meridian.component.ui.theme.select
 import com.nmichail.meridian.features.conversation.R
 import com.nmichail.meridian.features.conversation.domain.entity.Mention
 
@@ -38,7 +40,6 @@ internal fun MentionList(
 	members: Int,
 	onPick: (String) -> Unit,
 ) {
-
 	if (mentions.isEmpty() && !everyone) {
 		return
 	}
@@ -57,8 +58,8 @@ internal fun MentionList(
 			MentionRow(
 				title = mention.title,
 				note = mention.note,
+				userId = mention.userId,
 				marked = index == 0,
-				initials = mention.initials,
 				onClick = { onPick(mention.token) },
 			)
 		}
@@ -77,31 +78,31 @@ internal fun MentionList(
 private fun MentionRow(
 	title: String,
 	note: String,
+	userId: String,
 	marked: Boolean,
-	initials: String,
 	onClick: () -> Unit,
 ) {
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
-			.background(if (marked) palette.field else palette.surface)
+			.background(
+				select(
+					active = marked,
+					on = palette.field,
+					off = palette.surface,
+				),
+			)
 			.clickable(onClick = onClick)
 			.padding(horizontal = 16.dp, vertical = 8.dp),
 		verticalAlignment = Alignment.CenterVertically,
 		horizontalArrangement = Arrangement.spacedBy(12.dp),
 	) {
-		Box(
-			modifier = Modifier
-				.size(40.dp)
-				.clip(CircleShape)
-				.background(palette.accentPrimarySoft),
-			contentAlignment = Alignment.Center,
-		) {
-			Text(text = initials,
-				style = MeridianType.bodyName,
-				color = palette.accentPrimary
-			)
-		}
+		PhotoFace(
+			name = title,
+			userId = userId,
+			size = 40.dp,
+			style = MeridianType.bodyName,
+		)
 
 		Column(modifier = Modifier.weight(1f)) {
 			Text(
@@ -128,7 +129,13 @@ private fun AllRow(members: Int, marked: Boolean, onClick: () -> Unit) {
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
-			.background(if (marked) palette.field else palette.surface)
+			.background(
+				select(
+					active = marked,
+					on = palette.field,
+					off = palette.surface,
+				),
+			)
 			.clickable(onClick = onClick)
 			.padding(horizontal = 16.dp, vertical = 8.dp),
 		verticalAlignment = Alignment.CenterVertically,

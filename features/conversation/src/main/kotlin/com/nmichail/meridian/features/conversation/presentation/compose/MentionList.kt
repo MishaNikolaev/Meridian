@@ -26,8 +26,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.shape.RoundedCornerShape
+import com.nmichail.meridian.component.ui.initials.markColor
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
+import com.nmichail.meridian.component.ui.theme.select
 import com.nmichail.meridian.features.conversation.R
 import com.nmichail.meridian.features.conversation.domain.entity.Mention
 
@@ -41,6 +43,7 @@ internal fun MentionList(
 	if (mentions.isEmpty() && !everyone) {
 		return
 	}
+
 	Column(
 		modifier = Modifier
 			.padding(horizontal = 10.dp, vertical = 6.dp)
@@ -60,6 +63,7 @@ internal fun MentionList(
 				onClick = { onPick(mention.token) },
 			)
 		}
+
 		if (everyone) {
 			AllRow(
 				members = members,
@@ -81,7 +85,13 @@ private fun MentionRow(
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
-			.background(if (marked) palette.field else palette.surface)
+			.background(
+				select(
+					active = marked,
+					on = palette.field,
+					off = palette.surface,
+				),
+			)
 			.clickable(onClick = onClick)
 			.padding(horizontal = 16.dp, vertical = 8.dp),
 		verticalAlignment = Alignment.CenterVertically,
@@ -91,11 +101,12 @@ private fun MentionRow(
 			modifier = Modifier
 				.size(40.dp)
 				.clip(CircleShape)
-				.background(palette.accentPrimarySoft),
+				.background(markColor(title)),
 			contentAlignment = Alignment.Center,
 		) {
-			Text(text = initials, style = MeridianType.bodyName, color = palette.accentPrimary)
+			Text(text = initials, style = MeridianType.bodyName, color = palette.textOnAccent)
 		}
+
 		Column(modifier = Modifier.weight(1f)) {
 			Text(
 				text = title,
@@ -104,6 +115,7 @@ private fun MentionRow(
 				maxLines = 1,
 				overflow = TextOverflow.Ellipsis,
 			)
+
 			Text(
 				text = note,
 				style = MeridianType.captionDefault,
@@ -120,7 +132,13 @@ private fun AllRow(members: Int, marked: Boolean, onClick: () -> Unit) {
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
-			.background(if (marked) palette.field else palette.surface)
+			.background(
+				select(
+					active = marked,
+					on = palette.field,
+					off = palette.surface,
+				),
+			)
 			.clickable(onClick = onClick)
 			.padding(horizontal = 16.dp, vertical = 8.dp),
 		verticalAlignment = Alignment.CenterVertically,
@@ -140,12 +158,14 @@ private fun AllRow(members: Int, marked: Boolean, onClick: () -> Unit) {
 				modifier = Modifier.size(22.dp),
 			)
 		}
+
 		Column(modifier = Modifier.weight(1f)) {
 			Text(
 				text = stringResource(R.string.conversation_mention_all),
 				style = MeridianType.bodyName,
 				color = palette.textPrimary,
 			)
+
 			Text(
 				text = stringResource(R.string.conversation_mention_everyone, members),
 				style = MeridianType.captionDefault,
