@@ -6,7 +6,6 @@ import android.os.Build
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -32,12 +31,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nmichail.meridian.component.ui.text.MUiBaseText
-import com.nmichail.meridian.component.ui.theme.DarkSplash
 import com.nmichail.meridian.component.ui.theme.Glow
 import com.nmichail.meridian.component.ui.theme.Glow2
-import com.nmichail.meridian.component.ui.theme.LightSplash
 import com.nmichail.meridian.component.ui.theme.MeridianType
-import com.nmichail.meridian.component.ui.theme.SplashColors
+import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.features.authorization.splash.R
 import com.nmichail.meridian.features.authorization.splash.presentation.SplashIntent
 
@@ -49,14 +46,12 @@ fun SplashScreen(
 		onIntent(SplashIntent.LoadInitialData)
 	}
 
-	val colors = if (isSystemInDarkTheme()) DarkSplash else LightSplash
-
 	Box(modifier = Modifier.fillMaxSize()) {
-		SplashBackground(colors = colors)
+		SplashBackground()
 
 		SplashGlow(
 			color = Glow,
-			alpha = colors.glowAlpha,
+			alpha = palette.splashGlowAlpha,
 			modifier = Modifier
 				.align(Alignment.TopCenter)
 				.offset(y = 80.dp)
@@ -65,7 +60,7 @@ fun SplashScreen(
 
 		SplashGlow(
 			color = Glow2,
-			alpha = colors.glow2Alpha,
+			alpha = palette.splashGlow2Alpha,
 			modifier = Modifier
 				.align(Alignment.TopCenter)
 				.offset(x = 90.dp, y = (-110).dp)
@@ -73,7 +68,6 @@ fun SplashScreen(
 		)
 
 		SplashIdentity(
-			colors = colors,
 			modifier = Modifier.align(Alignment.Center),
 		)
 
@@ -82,7 +76,7 @@ fun SplashScreen(
 				LocalContext.current.appVersion()
 			),
 			style = MeridianType.captionSmall,
-			color = colors.version,
+			color = palette.splashVersion,
 			textAlign = TextAlign.Center,
 			modifier = Modifier
 				.align(Alignment.BottomCenter)
@@ -93,13 +87,13 @@ fun SplashScreen(
 }
 
 @Composable
-private fun SplashBackground(colors: SplashColors) {
+private fun SplashBackground() {
 	Box(
 		modifier = Modifier
 			.fillMaxSize()
 			.background(
 				brush = Brush.verticalGradient(
-					colors = listOf(colors.gradientTop, colors.gradientBottom),
+					colors = listOf(palette.splashGradientTop, palette.splashGradientBottom),
 				),
 			),
 	)
@@ -125,14 +119,13 @@ private fun SplashGlow(
 
 @Composable
 private fun SplashIdentity(
-	colors: SplashColors,
 	modifier: Modifier = Modifier,
 ) {
 	Column(
 		modifier = modifier,
 		horizontalAlignment = Alignment.CenterHorizontally,
 	) {
-		SplashMark(colors = colors)
+		SplashMark()
 
 		Spacer(modifier = Modifier.height(30.dp))
 
@@ -142,7 +135,7 @@ private fun SplashIdentity(
 				fontSize = 34.sp,
 				lineHeight = 41.sp,
 			),
-			color = colors.title,
+			color = palette.splashTitle,
 			textAlign = TextAlign.Center,
 		)
 
@@ -151,23 +144,24 @@ private fun SplashIdentity(
 		MUiBaseText(
 			text = stringResource(R.string.splash_subtitle),
 			style = MeridianType.bodyRegular,
-			color = colors.subtitle,
+			color = palette.splashSubtitle,
 			textAlign = TextAlign.Center,
 		)
 	}
 }
 
 @Composable
-private fun SplashMark(colors: SplashColors) {
+private fun SplashMark() {
 	val shape = RoundedCornerShape(42.dp)
+
 	Box(
 		modifier = Modifier
 			.size(132.dp)
 			.clip(shape)
-			.background(color = colors.icon)
+			.background(color = palette.splashIcon)
 			.border(
 				width = 1.dp,
-				color = colors.iconBorder,
+				color = palette.splashIconBorder,
 				shape = shape,
 			),
 		contentAlignment = Alignment.Center,
@@ -175,7 +169,7 @@ private fun SplashMark(colors: SplashColors) {
 		Image(
 			painter = painterResource(R.drawable.ic_splash_mark),
 			contentDescription = null,
-			colorFilter = ColorFilter.tint(colors.mark),
+			colorFilter = ColorFilter.tint(palette.splashMark),
 			modifier = Modifier.size(width = 81.dp, height = 61.dp),
 		)
 	}
@@ -191,5 +185,6 @@ private fun Context.appVersion(): String {
 		@Suppress("DEPRECATION")
 		packageManager.getPackageInfo(packageName, 0)
 	}
+
 	return info.versionName.orEmpty()
 }

@@ -18,11 +18,11 @@ fun getSignInScreen(): FullScreen = FullScreen(
 )
 
 class SignInFragment : FullScreenFragment() {
-
 	private val viewModel: SignInViewModel by viewModel()
 
 	override fun onAttach(context: Context) {
 		super.onAttach(context)
+
 		SignInComponentHolder.get().inject(this)
 	}
 
