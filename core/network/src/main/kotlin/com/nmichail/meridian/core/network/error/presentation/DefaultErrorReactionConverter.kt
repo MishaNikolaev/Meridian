@@ -22,7 +22,6 @@ class DefaultErrorReactionConverter @Inject constructor() {
 			exception.canRetry() -> ErrorReactionOptions.RetryOnly(retryIntent)
 
 			backIntent != null -> ErrorReactionOptions.BackOnly(backIntent)
-
 			else -> ErrorReactionOptions.RetryOnly(retryIntent)
 		}
 }
@@ -30,10 +29,7 @@ class DefaultErrorReactionConverter @Inject constructor() {
 private fun Exception.canRetry(): Boolean =
 	when (this) {
 		is NoConnectionException -> true
-
 		is IOException -> true
-
 		is GatewayException -> code == GatewayCode.UNKNOWN
-
 		else -> false
 	}

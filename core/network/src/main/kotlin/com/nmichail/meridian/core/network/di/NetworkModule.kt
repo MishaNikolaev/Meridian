@@ -25,11 +25,12 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
 import javax.inject.Singleton
+import java.time.Duration
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
 
 @Module
 object NetworkModule {
-
 	@Provides
 	@Singleton
 	@JvmStatic
@@ -48,27 +49,45 @@ object NetworkModule {
 		errors: NetworkErrorConverter,
 	): HttpClient = HttpClient(OkHttp) {
 		engine {
+			config {
+				connectTimeout(Duration.ZERO)
+
+				readTimeout(Duration.ZERO)
+
+				writeTimeout(Duration.ZERO)
+
+				callTimeout(Duration.ZERO)
+			}
+
 			addInterceptor(LoggingInterceptor())
 		}
+
 		expectSuccess = false
+
 		install(ContentNegotiation) {
 			json(json)
 		}
+
 		defaultRequest {
 			contentType(ContentType.Application.Json)
+
 			val token = sessionRepository.getAccessToken()
+
 			if (!token.isNullOrBlank()) {
 				header(HttpHeaders.Authorization, "Bearer $token")
 			}
 		}
+
 		HttpResponseValidator {
 			validateResponse { response ->
 				if (!response.status.isSuccess()) {
 					throw response.toGatewayException(errors)
 				}
 			}
+
 			handleResponseExceptionWithRequest { cause, _ ->
 				val converted = errors.convertTransport(cause)
+
 				if (converted != null) {
 					throw converted
 				}
@@ -91,6 +110,13 @@ object NetworkModule {
 }
 
 private suspend fun HttpResponse.toGatewayException(errors: NetworkErrorConverter): GatewayException {
-	val error = runCatching { body<ApiErrorBody>() }.getOrNull()
+	val error = try {
+		body<ApiErrorBody>()
+	} catch (exception: CancellationException) {
+		throw exception
+	} catch (_: Exception) {
+		null
+	}
+
 	return errors.fromResponse(status.value, error)
 }
