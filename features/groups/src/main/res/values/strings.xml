@@ -1,12 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="group_title">Новая группа</string>
+	<string name="group_edit">Редактирование</string>
+	<string name="group_change_photo">Изменить фото</string>
+	<string name="group_field_name">Название</string>
+	<string name="group_field_description">Описание</string>
+	<string name="group_type">Тип группы</string>
+	<string name="group_type_private">Приватная</string>
+	<string name="group_invite">Ссылка-приглашение</string>
+	<string name="group_invite_on">Включена</string>
+	<string name="group_save">Сохранить</string>
 	<string name="group_photo">Добавить фото группы</string>
 	<string name="group_name">Название группы</string>
 	<string name="group_description">Описание · необязательно</string>
 	<string name="group_description_hint">О чём эта группа</string>
 	<string name="group_members">Участники · %d</string>
+	<string name="group_members_title">Участники</string>
+	<string name="group_owner">Владелец</string>
+	<string name="group_admin">Админ</string>
+	<string name="group_mute">Без звука</string>
+	<string name="group_search">Поиск</string>
+	<string name="group_call">Звонок</string>
+	<string name="group_more">Ещё</string>
+	<string name="group_media">Медиа</string>
+	<string name="group_notifications">Уведомления чата</string>
+	<string name="group_notifications_on">Включены</string>
+	<string name="group_pinned">Закреплённые сообщения</string>
+	<string name="group_sprint">План спринта</string>
+	<string name="group_sprint_current">Спринт 38</string>
+	<string name="group_show_all">Показать всех</string>
+	<string name="group_leave">Покинуть группу</string>
+	<string name="group_leave_owner">Сначала передайте права владельца</string>
+	<string name="group_profile">Перейти в профиль</string>
+	<string name="group_remove">Удалить из группы</string>
+	<string name="group_remove_owner">Вы не можете удалить из группы владельца</string>
+	<string name="group_make_admin">Сделать администратором</string>
+	<string name="group_transfer">Передать права владельца</string>
+	<string name="group_transfer_failed">Не удалось передать права владельца</string>
+	<string name="group_menu_edit">Редактировать</string>
+	<plurals name="group_people">
+		<item quantity="one">%d участник</item>
+		<item quantity="few">%d участника</item>
+		<item quantity="many">%d участников</item>
+		<item quantity="other">%d участников</item>
+	</plurals>
 	<string name="group_add">Добавить участников</string>
+	<string name="group_add_member">Добавить участника</string>
 	<string name="group_submit">Создать группу</string>
 	<string name="group_member_login">Логин участника</string>
 </resources>

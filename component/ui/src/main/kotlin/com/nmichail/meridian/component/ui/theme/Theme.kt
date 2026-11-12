@@ -24,42 +24,26 @@ val palette: MeridianPalette
 
 @Composable
 fun MeridianTheme(
-	darkTheme: Boolean = isSystemInDarkTheme(),
+	themeState: Boolean? = SelectedTheme.getAppTheme(),
 	content: @Composable () -> Unit,
 ) {
-	val palette = if (darkTheme) DarkPalette else LightPalette
-	SystemBarsEffect(darkTheme)
-	val colorScheme = if (darkTheme) {
-		darkColorScheme(
-			primary = palette.accentPrimary,
-			onPrimary = palette.textOnAccent,
-			secondary = palette.accentExternal,
-			background = palette.page,
-			onBackground = palette.textPrimary,
-			surface = palette.surface,
-			onSurface = palette.textPrimary,
-			onSurfaceVariant = palette.textSecondary,
-			outline = palette.borderDefault,
-			error = palette.statusError,
-			errorContainer = palette.statusErrorSoft,
-		)
+	val darkTheme = themeState ?: isSystemInDarkTheme()
+
+	val colors = if (darkTheme) {
+		DarkPalette
 	} else {
-		lightColorScheme(
-			primary = palette.accentPrimary,
-			onPrimary = palette.textOnAccent,
-			secondary = palette.accentExternal,
-			background = palette.page,
-			onBackground = palette.textPrimary,
-			surface = palette.surface,
-			onSurface = palette.textPrimary,
-			onSurfaceVariant = palette.textSecondary,
-			outline = palette.borderDefault,
-			error = palette.statusError,
-			errorContainer = palette.statusErrorSoft,
-		)
+		LightPalette
 	}
 
-	CompositionLocalProvider(LocalMeridianPalette provides palette) {
+	val colorScheme = if (darkTheme) {
+		colors.darkScheme()
+	} else {
+		colors.lightScheme()
+	}
+
+	SystemBarsEffect(darkTheme)
+
+	CompositionLocalProvider(LocalMeridianPalette provides colors) {
 		MaterialTheme(
 			colorScheme = colorScheme,
 			typography = MeridianMaterialTypography,
@@ -68,17 +52,50 @@ fun MeridianTheme(
 	}
 }
 
+private fun MeridianPalette.lightScheme() = lightColorScheme(
+	primary = accentPrimary,
+	onPrimary = textOnAccent,
+	secondary = accentExternal,
+	background = page,
+	onBackground = textPrimary,
+	surface = this.surface,
+	onSurface = textPrimary,
+	onSurfaceVariant = textSecondary,
+	outline = borderDefault,
+	error = statusError,
+	errorContainer = statusErrorSoft,
+)
+
+private fun MeridianPalette.darkScheme() = darkColorScheme(
+	primary = accentPrimary,
+	onPrimary = textOnAccent,
+	secondary = accentExternal,
+	background = page,
+	onBackground = textPrimary,
+	surface = this.surface,
+	onSurface = textPrimary,
+	onSurfaceVariant = textSecondary,
+	outline = borderDefault,
+	error = statusError,
+	errorContainer = statusErrorSoft,
+)
+
 @Composable
 private fun SystemBarsEffect(darkTheme: Boolean) {
 	val view = LocalView.current
+
 	val lightIcons = !darkTheme
+
 	SideEffect {
 		if (view.isInEditMode) {
 			return@SideEffect
 		}
+
 		val window = view.context.activity()?.window ?: return@SideEffect
+
 		WindowCompat.getInsetsController(window, view).apply {
 			isAppearanceLightStatusBars = lightIcons
+
 			isAppearanceLightNavigationBars = lightIcons
 		}
 	}
