@@ -4,17 +4,13 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -36,42 +32,50 @@ import com.nmichail.meridian.component.ui.button.MUiButton
 import com.nmichail.meridian.component.ui.button.model.MUiButtonModel
 import com.nmichail.meridian.component.ui.button.model.MUiButtonStyle
 import com.nmichail.meridian.component.ui.validation.displayNameErrorMessage
-import com.nmichail.meridian.component.ui.validation.usernameErrorMessage
 import com.nmichail.meridian.component.ui.field.MUiTextField
 import com.nmichail.meridian.component.ui.field.model.MUiFieldIcon
 import com.nmichail.meridian.component.ui.field.model.MUiTextFieldModel
-import com.nmichail.meridian.component.ui.text.MUiBodyDefaultText
-import com.nmichail.meridian.component.ui.text.MUiBodyNameText
 import com.nmichail.meridian.component.ui.text.MUiCaptionDefaultText
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.core.validation.displayName.DisplayNameValidationItem
-import com.nmichail.meridian.component.ui.initials.initials
-import com.nmichail.meridian.core.validation.username.UsernameValidationItem
 import com.nmichail.meridian.features.groups.R
 import com.nmichail.meridian.features.groups.presentation.GroupIntent
 import com.nmichail.meridian.features.groups.presentation.GroupState
-import com.nmichail.meridian.shared.chat.domain.entity.ChatPerson
 import com.nmichail.meridian.component.ui.R as UiR
 
 @Composable
 internal fun GroupScreen(
 	state: StateFlow<GroupState>,
+	chatId: String,
+	title: String,
+	description: String,
+	editing: Boolean,
 	onIntent: (GroupIntent) -> Unit,
 ) {
 	val uiState by state.collectAsStateWithLifecycle()
-	LaunchedEffect(Unit) {
-		onIntent(GroupIntent.Load)
+
+	LaunchedEffect(editing) {
+		if (editing) {
+			onIntent(
+				GroupIntent.Open(
+					chatId = chatId,
+					title = title,
+					description = description,
+				),
+			)
+		} else {
+			onIntent(GroupIntent.Load)
+		}
 	}
+
 	when (val state = uiState) {
 		GroupState.Initial -> Unit
-
 		is GroupState.Loading -> GroupBody(
 			title = state.title,
 			description = state.description,
-			login = state.login,
-			adding = state.adding,
-			members = state.members,
+			photo = state.photo,
+			enabled = false,
 			message = null,
 			onIntent = onIntent,
 		)
@@ -79,9 +83,8 @@ internal fun GroupScreen(
 		is GroupState.Content -> GroupBody(
 			title = state.title,
 			description = state.description,
-			login = state.login,
-			adding = state.adding,
-			members = state.members,
+			photo = state.photo,
+			enabled = true,
 			message = null,
 			onIntent = onIntent,
 		)
@@ -89,9 +92,8 @@ internal fun GroupScreen(
 		is GroupState.Error -> GroupBody(
 			title = state.title,
 			description = state.description,
-			login = state.login,
-			adding = state.adding,
-			members = state.members,
+			photo = "",
+			enabled = true,
 			message = state.message,
 			onIntent = onIntent,
 		)
@@ -103,12 +105,14 @@ private fun GroupBar(
 	onIntent: (GroupIntent) -> Unit,
 ) {
 	val border = palette.borderDefault
+
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
 			.background(palette.bar)
 			.drawBehind {
 				val stroke = 1.dp.toPx()
+
 				drawLine(
 					border,
 					Offset(0f, size.height),
@@ -116,9 +120,8 @@ private fun GroupBar(
 					stroke,
 				)
 			}
-			.padding(8.dp),
+			.padding(horizontal = 16.dp, vertical = 14.dp),
 		verticalAlignment = Alignment.CenterVertically,
-		horizontalArrangement = Arrangement.spacedBy(4.dp),
 	) {
 		Image(
 			painter = painterResource(UiR.drawable.ic_back),
@@ -128,12 +131,6 @@ private fun GroupBar(
 				.size(16.dp)
 				.clickable { onIntent(GroupIntent.NavigateBack) },
 		)
-
-		Text(
-			text = stringResource(R.string.group_title),
-			style = MeridianType.titleCard,
-			color = palette.textPrimary,
-		)
 	}
 }
 
@@ -141,9 +138,8 @@ private fun GroupBar(
 private fun GroupBody(
 	title: DisplayNameValidationItem,
 	description: String,
-	login: UsernameValidationItem,
-	adding: Boolean,
-	members: List<ChatPerson>,
+	photo: String,
+	enabled: Boolean,
 	message: Int?,
 	onIntent: (GroupIntent) -> Unit,
 ) {
@@ -159,10 +155,17 @@ private fun GroupBody(
 				.weight(1f)
 				.fillMaxWidth()
 				.verticalScroll(rememberScrollState())
-				.padding(horizontal = 16.dp, vertical = 16.dp),
-			verticalArrangement = Arrangement.spacedBy(16.dp),
+				.padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 16.dp),
+			verticalArrangement = Arrangement.spacedBy(12.dp),
 		) {
-			GroupPhoto()
+			GroupPhoto(
+				title = title.data,
+				photo = photo,
+				enabled = enabled,
+				onPhoto = { bytes, type ->
+					onIntent(GroupIntent.InstallPhoto(bytes = bytes, type = type))
+				},
+			)
 
 			GroupFields(
 				title = title,
@@ -170,12 +173,7 @@ private fun GroupBody(
 				onIntent = onIntent,
 			)
 
-			MemberBlock(
-				login = login,
-				adding = adding,
-				members = members,
-				onIntent = onIntent,
-			)
+			GroupOptions()
 		}
 
 		GroupSubmit(
@@ -186,187 +184,97 @@ private fun GroupBody(
 }
 
 @Composable
-private fun GroupPhoto() {
-	Row(
-		horizontalArrangement = Arrangement.spacedBy(14.dp),
-		verticalAlignment = Alignment.CenterVertically,
-	) {
-		Box(
-			modifier = Modifier
-				.size(72.dp)
-				.clip(CircleShape)
-				.background(palette.accentPrimarySoft),
-			contentAlignment = Alignment.Center,
-		) {
-			Image(
-				painter = painterResource(R.drawable.ic_group_camera),
-				contentDescription = null,
-				modifier = Modifier.size(28.dp),
-			)
-		}
-
-		MUiBodyDefaultText(
-			text = stringResource(R.string.group_photo),
-			color = palette.accentPrimary,
-		)
-	}
-}
-
-@Composable
 private fun GroupFields(
 	title: DisplayNameValidationItem,
 	description: String,
 	onIntent: (GroupIntent) -> Unit,
 ) {
-	Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+	Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 		MUiTextField(
 			model = MUiTextFieldModel(
 				icon = MUiFieldIcon.None,
 				value = title.data,
-				label = stringResource(R.string.group_name),
+				label = stringResource(R.string.group_field_name),
 				error = stringResource(id = displayNameErrorMessage(state = title.validationState)),
-				outlined = true,
 			),
 			onValueChange = { onIntent(GroupIntent.ChangeTitle(title = it)) },
+			container = palette.surface,
+			stroke = palette.borderDefault,
 		)
 
 		MUiTextField(
 			model = MUiTextFieldModel(
 				icon = MUiFieldIcon.None,
 				value = description,
-				label = stringResource(R.string.group_description),
-				placeholder = stringResource(R.string.group_description_hint),
-				outlined = true,
+				label = stringResource(R.string.group_field_description),
 			),
 			onValueChange = { onIntent(GroupIntent.ChangeDescription(description = it)) },
+			container = palette.surface,
+			stroke = palette.borderDefault,
 		)
 	}
 }
 
 @Composable
-private fun MemberBlock(
-	login: UsernameValidationItem,
-	adding: Boolean,
-	members: List<ChatPerson>,
-	onIntent: (GroupIntent) -> Unit,
-) {
-	Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-		MUiBodyNameText(
-			text = stringResource(R.string.group_members, members.size),
-		)
-
-		MemberChips(
-			members = members,
-			onIntent = onIntent,
-		)
-
-		AddMembers(
-			login = login,
-			adding = adding,
-			onIntent = onIntent,
-		)
-	}
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun MemberChips(
-	members: List<ChatPerson>,
-	onIntent: (GroupIntent) -> Unit,
-) {
-	FlowRow(
-		modifier = Modifier.fillMaxWidth(),
-		horizontalArrangement = Arrangement.spacedBy(8.dp),
+private fun GroupOptions() {
+	Column(
+		modifier = Modifier
+			.fillMaxWidth()
+			.clip(RoundedCornerShape(20.dp))
+			.background(palette.surface),
 	) {
-		members.forEach { person ->
-			MemberChip(
-				person = person,
-				onIntent = onIntent,
-			)
-		}
+		OptionRow(
+			icon = R.drawable.ic_group_people,
+			label = R.string.group_type,
+			value = R.string.group_type_private,
+		)
+
+		OptionRow(
+			icon = R.drawable.ic_group_link,
+			label = R.string.group_invite,
+			value = R.string.group_invite_on,
+		)
 	}
 }
 
 @Composable
-private fun MemberChip(
-	person: ChatPerson,
-	onIntent: (GroupIntent) -> Unit,
+private fun OptionRow(
+	icon: Int,
+	label: Int,
+	value: Int,
 ) {
-	val name = person.displayName.ifBlank { person.username }
 	Row(
 		modifier = Modifier
-			.clip(RoundedCornerShape(18.dp))
-			.background(palette.field)
-			.padding(start = 4.dp, end = 10.dp, top = 4.dp, bottom = 4.dp),
+			.fillMaxWidth()
+			.padding(start = 16.dp, end = 14.dp, top = 14.dp, bottom = 14.dp),
 		verticalAlignment = Alignment.CenterVertically,
-		horizontalArrangement = Arrangement.spacedBy(6.dp),
+		horizontalArrangement = Arrangement.spacedBy(14.dp),
 	) {
-		Box(
-			modifier = Modifier
-				.size(24.dp)
-				.clip(CircleShape)
-				.background(palette.accentPrimarySoft),
-			contentAlignment = Alignment.Center,
-		) {
-			Text(
-				text = initials(name),
-				style = MeridianType.chatMeta,
-				color = palette.accentPrimary,
-			)
-		}
+		Image(
+			painter = painterResource(icon),
+			contentDescription = null,
+			modifier = Modifier.size(22.dp),
+		)
 
-		MUiCaptionDefaultText(text = name)
+		Text(
+			text = stringResource(label),
+			style = MeridianType.bodyDefault,
+			color = palette.textPrimary,
+			modifier = Modifier.weight(1f),
+		)
+
+		Text(
+			text = stringResource(value),
+			style = MeridianType.bodySmall,
+			color = palette.textSecondary,
+		)
 
 		Image(
-			painter = painterResource(UiR.drawable.ic_close),
+			painter = painterResource(UiR.drawable.ic_chevron_right),
 			contentDescription = null,
-			modifier = Modifier
-				.size(14.dp)
-				.clickable { onIntent(GroupIntent.RemoveMember(userId = person.userId)) },
+			colorFilter = ColorFilter.tint(palette.textSecondary),
+			modifier = Modifier.size(18.dp),
 		)
-	}
-}
-
-@Composable
-private fun AddMembers(
-	login: UsernameValidationItem,
-	adding: Boolean,
-	onIntent: (GroupIntent) -> Unit,
-) {
-	Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-		Row(
-			modifier = Modifier
-				.fillMaxWidth()
-				.clickable { onIntent(GroupIntent.OpenMembers) }
-				.padding(horizontal = 16.dp, vertical = 14.dp),
-			verticalAlignment = Alignment.CenterVertically,
-			horizontalArrangement = Arrangement.spacedBy(14.dp),
-		) {
-			Image(
-				painter = painterResource(R.drawable.ic_person_add),
-				contentDescription = null,
-				modifier = Modifier.size(22.dp),
-			)
-
-			MUiBodyDefaultText(
-				text = stringResource(R.string.group_add),
-				color = palette.accentPrimary,
-			)
-		}
-
-		if (adding) {
-			MUiTextField(
-				model = MUiTextFieldModel(
-					icon = MUiFieldIcon.None,
-					value = login.data,
-					placeholder = stringResource(R.string.group_member_login),
-					error = stringResource(id = usernameErrorMessage(state = login.validationState)),
-					outlined = true,
-				),
-				onValueChange = { onIntent(GroupIntent.ChangeLogin(login = it)) },
-				onDone = { onIntent(GroupIntent.AddMember) },
-			)
-		}
 	}
 }
 
@@ -391,7 +299,7 @@ private fun GroupSubmit(
 		MUiButton(
 			model = MUiButtonModel(
 				style = MUiButtonStyle.Primary,
-				label = stringResource(R.string.group_submit),
+				label = stringResource(R.string.group_save),
 			),
 			onClick = { onIntent(GroupIntent.Submit) },
 			modifier = Modifier.fillMaxWidth(),

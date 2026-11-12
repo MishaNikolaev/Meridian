@@ -1,5 +1,7 @@
 package com.nmichail.meridian.features.groups.presentation
 
+import com.nmichail.meridian.component.photopicker.PhotoLocalDataSource
+import com.nmichail.meridian.component.photopicker.domain.usecase.UploadPhotoUseCase
 import com.nmichail.meridian.core.network.error.presentation.ErrorDelegate
 import com.nmichail.meridian.core.network.error.presentation.NonBlockingErrorProcessResult
 import com.nmichail.meridian.core.network.error.userMessage
@@ -14,22 +16,33 @@ import com.nmichail.meridian.shared.chat.domain.entity.ChatPerson
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType
 import com.nmichail.meridian.shared.chat.domain.usecase.CreateChatUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.FindPersonUseCase
+import com.nmichail.meridian.shared.chat.domain.usecase.UpdateChatUseCase
 import javax.inject.Inject
+
+internal const val GROUP_EDIT = "group-edit"
 
 class GroupViewModel @Inject constructor(
 	private val findPersonUseCase: FindPersonUseCase,
 	private val createChatUseCase: CreateChatUseCase,
+	private val updateChatUseCase: UpdateChatUseCase,
+	private val uploadPhotoUseCase: UploadPhotoUseCase,
 	private val validateUsernameUseCase: ValidateUsernameUseCase,
 	private val validateDisplayNameUseCase: ValidateDisplayNameUseCase,
 	private val errorDelegate: ErrorDelegate,
 	private val router: GroupRouter,
-) : BaseViewModel<GroupState, GroupIntent, Nothing>() {
+) : BaseViewModel<GroupState, GroupIntent, GroupEvent>() {
+	private var editing = false
+
+	private var chatId = ""
+	private var uploading = false
+	private var picked = ""
 
 	override fun initState(): GroupState = GroupState.Initial
 
 	override fun applyIntent(intent: GroupIntent) {
 		when (intent) {
 			is GroupIntent.Load -> handleLoad()
+			is GroupIntent.Open -> handleOpen(intent.chatId, intent.title, intent.description)
 			is GroupIntent.ChangeTitle -> handleChangeTitle(intent.title)
 			is GroupIntent.ChangeDescription -> handleChangeDescription(intent.description)
 			is GroupIntent.ChangeLogin -> handleChangeLogin(intent.login)
@@ -37,6 +50,7 @@ class GroupViewModel @Inject constructor(
 			is GroupIntent.AddMember -> handleAddMember()
 			is GroupIntent.RemoveMember -> handleRemoveMember(intent.userId)
 			is GroupIntent.Submit -> handleSubmit()
+			is GroupIntent.InstallPhoto -> handleInstall(intent.bytes, intent.type)
 			is GroupIntent.NavigateBack -> router.navigateBack()
 		}
 	}
@@ -45,6 +59,7 @@ class GroupViewModel @Inject constructor(
 		if (state.value != GroupState.Initial) {
 			return
 		}
+
 		setState(
 			GroupState.Content(
 				title = DisplayNameValidationItem(),
@@ -52,8 +67,71 @@ class GroupViewModel @Inject constructor(
 				login = UsernameValidationItem(),
 				adding = false,
 				members = emptyList(),
+				photo = "",
 			),
 		)
+
+		picked = ""
+	}
+
+	private fun handleOpen(chatId: String, title: String, description: String) {
+		if (state.value != GroupState.Initial) {
+			return
+		}
+
+		editing = true
+
+		this.chatId = chatId
+
+		val stored = PhotoLocalDataSource.storedChatPhoto(chatId)
+
+		picked = stored
+
+		setState(
+			GroupState.Content(
+				title = validateDisplayNameUseCase(title),
+				description = description,
+				login = UsernameValidationItem(),
+				adding = false,
+				members = emptyList(),
+				photo = stored,
+			),
+		)
+	}
+
+	private fun handleInstall(bytes: ByteArray, type: String) {
+		if (uploading || state.value == GroupState.Initial) {
+			return
+		}
+
+		uploading = true
+
+		launchTry {
+			val photoId = uploadPhotoUseCase(bytes, type)
+
+			PhotoLocalDataSource.keepChatPhoto(chatId = chatId, photoId = photoId)
+
+			remember(photoId)
+
+			uploading = false
+		} catch ::handleUploadFailure
+	}
+
+	private fun remember(photoId: String) {
+		picked = photoId
+
+		when (val current = state.value) {
+			GroupState.Initial -> Unit
+			is GroupState.Loading -> setState(current.copy(photo = photoId))
+			is GroupState.Content -> setState(current.copy(photo = photoId))
+			is GroupState.Error -> Unit
+		}
+	}
+
+	private fun handleUploadFailure(error: Exception) {
+		uploading = false
+
+		errorDelegate.processNonBlockingError(error)
 	}
 
 	private fun handleChangeTitle(title: String) {
@@ -61,7 +139,6 @@ class GroupViewModel @Inject constructor(
 			GroupState.Initial,
 			is GroupState.Loading,
 			-> return
-
 			is GroupState.Content -> setState(
 				current.copy(title = validateDisplayNameUseCase(title)),
 			)
@@ -73,6 +150,7 @@ class GroupViewModel @Inject constructor(
 					login = current.login,
 					adding = current.adding,
 					members = current.members,
+					photo = picked,
 				),
 			)
 		}
@@ -83,9 +161,7 @@ class GroupViewModel @Inject constructor(
 			GroupState.Initial,
 			is GroupState.Loading,
 			-> return
-
 			is GroupState.Content -> setState(current.copy(description = description))
-
 			is GroupState.Error -> setState(
 				GroupState.Content(
 					title = current.title,
@@ -93,6 +169,7 @@ class GroupViewModel @Inject constructor(
 					login = current.login,
 					adding = current.adding,
 					members = current.members,
+					photo = picked,
 				),
 			)
 		}
@@ -103,7 +180,6 @@ class GroupViewModel @Inject constructor(
 			GroupState.Initial,
 			is GroupState.Loading,
 			-> return
-
 			is GroupState.Content -> setState(
 				current.copy(login = validateUsernameUseCase(login)),
 			)
@@ -115,6 +191,7 @@ class GroupViewModel @Inject constructor(
 					login = validateUsernameUseCase(login),
 					adding = current.adding,
 					members = current.members,
+					photo = picked,
 				),
 			)
 		}
@@ -125,9 +202,7 @@ class GroupViewModel @Inject constructor(
 			GroupState.Initial,
 			is GroupState.Loading,
 			-> return
-
 			is GroupState.Content -> setState(current.copy(adding = true))
-
 			is GroupState.Error -> setState(
 				GroupState.Content(
 					title = current.title,
@@ -135,6 +210,7 @@ class GroupViewModel @Inject constructor(
 					login = current.login,
 					adding = true,
 					members = current.members,
+					photo = picked,
 				),
 			)
 		}
@@ -145,7 +221,6 @@ class GroupViewModel @Inject constructor(
 			GroupState.Initial,
 			is GroupState.Loading,
 			-> return
-
 			is GroupState.Content -> setState(
 				current.copy(members = current.members.filter { person -> person.userId != userId }),
 			)
@@ -157,6 +232,7 @@ class GroupViewModel @Inject constructor(
 					login = current.login,
 					adding = current.adding,
 					members = current.members.filter { person -> person.userId != userId },
+					photo = picked,
 				),
 			)
 		}
@@ -167,13 +243,13 @@ class GroupViewModel @Inject constructor(
 			GroupState.Initial,
 			is GroupState.Loading,
 			-> return
-
 			is GroupState.Content -> handleFindPerson(
 				title = current.title,
 				description = current.description,
 				login = current.login,
 				adding = current.adding,
 				members = current.members,
+				photo = current.photo,
 			)
 
 			is GroupState.Error -> handleFindPerson(
@@ -182,6 +258,7 @@ class GroupViewModel @Inject constructor(
 				login = current.login,
 				adding = current.adding,
 				members = current.members,
+				photo = picked,
 			)
 		}
 	}
@@ -192,8 +269,11 @@ class GroupViewModel @Inject constructor(
 		login: UsernameValidationItem,
 		adding: Boolean,
 		members: List<ChatPerson>,
+		photo: String,
 	) {
+		picked = photo
 		val checked = validateUsernameUseCase(login.data.trim())
+
 		if (!checked.isValid()) {
 			setState(
 				GroupState.Content(
@@ -202,10 +282,13 @@ class GroupViewModel @Inject constructor(
 					login = checked,
 					adding = adding,
 					members = members,
+					photo = photo,
 				),
 			)
+
 			return
 		}
+
 		if (members.any { person -> person.username.equals(checked.data, ignoreCase = true) }) {
 			setState(
 				GroupState.Content(
@@ -214,10 +297,13 @@ class GroupViewModel @Inject constructor(
 					login = UsernameValidationItem(),
 					adding = false,
 					members = members,
+					photo = photo,
 				),
 			)
+
 			return
 		}
+
 		setState(
 			GroupState.Loading(
 				title = title,
@@ -225,15 +311,19 @@ class GroupViewModel @Inject constructor(
 				login = checked,
 				adding = adding,
 				members = members,
+				photo = photo,
 			),
 		)
+
 		loadPerson(checked.data)
 	}
 
 	private fun loadPerson(username: String) {
 		launchTry {
 			val person = findPersonUseCase(username)
+
 			val opened = state.value as? GroupState.Loading ?: return@launchTry
+
 			setState(
 				GroupState.Content(
 					title = opened.title,
@@ -241,23 +331,30 @@ class GroupViewModel @Inject constructor(
 					login = UsernameValidationItem(),
 					adding = false,
 					members = opened.members + person,
+					photo = opened.photo,
 				),
 			)
 		} catch ::handleAddFailure
 	}
 
 	private fun handleSubmit() {
+		if (editing) {
+			handleSave()
+
+			return
+		}
+
 		when (val current = state.value) {
 			GroupState.Initial,
 			is GroupState.Loading,
 			-> return
-
 			is GroupState.Content -> handleCreateChat(
 				title = current.title,
 				description = current.description,
 				login = current.login,
 				adding = current.adding,
 				members = current.members,
+				photo = current.photo,
 			)
 
 			is GroupState.Error -> handleCreateChat(
@@ -266,8 +363,87 @@ class GroupViewModel @Inject constructor(
 				login = current.login,
 				adding = current.adding,
 				members = current.members,
+				photo = picked,
 			)
 		}
+	}
+
+	private fun handleSave() {
+		val opened = openedForm() ?: return
+		val title = opened.title
+		val description = opened.description
+		val photo = opened.photo
+
+		picked = photo
+
+		val checked = validateDisplayNameUseCase(title.data.trim())
+
+		if (!checked.isValid()) {
+			setState(
+				GroupState.Content(
+					title = checked,
+					description = description,
+					login = UsernameValidationItem(),
+					adding = false,
+					members = emptyList(),
+					photo = photo,
+				),
+			)
+
+			return
+		}
+
+		val id = chatId
+
+		setState(
+			GroupState.Loading(
+				title = checked,
+				description = description,
+				login = UsernameValidationItem(),
+				adding = false,
+				members = emptyList(),
+				photo = photo,
+			),
+		)
+
+		launchTry {
+			val saved = updateChatUseCase(
+				id,
+				checked.data,
+				description.trim(),
+			)
+
+			setEvent(
+				GroupEvent.Saved(
+					title = saved.title,
+					description = saved.description,
+				),
+			)
+
+			router.navigateBack()
+		} catch ::handleSaveFailure
+	}
+
+	private fun openedForm(): GroupState.Content? {
+		return when (val current = state.value) {
+			is GroupState.Content -> current
+			is GroupState.Error -> GroupState.Content(
+				title = current.title,
+				description = current.description,
+				login = current.login,
+				adding = current.adding,
+				members = current.members,
+				photo = picked,
+			)
+
+			GroupState.Initial,
+			is GroupState.Loading,
+			-> null
+		}
+	}
+
+	private fun handleSaveFailure(error: Exception) {
+		handleRequestFailure(error)
 	}
 
 	private fun handleCreateChat(
@@ -276,8 +452,12 @@ class GroupViewModel @Inject constructor(
 		login: UsernameValidationItem,
 		adding: Boolean,
 		members: List<ChatPerson>,
+		photo: String,
 	) {
+		picked = photo
+
 		val checked = validateDisplayNameUseCase(title.data.trim())
+
 		if (!checked.isValid()) {
 			setState(
 				GroupState.Content(
@@ -286,8 +466,10 @@ class GroupViewModel @Inject constructor(
 					login = login,
 					adding = adding,
 					members = members,
+					photo = photo,
 				),
 			)
+
 			return
 		}
 
@@ -298,6 +480,7 @@ class GroupViewModel @Inject constructor(
 				login = login,
 				adding = adding,
 				members = members,
+				photo = photo,
 			),
 		)
 
@@ -307,6 +490,8 @@ class GroupViewModel @Inject constructor(
 				checked.data,
 				members.map { person -> person.username },
 			)
+
+			PhotoLocalDataSource.keepChatPhoto(chatId = chat.id, photoId = photo)
 
 			router.navigateBack()
 
@@ -329,6 +514,9 @@ class GroupViewModel @Inject constructor(
 
 	private fun handleRequestFailure(error: Exception) {
 		val failed = state.value as? GroupState.Loading ?: return
+
+		picked = failed.photo
+
 		val result = errorDelegate.processNonBlockingError(error)
 
 		if (result is NonBlockingErrorProcessResult.Handled) {
@@ -339,8 +527,10 @@ class GroupViewModel @Inject constructor(
 					login = failed.login,
 					adding = failed.adding,
 					members = failed.members,
+					photo = failed.photo,
 				),
 			)
+
 			return
 		}
 

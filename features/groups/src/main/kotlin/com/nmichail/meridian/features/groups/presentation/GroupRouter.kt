@@ -1,7 +1,6 @@
 package com.nmichail.meridian.features.groups.presentation
 
 interface GroupRouter {
-
 	fun navigateToConversation(
 		chatId: String,
 		title: String,
@@ -10,4 +9,17 @@ interface GroupRouter {
 	)
 
 	fun navigateBack()
+
+	fun closeChat()
+
+	fun navigateToEdit(
+		chatId: String,
+		title: String,
+		description: String,
+	)
+
+	fun navigateToPerson(
+		userId: String,
+		corporate: Boolean,
+	)
 }
