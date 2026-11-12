@@ -47,7 +47,9 @@ fun RegistrationScreen(
 	onIntent: (RegistrationIntent) -> Unit,
 ) {
 	val uiState by state.collectAsStateWithLifecycle()
+
 	DismissKeyboardOnDispose()
+
 	when (val current = uiState) {
 		RegistrationState.Initial -> RegistrationForm(
 			username = UsernameValidationItem(),
@@ -99,28 +101,34 @@ private fun RegistrationForm(
 		verticalArrangement = Arrangement.spacedBy(16.dp),
 	) {
 		MUiDisplayAuthText(text = stringResource(R.string.registration_title))
+
 		MUiBodyRegularText(
 			text = stringResource(R.string.registration_hint),
 			color = palette.textSecondary,
 		)
+
 		MUiTextField(
 			model = MUiTextFieldModel(
 				icon = MUiFieldIcon.None,
 				value = username.data,
 				placeholder = stringResource(R.string.registration_login),
 				error = stringResource(id = usernameErrorMessage(state = username.validationState)),
+				outlined = true,
 			),
 			onValueChange = { onIntent(RegistrationIntent.ChangeUsername(it)) },
 		)
+
 		MUiTextField(
 			model = MUiTextFieldModel(
 				icon = MUiFieldIcon.None,
 				value = displayName.data,
 				placeholder = stringResource(R.string.registration_name),
 				error = stringResource(id = displayNameErrorMessage(state = displayName.validationState)),
+				outlined = true,
 			),
 			onValueChange = { onIntent(RegistrationIntent.ChangeDisplayName(it)) },
 		)
+
 		MUiTextField(
 			model = MUiTextFieldModel(
 				icon = MUiFieldIcon.None,
@@ -128,15 +136,18 @@ private fun RegistrationForm(
 				placeholder = stringResource(R.string.registration_password),
 				error = stringResource(id = passwordErrorMessage(state = password.validationState)),
 				secret = true,
+				outlined = true,
 			),
 			onValueChange = { onIntent(RegistrationIntent.ChangePassword(it)) },
 		)
+
 		if (message != null) {
 			MUiCaptionSmallText(
 				text = stringResource(message),
 				color = MaterialTheme.colorScheme.error,
 			)
 		}
+
 		RegistrationActions(onIntent)
 	}
 }
@@ -150,6 +161,7 @@ private fun RegistrationActions(onIntent: (RegistrationIntent) -> Unit) {
 		),
 		onClick = { onIntent(RegistrationIntent.Submit) },
 	)
+
 	Column(
 		modifier = Modifier.fillMaxWidth(),
 		horizontalAlignment = Alignment.CenterHorizontally,
@@ -162,7 +174,9 @@ private fun RegistrationActions(onIntent: (RegistrationIntent) -> Unit) {
 			),
 			onClick = { onIntent(RegistrationIntent.OpenSignIn) },
 		)
+
 		HorizontalDivider(color = palette.borderDefault)
+
 		MUiBodyDefaultText(
 			text = stringResource(R.string.registration_workspace),
 			color = palette.textPrimary,

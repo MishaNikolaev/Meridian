@@ -48,6 +48,11 @@ class RegistrationViewModelTest {
 	private val username = UsernameValidationItem(data = "chief", validationState = DefaultValidationState.Valid)
 	private val displayName = DisplayNameValidationItem(data = "Сергей", validationState = DefaultValidationState.Valid)
 	private val password = PasswordValidationItem(data = "meridian1", validationState = DefaultValidationState.Valid)
+	private val registration = RegistrationData(
+		username = "chief",
+		displayName = "Сергей",
+		password = "meridian1",
+	)
 
 	@Test
 	fun `change display name EXPECT validated name`() = runTest {
@@ -67,7 +72,10 @@ class RegistrationViewModelTest {
 
 	@Test
 	fun `submit EXPECT open home`() = runTest {
-		stubValid()
+		whenever(validateUsernameUseCase.invoke("chief")) doReturn username
+		whenever(validateDisplayNameUseCase.invoke("Сергей")) doReturn displayName
+		whenever(validatePasswordUseCase.invoke("meridian1")) doReturn password
+		whenever(registerUseCase.invoke(registration)) doReturn session
 		viewModel.applyIntent(RegistrationIntent.ChangeUsername(value = "chief"))
 		viewModel.applyIntent(RegistrationIntent.ChangeDisplayName(value = "Сергей"))
 		viewModel.applyIntent(RegistrationIntent.ChangePassword(value = "meridian1"))
@@ -79,34 +87,25 @@ class RegistrationViewModelTest {
 
 	@Test
 	fun `submit EXPECT registration data`() = runTest {
-		stubValid()
+		whenever(validateUsernameUseCase.invoke("chief")) doReturn username
+		whenever(validateDisplayNameUseCase.invoke("Сергей")) doReturn displayName
+		whenever(validatePasswordUseCase.invoke("meridian1")) doReturn password
+		whenever(registerUseCase.invoke(registration)) doReturn session
 		viewModel.applyIntent(RegistrationIntent.ChangeUsername(value = "chief"))
 		viewModel.applyIntent(RegistrationIntent.ChangeDisplayName(value = "Сергей"))
 		viewModel.applyIntent(RegistrationIntent.ChangePassword(value = "meridian1"))
 
 		viewModel.applyIntent(RegistrationIntent.Submit)
 
-		verify(registerUseCase).invoke(
-			RegistrationData(
-				username = "chief",
-				displayName = "Сергей",
-				password = "meridian1",
-			),
-		)
+		verify(registerUseCase).invoke(registration)
 	}
 
 	@Test
 	fun `submit failure EXPECT error`() = runTest {
-		stubValid()
-		whenever(
-			registerUseCase.invoke(
-				RegistrationData(
-					username = "chief",
-					displayName = "Сергей",
-					password = "meridian1",
-				),
-			),
-		) doThrowSafe IOException("down")
+		whenever(validateUsernameUseCase.invoke("chief")) doReturn username
+		whenever(validateDisplayNameUseCase.invoke("Сергей")) doReturn displayName
+		whenever(validatePasswordUseCase.invoke("meridian1")) doReturn password
+		whenever(registerUseCase.invoke(registration)) doThrowSafe IOException("down")
 		viewModel.applyIntent(RegistrationIntent.ChangeUsername(value = "chief"))
 		viewModel.applyIntent(RegistrationIntent.ChangeDisplayName(value = "Сергей"))
 		viewModel.applyIntent(RegistrationIntent.ChangePassword(value = "meridian1"))
@@ -143,20 +142,5 @@ class RegistrationViewModelTest {
 		viewModel.applyIntent(RegistrationIntent.NavigateBack)
 
 		verify(router).navigateBack()
-	}
-
-	private suspend fun stubValid() {
-		whenever(validateUsernameUseCase.invoke("chief")) doReturn username
-		whenever(validateDisplayNameUseCase.invoke("Сергей")) doReturn displayName
-		whenever(validatePasswordUseCase.invoke("meridian1")) doReturn password
-		whenever(
-			registerUseCase.invoke(
-				RegistrationData(
-					username = "chief",
-					displayName = "Сергей",
-					password = "meridian1",
-				),
-			),
-		) doReturn session
 	}
 }

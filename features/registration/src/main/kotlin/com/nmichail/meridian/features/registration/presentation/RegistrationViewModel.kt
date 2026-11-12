@@ -41,7 +41,6 @@ class RegistrationViewModel @Inject constructor(
 	private fun handleChangeUsername(value: String) {
 		when (val current = state.value) {
 			is RegistrationState.Loading -> return
-
 			RegistrationState.Initial    -> setState(
 				RegistrationState.Content(
 					username = validateUsernameUseCase(value),
@@ -67,7 +66,6 @@ class RegistrationViewModel @Inject constructor(
 	private fun handleChangeDisplayName(value: String) {
 		when (val current = state.value) {
 			is RegistrationState.Loading -> return
-
 			RegistrationState.Initial    -> setState(
 				RegistrationState.Content(
 					username = UsernameValidationItem(),
@@ -94,7 +92,6 @@ class RegistrationViewModel @Inject constructor(
 		val password = PasswordValidationItem(data = value, validationState = DefaultValidationState.Unverified)
 		when (val current = state.value) {
 			is RegistrationState.Loading -> return
-
 			RegistrationState.Initial    -> setState(
 				RegistrationState.Content(
 					username = UsernameValidationItem(),
@@ -120,7 +117,6 @@ class RegistrationViewModel @Inject constructor(
 	private fun handleSubmit() {
 		when (val current = state.value) {
 			is RegistrationState.Loading -> return
-
 			RegistrationState.Initial    -> register(
 				usernameData = "",
 				displayNameData = "",

@@ -11,5 +11,6 @@ data class MessageDto(
 	val deleted: Boolean,
 	val deviceMessages: List<DeviceMessageDto>,
 	val reactions: List<ReactionDto>,
-	val threadRoot: String? = null,
+	val threadRoot: String?,
+	val notice: String?,
 )

@@ -18,18 +18,18 @@ fun getRegistrationScreen(): FullScreen = FullScreen(
 )
 
 class RegistrationFragment : FullScreenFragment() {
-
 	private val viewModel: RegistrationViewModel by viewModel()
 
 	override fun onAttach(context: Context) {
 		super.onAttach(context)
+
 		RegistrationComponentHolder.get().inject(this)
 	}
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
 		ComposeView(requireContext()).apply {
 			setContent {
-				Screen {
+				Screen(canvas = true) {
 					RegistrationScreen(
 						state = viewModel.state,
 						onIntent = viewModel::applyIntent,

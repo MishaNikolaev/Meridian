@@ -48,7 +48,6 @@ internal fun MessageAction.choose(
 		)
 
 		MessageAction.EDIT -> onIntent(ConversationIntent.BeginEdit(line = line))
-
 		MessageAction.START_DISCUSSION -> onIntent(
 			ConversationIntent.StartDiscussion(lineId = line.id),
 		)
@@ -58,7 +57,6 @@ internal fun MessageAction.choose(
 		)
 
 		MessageAction.PIN -> onIntent(ConversationIntent.Pin(lineId = line.id))
-
 		MessageAction.REPORT -> onIntent(ConversationIntent.DismissMessageMenu)
 	}
 }
