@@ -15,14 +15,18 @@ import com.nmichail.meridian.features.conversation.domain.entity.toMention
 import com.nmichail.meridian.features.conversation.presentation.compose.component.days
 import com.nmichail.meridian.features.conversation.presentation.compose.component.keepingEdits
 import com.nmichail.meridian.features.conversation.presentation.compose.component.markDeleted
-import com.nmichail.meridian.features.conversation.presentation.compose.component.mergeReactionViewers
+import com.nmichail.meridian.features.conversation.presentation.compose.component.mineGlyph
+import com.nmichail.meridian.features.conversation.presentation.compose.component.reactionGlyph
 import com.nmichail.meridian.features.conversation.presentation.compose.component.reactionGlyphs
+import com.nmichail.meridian.features.conversation.presentation.compose.component.usedGlyph
 import com.nmichail.meridian.shared.chat.data.realtime.ChatRealtime
+import com.nmichail.meridian.shared.chat.domain.entity.Chat
 import com.nmichail.meridian.shared.chat.domain.entity.ChatLine
 import com.nmichail.meridian.shared.chat.domain.entity.ChatPerson
 import com.nmichail.meridian.shared.chat.domain.entity.ChatReaction
 import com.nmichail.meridian.shared.chat.domain.usecase.DeleteMessageUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.LoadMessagesUseCase
+import com.nmichail.meridian.shared.chat.domain.usecase.ReadCachedChatsUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.ReadCachedMessagesUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.MarkReadUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.ReactUseCase
@@ -36,6 +40,7 @@ import kotlinx.coroutines.CancellationException
 class ConversationViewModel @Inject constructor(
 	private val loadMessagesUseCase: LoadMessagesUseCase,
 	private val readCachedMessagesUseCase: ReadCachedMessagesUseCase,
+	private val readCachedChatsUseCase: ReadCachedChatsUseCase,
 	private val sendMessageUseCase: SendMessageUseCase,
 	private val markReadUseCase: MarkReadUseCase,
 	private val readReactionsUseCase: ReadReactionsUseCase,
@@ -51,7 +56,6 @@ class ConversationViewModel @Inject constructor(
 	private val errorDelegate: ErrorDelegate,
 	private val router: ConversationRouter,
 ) : BaseViewModel<ConversationState, ConversationIntent, ConversationEvent>() {
-
 	private var markedChatId: String? = null
 
 	private var markedMessageId: String? = null
@@ -68,7 +72,8 @@ class ConversationViewModel @Inject constructor(
 			is ConversationIntent.StartReply         -> handleStartReply(intent.author, intent.text)
 			is ConversationIntent.CancelReply        -> handleCancelReply()
 			is ConversationIntent.Send               -> handleSend()
-			is ConversationIntent.NavigateBack       -> handleNavigateBack()
+			is ConversationIntent.NavigateBack       -> router.navigateBack()
+			is ConversationIntent.SyncTitles         -> handleSyncTitles()
 			is ConversationIntent.OpenPerson         -> handleOpenPerson()
 			is ConversationIntent.OpenMessage        -> handleOpenMessage(intent.lineId)
 			is ConversationIntent.DismissMessageMenu -> handleDismissMessageMenu()
@@ -85,6 +90,7 @@ class ConversationViewModel @Inject constructor(
 		if (state.value != ConversationState.Initial) {
 			return
 		}
+
 		if (load.chatId.startsWith("bot:")) {
 			handleOpenBot(
 				chatId = load.chatId.removePrefix("bot:"),
@@ -93,8 +99,10 @@ class ConversationViewModel @Inject constructor(
 				rootId = load.rootId,
 				personId = load.personId,
 			)
+
 			return
 		}
+
 		handleOpenChat(
 			chatId = load.chatId,
 			title = load.title,
@@ -125,15 +133,18 @@ class ConversationViewModel @Inject constructor(
 					text = "",
 					sentAt = Instant.now().toString(),
 					author = title,
+					authorId = "",
 					replyAuthor = null,
 					replyText = null,
 					threadRoot = null,
 					deleted = false,
 					edited = false,
+					service = false,
 				),
 			),
 			members = 0,
 			people = emptyList(),
+			selfName = "",
 			reactions = emptyMap(),
 			reactionViewers = emptyMap(),
 		)
@@ -147,23 +158,22 @@ class ConversationViewModel @Inject constructor(
 		personId: String,
 	) {
 		val cached = readCachedMessagesUseCase(chatId)
-		if (cached == null) {
-			setState(ConversationState.Loading)
-		} else {
-			handlePublish(
-				chatId = chatId,
-				title = title,
-				corporate = corporate,
-				rootId = rootId,
-				personId = personId,
-				bot = false,
-				lines = cached.lines,
-				members = cached.members,
-				people = cached.people,
-				reactions = reactionGlyphs(cached.reactions) + reactionGlyphs(readReactionsUseCase()),
-				reactionViewers = cached.reactionViewers,
-			)
-		}
+
+		handlePublish(
+			chatId = chatId,
+			title = title,
+			corporate = corporate,
+			rootId = rootId,
+			personId = personId,
+			bot = false,
+			lines = cached?.lines.orEmpty(),
+			members = cached?.members ?: 0,
+			people = cached?.people.orEmpty(),
+			selfName = cached?.selfName.orEmpty(),
+			reactions = reactionGlyphs(cached?.reactions.orEmpty()) + reactionGlyphs(readReactionsUseCase().chosen),
+			reactionViewers = cached?.reactionViewers.orEmpty(),
+		)
+
 		handleListen(
 			chatId = chatId,
 			title = title,
@@ -171,6 +181,7 @@ class ConversationViewModel @Inject constructor(
 			rootId = rootId,
 			personId = personId,
 		)
+
 		handleLoadMessages(
 			chatId = chatId,
 			title = title,
@@ -188,6 +199,7 @@ class ConversationViewModel @Inject constructor(
 		personId: String,
 	) {
 		realtime.ensureStarted()
+
 		launchTry {
 			realtime.chatIds.collect { changed ->
 				if (changed == chatId) {
@@ -209,10 +221,12 @@ class ConversationViewModel @Inject constructor(
 
 	private fun handlePickMention(token: String) {
 		val currentState = state.value as? ConversationState.Content ?: return
+
 		val next = applyMentionUseCase(
 			draft = currentState.draft,
 			token = token,
 		)
+
 		handleDraft(next)
 	}
 
@@ -220,7 +234,9 @@ class ConversationViewModel @Inject constructor(
 		if (!line.mine || line.deleted) {
 			return
 		}
+
 		val currentState = state.value as? ConversationState.Content ?: return
+
 		setState(
 			currentState.copy(
 				menuLineId = null,
@@ -230,22 +246,26 @@ class ConversationViewModel @Inject constructor(
 				replyText = "",
 			),
 		)
+
 		handleDraft(line.text)
 	}
 
 	private fun handleCancelEdit() {
 		val currentState = state.value as? ConversationState.Content ?: return
+
 		setState(
 			currentState.copy(
 				editingId = null,
 				editingText = "",
 			),
 		)
+
 		handleDraft("")
 	}
 
 	private fun handleStartReply(author: String, text: String) {
 		val currentState = state.value as? ConversationState.Content ?: return
+
 		setState(
 			currentState.copy(
 				menuLineId = null,
@@ -259,27 +279,39 @@ class ConversationViewModel @Inject constructor(
 
 	private fun handleCancelReply() {
 		val currentState = state.value as? ConversationState.Content ?: return
+
 		setState(currentState.copy(replyAuthor = "", replyText = ""))
 	}
 
 	private fun handleSend() {
 		val currentState = state.value as? ConversationState.Content ?: return
+
 		val text = currentState.draft.trim()
+
 		if (text.isEmpty() || currentState.sending) {
 			return
 		}
+
 		if (currentState.editingId != null) {
 			handleApplyEdit(text)
+
 			return
 		}
+
 		val replyAuthor = currentState.replyAuthor
+
 		val replyText = currentState.replyText
+
 		val threadRoot = currentState.rootId.orEmpty()
+
 		val chatId = currentState.chatId
+
 		if (currentState.bot) {
 			handleSendBot(text, replyAuthor, replyText)
+
 			return
 		}
+
 		setState(
 			currentState.copy(
 				sending = true,
@@ -287,7 +319,9 @@ class ConversationViewModel @Inject constructor(
 				replyText = "",
 			),
 		)
+
 		handleDraft("")
+
 		launchTry {
 			sendMessageUseCase(
 				chatId,
@@ -296,27 +330,35 @@ class ConversationViewModel @Inject constructor(
 				replyText,
 				threadRoot,
 			)
+
 			val sent = state.value as? ConversationState.Content ?: return@launchTry
+
 			setState(sent.copy(sending = false))
+
 			handleLoadMessages(chatId)
 		} catch ::handleSendFailure
 	}
 
 	private fun handleSendBot(text: String, replyAuthor: String, replyText: String) {
 		val currentState = state.value as? ConversationState.Content ?: return
+
 		val line = ChatLine(
 			id = "${currentState.lines.size}",
 			mine = true,
 			text = text,
 			sentAt = Instant.now().toString(),
 			author = null,
+			authorId = "",
 			replyAuthor = replyAuthor.ifEmpty { null },
 			replyText = replyText.ifEmpty { null },
 			threadRoot = currentState.rootId,
 			deleted = false,
 			edited = false,
+			service = false,
 		)
+
 		val lines = currentState.lines + line
+
 		setState(
 			currentState.copy(
 				replyAuthor = "",
@@ -325,18 +367,34 @@ class ConversationViewModel @Inject constructor(
 				days = lines.days(),
 			),
 		)
+
 		handleDraft("")
 	}
 
-	private fun handleNavigateBack() {
-		router.navigateBack()
+	private fun handleSyncTitles() {
+		val current = state.value as? ConversationState.Content ?: return
+
+		launchTry {
+			setState(current.renamed(readCachedChatsUseCase().savedTitle(current.chatId)) ?: return@launchTry)
+		} catch ::handleRefreshFailure
 	}
 
 	private fun handleOpenPerson() {
 		val currentState = state.value as? ConversationState.Content ?: return
+
 		if (currentState.personId.isEmpty()) {
+			if (!currentState.bot) {
+				router.navigateToGroup(
+					chatId = currentState.chatId,
+					title = currentState.title,
+					members = memberNames(currentState.people),
+					corporate = currentState.corporate,
+				)
+			}
+
 			return
 		}
+
 		router.navigateToPerson(
 			userId = currentState.personId,
 			corporate = currentState.corporate,
@@ -345,45 +403,66 @@ class ConversationViewModel @Inject constructor(
 
 	private fun handleOpenMessage(lineId: String) {
 		val currentState = state.value as? ConversationState.Content ?: return
+
 		if (currentState.selectedIds.isNotEmpty()) {
 			handleToggleSelection(lineId)
+
 			return
 		}
+
 		setState(currentState.copy(menuLineId = lineId))
 	}
 
 	private fun handleDismissMessageMenu() {
 		val currentState = state.value as? ConversationState.Content ?: return
+
 		setState(currentState.copy(menuLineId = null))
 	}
 
 	private fun handlePickReaction(lineId: String, reaction: String) {
 		val currentState = state.value as? ConversationState.Content ?: return
-		val others = currentState.reactionViewers[lineId].orEmpty().filter { viewer -> !viewer.mine }
-		val mine = ChatReaction(
-			name = "",
-			reaction = reaction,
-			sentAt = Instant.now().toString(),
-			mine = true,
-		)
+
+		val glyph = reactionGlyph(reaction)
+
+		val chosen = currentState.reactions[lineId].orEmpty()
+
+		val active = glyph !in chosen
+
+		val next = if (active) {
+			chosen + glyph
+		} else {
+			chosen - glyph
+		}
+
 		setState(
 			currentState.copy(
+				reactions = currentState.reactions + (lineId to next),
+				reactionViewers = currentState.reactionViewers + (
+					lineId to currentState.reactionViewers[lineId].orEmpty().mineGlyph(
+						glyph = glyph,
+						sentAt = Instant.now().toString(),
+						selfName = currentState.selfName,
+					)
+				),
+				usedReactions = currentState.usedReactions.usedGlyph(glyph = glyph, active = active),
 				menuLineId = null,
-				reactions = currentState.reactions + (lineId to reaction),
-				reactionViewers = currentState.reactionViewers + (lineId to (others + mine)),
-			)
+			),
 		)
+
+		saveReactionUseCase(lineId, next)
+
 		if (currentState.bot) {
 			return
 		}
-		saveReactionUseCase(lineId, reaction)
+
 		launchTry {
-			reactUseCase(lineId, reaction)
+			reactUseCase(lineId, glyph, active)
 		} catch ::handleRefreshFailure
 	}
 
 	private fun handlePin(lineId: String) {
 		val currentState = state.value as? ConversationState.Content ?: return
+
 		setState(
 			currentState.copy(
 				menuLineId = null,
@@ -398,8 +477,11 @@ class ConversationViewModel @Inject constructor(
 
 	private fun handleStartDiscussion(lineId: String) {
 		val currentState = state.value as? ConversationState.Content ?: return
+
 		setState(currentState.copy(menuLineId = null))
+
 		val screenId = if (currentState.bot) "bot:${currentState.chatId}" else currentState.chatId
+
 		router.navigateToDiscussion(
 			chatId = screenId,
 			title = currentState.title,
@@ -411,27 +493,33 @@ class ConversationViewModel @Inject constructor(
 
 	private fun handleStartSelection(lineId: String) {
 		val currentState = state.value as? ConversationState.Content ?: return
+
 		setState(currentState.copy(menuLineId = null, selectedIds = setOf(lineId)))
 	}
 
 	private fun handleToggleSelection(lineId: String) {
 		val currentState = state.value as? ConversationState.Content ?: return
+
 		val next = if (lineId in currentState.selectedIds) {
 			currentState.selectedIds - lineId
 		} else {
 			currentState.selectedIds + lineId
 		}
+
 		setState(currentState.copy(selectedIds = next))
 	}
 
 	private fun handleClearSelection() {
 		val currentState = state.value as? ConversationState.Content ?: return
+
 		setState(currentState.copy(selectedIds = emptySet()))
 	}
 
 	private fun handleDeleteSelection() {
 		val currentState = state.value as? ConversationState.Content ?: return
+
 		val ids = currentState.selectedIds
+
 		val lines = currentState.lines.map { line ->
 			if (line.id in ids) {
 				line.markDeleted()
@@ -439,6 +527,7 @@ class ConversationViewModel @Inject constructor(
 				line
 			}
 		}
+
 		setState(
 			currentState.copy(
 				lines = lines,
@@ -454,9 +543,11 @@ class ConversationViewModel @Inject constructor(
 				reactionViewers = currentState.reactionViewers.filterKeys { it !in ids },
 			)
 		)
+
 		if (currentState.bot) {
 			return
 		}
+
 		launchTry {
 			ids.forEach { id -> deleteMessageUseCase(id) }
 		} catch ::handleDeleteFailure
@@ -464,7 +555,9 @@ class ConversationViewModel @Inject constructor(
 
 	private fun handleApplyEdit(text: String) {
 		val currentState = state.value as? ConversationState.Content ?: return
+
 		val editing = currentState.editingId ?: return
+
 		val lines = currentState.lines.map { line ->
 			if (line.id == editing) {
 				line.copy(text = text, edited = line.edited || text != line.text)
@@ -472,6 +565,7 @@ class ConversationViewModel @Inject constructor(
 				line
 			}
 		}
+
 		setState(
 			currentState.copy(
 				editingId = null,
@@ -480,11 +574,13 @@ class ConversationViewModel @Inject constructor(
 				days = lines.days(),
 			),
 		)
+
 		handleDraft("")
 	}
 
 	private fun handleLoadMessages(chatId: String) {
 		val current = state.value as? ConversationState.Content ?: return
+
 		handleLoadMessages(
 			chatId = chatId,
 			title = current.title,
@@ -502,9 +598,12 @@ class ConversationViewModel @Inject constructor(
 		personId: String,
 	) {
 		val failure = if (state.value is ConversationState.Content) ::handleRefreshFailure else ::handleLoadFailure
+
 		launchTry {
 			val thread = loadMessagesUseCase(chatId)
+
 			val contentState = state.value as? ConversationState.Content
+
 			handlePublish(
 				chatId = contentState?.chatId ?: chatId,
 				title = contentState?.title ?: title,
@@ -515,9 +614,11 @@ class ConversationViewModel @Inject constructor(
 				lines = thread.lines,
 				members = thread.members,
 				people = thread.people,
-				reactions = reactionGlyphs(thread.reactions) + reactionGlyphs(readReactionsUseCase()),
+				selfName = thread.selfName,
+				reactions = reactionGlyphs(thread.reactions) + reactionGlyphs(readReactionsUseCase().chosen),
 				reactionViewers = thread.reactionViewers,
 			)
+
 			handleMarkRead(chatId, thread.readUpTo)
 		} catch failure
 	}
@@ -525,11 +626,14 @@ class ConversationViewModel @Inject constructor(
 	private suspend fun handleMarkRead(chatId: String, messageId: String?) {
 		if (markedChatId != chatId) {
 			markedChatId = chatId
+
 			markedMessageId = null
 		}
+
 		if (messageId == null || messageId == markedMessageId) {
 			return
 		}
+
 		try {
 			markReadUseCase(messageId)
 		} catch (error: CancellationException) {
@@ -538,22 +642,27 @@ class ConversationViewModel @Inject constructor(
 			handleRefreshFailure(error)
 			return
 		}
+
 		markedMessageId = messageId
 	}
 
 	private fun handleSendFailure(error: Exception) {
 		(state.value as? ConversationState.Content)?.let { current -> setState(current.copy(sending = false)) }
+
 		handleRefreshFailure(error)
 	}
 
 	private fun handleDeleteFailure(error: Exception) {
 		handleRefreshFailure(error)
+
 		(state.value as? ConversationState.Content)?.let { current -> handleLoadMessages(current.chatId) }
 	}
 
 	private fun handleRefreshFailure(error: Exception) {
 		val result = errorDelegate.processNonBlockingError(error)
+
 		val recommended = (result as? NonBlockingErrorProcessResult.NotHandled)?.recommended ?: return
+
 		setEvent(recommended.toEvent())
 	}
 
@@ -589,54 +698,48 @@ class ConversationViewModel @Inject constructor(
 		lines: List<ChatLine>,
 		members: Int,
 		people: List<ChatPerson>,
-		reactions: Map<String, String>,
+		selfName: String,
+		reactions: Map<String, Set<String>>,
 		reactionViewers: Map<String, List<ChatReaction>>,
 	) {
 		when (val current = state.value) {
 			is ConversationState.Content -> {
 				val kept = lines.keepingEdits(current.lines)
+
 				setState(
 					current.copy(
 						lines = kept,
 						days = kept.days(),
 						members = members,
 						people = people,
+						selfName = selfName.ifBlank { current.selfName },
 						reactions = reactions,
 						reactionViewers = mergeReactionViewers(
-							reactionViewers,
-							current.reactionViewers,
+							remote = reactionViewers,
+							current = current.reactionViewers,
+							selfName = selfName.ifBlank { current.selfName },
 						),
 					),
 				)
+
 				handleDraft(current.draft)
 			}
 
 			else                         -> setState(
-				ConversationState.Content(
-					title = title,
-					lines = lines,
-					days = lines.days(),
-					members = members,
-					people = people,
+				freshConversation(
 					chatId = chatId,
-					bot = bot,
-					draft = "",
-					mentionQuery = null,
-					mentions = emptyList(),
-					mentionEveryone = false,
-					editingId = null,
-					editingText = "",
-					sending = false,
-					menuLineId = null,
-					pinnedId = null,
-					selectedIds = emptySet(),
-					reactions = reactions,
-					reactionViewers = reactionViewers,
+					title = title,
 					corporate = corporate,
-					replyAuthor = "",
-					replyText = "",
 					rootId = rootId,
 					personId = personId,
+					bot = bot,
+					lines = lines,
+					members = members,
+					people = people,
+					selfName = selfName,
+					reactions = reactions,
+					reactionViewers = reactionViewers,
+					used = readReactionsUseCase().used,
 				),
 			)
 		}
@@ -644,28 +747,126 @@ class ConversationViewModel @Inject constructor(
 
 	private fun handleDraft(value: String) {
 		val current = state.value as? ConversationState.Content ?: return
-		val query = mentionQueryUseCase(value)
-		val mentions = if (query == null) {
-			emptyList()
-		} else {
-			current.people.filter { person ->
-				matchMentionUseCase(
-					name = person.displayName,
-					username = person.username,
-					query = query,
-				)
-			}.map { person ->
-				val title = person.displayName.ifBlank { person.username }
-				person.toMention(initialsUseCase(title))
-			}
-		}
+
 		setState(
-			current.copy(
-				draft = value,
-				mentionQuery = query,
-				mentions = mentions,
-				mentionEveryone = query != null && everyoneMentionUseCase(query),
+			current.drafted(
+				value = value,
+				mentionQueryUseCase = mentionQueryUseCase,
+				matchMentionUseCase = matchMentionUseCase,
+				everyoneMentionUseCase = everyoneMentionUseCase,
+				initialsUseCase = initialsUseCase,
 			),
 		)
 	}
+}
+
+private fun mergeReactionViewers(
+	remote: Map<String, List<ChatReaction>>,
+	current: Map<String, List<ChatReaction>>,
+	selfName: String,
+): Map<String, List<ChatReaction>> = (remote.keys + current.keys).associate { id ->
+	val viewers = if (id !in current) {
+		remote[id].orEmpty()
+	} else {
+		val mine = current.getValue(id).filter { viewer -> viewer.mine }
+		val others = remote[id].orEmpty().filter { viewer -> !viewer.mine }
+		others + mine
+	}
+
+	id to viewers.map { viewer ->
+		if (selfName.isNotEmpty() && viewer.mine && viewer.name.isBlank()) {
+			viewer.copy(name = selfName)
+		} else {
+			viewer
+		}
+	}
+}
+
+private fun ConversationState.Content.drafted(
+	value: String,
+	mentionQueryUseCase: MentionQueryUseCase,
+	matchMentionUseCase: MatchMentionUseCase,
+	everyoneMentionUseCase: EveryoneMentionUseCase,
+	initialsUseCase: InitialsUseCase,
+): ConversationState.Content {
+	val query = mentionQueryUseCase(value)
+
+	val mentions = if (query == null) {
+		emptyList()
+	} else {
+		people.filter { person ->
+			matchMentionUseCase(
+				name = person.displayName,
+				username = person.username,
+				query = query,
+			)
+		}.map { person ->
+			val title = person.displayName.ifBlank { person.username }
+			person.toMention(initialsUseCase(title))
+		}
+	}
+
+	return copy(
+		draft = value,
+		mentionQuery = query,
+		mentions = mentions,
+		mentionEveryone = query != null && everyoneMentionUseCase(query),
+	)
+}
+
+private fun memberNames(people: List<ChatPerson>): List<String> =
+	people.map { person -> person.displayName.ifBlank { person.username } }
+
+private fun freshConversation(
+	chatId: String,
+	title: String,
+	corporate: Boolean,
+	rootId: String?,
+	personId: String,
+	bot: Boolean,
+	lines: List<ChatLine>,
+	members: Int,
+	people: List<ChatPerson>,
+	selfName: String,
+	reactions: Map<String, Set<String>>,
+	reactionViewers: Map<String, List<ChatReaction>>,
+	used: List<String>,
+): ConversationState.Content = ConversationState.Content(
+	title = title,
+	lines = lines,
+	days = lines.days(),
+	members = members,
+	people = people,
+	selfName = selfName,
+	chatId = chatId,
+	bot = bot,
+	draft = "",
+	mentionQuery = null,
+	mentions = emptyList(),
+	mentionEveryone = false,
+	editingId = null,
+	editingText = "",
+	sending = false,
+	menuLineId = null,
+	pinnedId = null,
+	selectedIds = emptySet(),
+	reactions = reactions,
+	reactionViewers = reactionViewers,
+	usedReactions = used,
+	corporate = corporate,
+	replyAuthor = "",
+	replyText = "",
+	rootId = rootId,
+	personId = personId,
+)
+
+private fun List<Chat>?.savedTitle(chatId: String): String? =
+	this?.firstOrNull { chat -> chat.id == chatId }?.title?.takeIf { title -> title.isNotEmpty() }
+
+private fun ConversationState.Content.renamed(title: String?): ConversationState.Content? {
+	if (title == null || title == this.title) {
+		return null
+	}
+
+	return copy(title = title)
 }

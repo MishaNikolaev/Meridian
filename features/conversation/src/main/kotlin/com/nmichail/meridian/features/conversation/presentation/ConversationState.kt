@@ -7,7 +7,6 @@ import com.nmichail.meridian.shared.chat.domain.entity.ChatPerson
 import com.nmichail.meridian.shared.chat.domain.entity.ChatReaction
 
 sealed interface ConversationState {
-
 	data object Initial : ConversationState
 
 	data object Loading : ConversationState
@@ -18,6 +17,7 @@ sealed interface ConversationState {
 		val days: Map<String, List<DayLine>>,
 		val members: Int,
 		val people: List<ChatPerson>,
+		val selfName: String,
 		val chatId: String,
 		val bot: Boolean,
 		val draft: String,
@@ -30,8 +30,9 @@ sealed interface ConversationState {
 		val menuLineId: String?,
 		val pinnedId: String?,
 		val selectedIds: Set<String>,
-		val reactions: Map<String, String>,
+		val reactions: Map<String, Set<String>>,
 		val reactionViewers: Map<String, List<ChatReaction>>,
+		val usedReactions: List<String>,
 		val corporate: Boolean,
 		val replyAuthor: String,
 		val replyText: String,

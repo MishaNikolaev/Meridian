@@ -3,7 +3,6 @@ package com.nmichail.meridian.features.conversation.presentation
 import com.nmichail.meridian.shared.chat.domain.entity.ChatLine
 
 sealed interface ConversationIntent {
-
 	data class LoadInitialData(
 		val chatId: String,
 		val title: String,
@@ -36,6 +35,8 @@ sealed interface ConversationIntent {
 	data object Send : ConversationIntent
 
 	data object NavigateBack : ConversationIntent
+
+	data object SyncTitles : ConversationIntent
 
 	data object OpenPerson : ConversationIntent
 

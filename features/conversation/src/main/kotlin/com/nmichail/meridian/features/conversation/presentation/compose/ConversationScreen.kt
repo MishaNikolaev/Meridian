@@ -1,6 +1,5 @@
 package com.nmichail.meridian.features.conversation.presentation.compose
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,6 +36,7 @@ import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.features.conversation.presentation.ConversationEvent
 import com.nmichail.meridian.features.conversation.presentation.ConversationIntent
 import com.nmichail.meridian.features.conversation.presentation.ConversationState
+import com.nmichail.meridian.component.ui.emoji.MessageReaction
 import com.nmichail.meridian.features.conversation.presentation.compose.component.DayLine
 import com.nmichail.meridian.features.conversation.R
 import com.nmichail.meridian.features.conversation.presentation.compose.component.ConversationBar
@@ -65,7 +64,9 @@ fun ConversationScreen(
 	onIntent: (ConversationIntent) -> Unit,
 ) {
 	val uiState by state.collectAsStateWithLifecycle()
+
 	var reactionsLine by remember { mutableStateOf<String?>(null) }
+
 	val snackBarHostState = remember { SnackbarHostState() }
 
 	LaunchedEffect(Unit) {
@@ -78,6 +79,8 @@ fun ConversationScreen(
 				personId = personId,
 			),
 		)
+
+		onIntent(ConversationIntent.SyncTitles)
 	}
 
 	EventObserver(
@@ -88,10 +91,13 @@ fun ConversationScreen(
 	Box(
 		modifier = Modifier
 			.fillMaxSize()
-			.background(palette.chatBackground),
+			.chatFoodBackground(),
 	) {
 		ConversationBody(
 			state = uiState,
+			title = title,
+			chatId = chatId,
+			personId = personId,
 			reactionsLine = reactionsLine,
 			onReactions = { lineId -> reactionsLine = lineId },
 			onDismissReactions = { reactionsLine = null },
@@ -110,6 +116,9 @@ fun ConversationScreen(
 @Composable
 private fun ConversationBody(
 	state: ConversationState,
+	title: String,
+	chatId: String,
+	personId: String,
 	reactionsLine: String?,
 	onReactions: (String) -> Unit,
 	onDismissReactions: () -> Unit,
@@ -118,7 +127,24 @@ private fun ConversationBody(
 	when (state) {
 		ConversationState.Initial,
 		ConversationState.Loading,
-		-> Unit
+		-> Column(modifier = Modifier.fillMaxSize()) {
+			ConversationBar(
+				title = title,
+				note = "",
+				bot = chatId.startsWith(prefix = "bot:"),
+				pinned = null,
+				personId = personId,
+				chatId = chatId,
+				onIntent = onIntent,
+			)
+
+			Box(modifier = Modifier.weight(1f))
+
+			MessageBar(
+				draft = "",
+				onIntent = onIntent,
+			)
+		}
 
 		is ConversationState.Error -> Error(message = state.message)
 
@@ -130,12 +156,16 @@ private fun ConversationBody(
 					onIntent = onIntent,
 				)
 			}
+
 			MessageMenuHost(
 				lines = state.lines,
 				menuLineId = state.menuLineId,
 				pinnedId = state.pinnedId,
+				reactions = MessageReaction.entries,
+				selected = state.reactions[state.menuLineId].orEmpty(),
 				onIntent = onIntent,
 			)
+
 			ReactionSheet(
 				open = reactionsLine != null,
 				viewers = state.reactionViewers[reactionsLine].orEmpty(),
@@ -155,9 +185,9 @@ private fun EventObserver(
 	LiveDataEffect(event) { value ->
 		val title = when (value) {
 			ConversationEvent.NoConnection -> NetworkR.string.error_event_connection_title
-
 			ConversationEvent.Error -> NetworkR.string.error_event_title
 		}
+
 		showErrorSnackBar(
 			snackBarHostState = snackBarHostState,
 			title = context.getString(title),
@@ -179,6 +209,7 @@ private fun ColumnScope.ConversationColumn(
 	onIntent: (ConversationIntent) -> Unit,
 ) {
 	val lines = state.lines
+
 	val selectedIds = state.selectedIds
 
 	if (state.rootId != null) {
@@ -187,17 +218,20 @@ private fun ColumnScope.ConversationColumn(
 			onReactions = onReactions,
 			onIntent = onIntent,
 		)
+
 		return
 	}
 
 	if (selectedIds.isEmpty()) {
 		val pinned = lines.firstOrNull { line -> line.id == state.pinnedId }
+
 		ConversationBar(
 			title = state.title,
 			note = barNote(state),
 			bot = state.bot,
 			pinned = pinnedText(pinned),
 			personId = state.personId,
+			chatId = state.chatId,
 			onIntent = onIntent,
 		)
 	} else {
@@ -239,9 +273,11 @@ internal fun MessageInput(
 			onPick = { token -> onIntent(ConversationIntent.PickMention(token = token)) },
 		)
 	}
+
 	if (uiState.editingId != null) {
 		EditBar(uiState.editingText, onIntent)
 	}
+
 	if (uiState.replyAuthor.isNotEmpty()) {
 		ReplyBar(
 			author = uiState.replyAuthor,
@@ -249,6 +285,7 @@ internal fun MessageInput(
 			onIntent = onIntent,
 		)
 	}
+
 	MessageBar(
 		draft = uiState.draft,
 		placeholder = placeholder,
@@ -262,44 +299,29 @@ private fun MessageList(
 	days: Map<String, List<DayLine>>,
 	comments: Map<String, Int>,
 	selectedIds: Set<String>,
-	reactions: Map<String, String>,
+	reactions: Map<String, Set<String>>,
 	reactionViewers: Map<String, List<ChatReaction>>,
 	corporate: Boolean,
 	onReactions: (String) -> Unit,
 	onIntent: (ConversationIntent) -> Unit,
 	modifier: Modifier,
 ) {
-	val listState = rememberLazyListState()
-	val itemCount = days.entries.sumOf { entry ->
-		entry.value.size + if (entry.key.isEmpty()) 0 else 1
-	}
-	LaunchedEffect(itemCount) {
-		if (itemCount > 0) {
-			listState.animateScrollToItem(itemCount - 1)
-		}
-	}
 	LazyColumn(
 		modifier = modifier.fillMaxWidth(),
-		state = listState,
+		reverseLayout = true,
 		contentPadding = PaddingValues(vertical = 10.dp),
-		verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.Bottom),
+		verticalArrangement = Arrangement.spacedBy(6.dp),
 	) {
-		days.forEach { (label, dayLines) ->
-			if (label.isNotEmpty()) {
-				item(key = "day-$label") {
-					DayPill(label)
-				}
-			}
-
+		days.entries.reversed().forEach { (label, dayLines) ->
 			items(
-				items = dayLines,
+				items = dayLines.asReversed(),
 				key = { row -> row.line.id },
 			) { row ->
 				MessageRow(
 					line = row.line,
 					continued = row.continued,
 					selected = row.line.id in selectedIds,
-					reaction = reactions[row.line.id],
+					reactions = reactions[row.line.id].orEmpty(),
 					viewers = reactionViewers[row.line.id].orEmpty(),
 					corporate = corporate,
 					comments = comments[row.line.id] ?: 0,
@@ -311,6 +333,12 @@ private fun MessageList(
 					onIntent = onIntent,
 				)
 			}
+
+			if (label.isNotEmpty()) {
+				item(key = "day-$label") {
+					DayPill(label)
+				}
+			}
 		}
 	}
 }
@@ -320,9 +348,11 @@ internal fun pinnedText(line: ChatLine?): String? {
 	if (line == null) {
 		return null
 	}
+
 	if (line.id == "hello") {
 		return stringResource(R.string.conversation_greeting)
 	}
+
 	return line.text
 }
 
@@ -331,9 +361,11 @@ private fun barNote(state: ConversationState.Content): String {
 	if (state.bot) {
 		return stringResource(R.string.conversation_bot)
 	}
+
 	if (state.members > 2) {
 		return pluralStringResource(R.plurals.conversation_members, state.members, state.members)
 	}
+
 	return ""
 }
 

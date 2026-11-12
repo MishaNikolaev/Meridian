@@ -2,7 +2,6 @@ package com.nmichail.meridian.features.conversation.presentation.compose.compone
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,7 +24,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.nmichail.meridian.component.photopicker.compose.PhotoFace
 import com.nmichail.meridian.component.ui.initials.initials
+import com.nmichail.meridian.component.ui.initials.markColor
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.R as UiR
 import com.nmichail.meridian.component.ui.theme.palette
@@ -39,15 +40,18 @@ internal fun ConversationBar(
 	bot: Boolean,
 	pinned: String?,
 	personId: String,
+	chatId: String,
 	onIntent: (ConversationIntent) -> Unit,
 ) {
 	val border = palette.borderDefault
+
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()
 			.background(palette.bar)
 			.drawBehind {
 				val stroke = 1.dp.toPx()
+
 				drawLine(
 					border,
 					Offset(0f, size.height),
@@ -70,11 +74,11 @@ internal fun ConversationBar(
 			Row(
 				modifier = Modifier
 					.weight(1f)
-					.clickable(enabled = personId.isNotEmpty()) { onIntent(ConversationIntent.OpenPerson) },
+					.clickable(enabled = personId.isNotEmpty() || !bot) { onIntent(ConversationIntent.OpenPerson) },
 				verticalAlignment = Alignment.CenterVertically,
 				horizontalArrangement = Arrangement.spacedBy(10.dp),
 			) {
-				PeerMark(title, bot)
+				PeerMark(title = title, bot = bot, personId = personId, chatId = chatId)
 
 				Column(modifier = Modifier.weight(1f)) {
 					Text(
@@ -90,10 +94,12 @@ internal fun ConversationBar(
 					}
 				}
 			}
+
 			BarIcon(R.drawable.ic_phone, size = 22, onClick = null)
 
 			BarIcon(R.drawable.ic_more, size = 18, onClick = null)
 		}
+
 		if (!pinned.isNullOrBlank()) {
 			PinnedLine(text = pinned)
 		}
@@ -129,12 +135,14 @@ private fun PinnedLine(text: String) {
 @Composable
 internal fun EditBar(text: String, onIntent: (ConversationIntent) -> Unit) {
 	val border = palette.borderDefault
+
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
 			.background(palette.bar)
 			.drawBehind {
 				val stroke = 1.dp.toPx()
+
 				drawLine(
 					border,
 					Offset.Zero,
@@ -162,6 +170,7 @@ internal fun EditBar(text: String, onIntent: (ConversationIntent) -> Unit) {
 				overflow = TextOverflow.Ellipsis,
 			)
 		}
+
 		BarIcon(UiR.drawable.ic_close, size = 22) { onIntent(ConversationIntent.CancelEdit) }
 	}
 }
@@ -176,6 +185,7 @@ internal fun ReplyBar(author: String, text: String, onIntent: (ConversationInten
 			.background(palette.bar)
 			.drawBehind {
 				val stroke = 1.dp.toPx()
+
 				drawLine(
 					border,
 					Offset.Zero,
@@ -218,6 +228,7 @@ internal fun ReplyBar(author: String, text: String, onIntent: (ConversationInten
 
 private fun shortName(author: String): String {
 	val parts = author.trim().split(" ").filter { it.isNotEmpty() }
+
 	return if (parts.size > 2) {
 		parts[0] + " " + parts[1]
 	} else {
@@ -226,25 +237,48 @@ private fun shortName(author: String): String {
 }
 
 @Composable
-private fun PeerMark(title: String, bot: Boolean) {
+private fun PeerMark(title: String, bot: Boolean, personId: String, chatId: String) {
+	if (!bot && personId.isNotEmpty()) {
+		PhotoFace(
+			name = title,
+			userId = personId,
+			size = 40.dp,
+			corner = 14.dp,
+			style = MeridianType.captionDefault,
+		)
+
+		return
+	}
+
+	if (!bot) {
+		PhotoFace(
+			name = title,
+			chatId = chatId,
+			size = 40.dp,
+			corner = 14.dp,
+			style = MeridianType.captionDefault,
+		)
+
+		return
+	}
+
 	val shape = if (bot) CircleShape else RoundedCornerShape(14.dp)
-	val fill = if (bot) palette.accentPrimary else palette.accentPrimarySoft
-	val ink = if (bot) palette.textOnAccent else palette.accentPrimary
+
 	Box(
 		modifier = Modifier
 			.size(40.dp)
 			.clip(shape)
-			.background(fill)
-			.then(if (bot) Modifier else Modifier.border(1.dp, palette.borderDefault, shape)),
+			.background(markColor(title)),
 		contentAlignment = Alignment.Center,
 	) {
-		Text(text = initials(title), style = MeridianType.captionDefault, color = ink)
+		Text(text = initials(title), style = MeridianType.captionDefault, color = palette.textOnAccent)
 	}
 }
 
 @Composable
 private fun BarIcon(icon: Int, size: Int, onClick: (() -> Unit)?) {
 	val modifier = Modifier.size(size.dp)
+
 	Image(
 		painter = painterResource(icon),
 		contentDescription = null,

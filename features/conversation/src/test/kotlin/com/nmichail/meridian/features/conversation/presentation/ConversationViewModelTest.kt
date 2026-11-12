@@ -15,13 +15,17 @@ import com.nmichail.meridian.core.validation.mention.EveryoneMentionUseCase
 import com.nmichail.meridian.core.validation.mention.MatchMentionUseCase
 import com.nmichail.meridian.core.validation.mention.MentionQueryUseCase
 import com.nmichail.meridian.shared.chat.data.realtime.ChatRealtime
+import com.nmichail.meridian.shared.chat.domain.entity.Chat
 import com.nmichail.meridian.shared.chat.domain.entity.ChatLine
+import com.nmichail.meridian.shared.chat.domain.entity.ChatType
 import com.nmichail.meridian.shared.chat.domain.entity.ChatPerson
 import com.nmichail.meridian.shared.chat.domain.entity.ChatThread
+import com.nmichail.meridian.shared.chat.domain.entity.ReactionMemory
 import com.nmichail.meridian.shared.chat.domain.usecase.DeleteMessageUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.LoadMessagesUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.MarkReadUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.ReactUseCase
+import com.nmichail.meridian.shared.chat.domain.usecase.ReadCachedChatsUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.ReadCachedMessagesUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.ReadReactionsUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.SaveReactionUseCase
@@ -42,13 +46,16 @@ import org.mockito.kotlin.whenever
 
 @ExtendWith(TestCoroutineExtension::class, InstantExecutorExtension::class)
 class ConversationViewModelTest {
-
 	private val loadMessagesUseCase: LoadMessagesUseCase = mock()
 	private val readCachedMessagesUseCase: ReadCachedMessagesUseCase = mock()
+	private val readCachedChatsUseCase: ReadCachedChatsUseCase = mock()
 	private val sendMessageUseCase: SendMessageUseCase = mock()
 	private val markReadUseCase: MarkReadUseCase = mock()
 	private val readReactionsUseCase: ReadReactionsUseCase = mock {
-		on { invoke() } doReturn emptyMap()
+		on { invoke() } doReturn ReactionMemory(
+			chosen = emptyMap(),
+			used = emptyList(),
+		)
 	}
 	private val saveReactionUseCase: SaveReactionUseCase = mock()
 	private val reactUseCase: ReactUseCase = mock()
@@ -57,10 +64,10 @@ class ConversationViewModelTest {
 		on { chatIds } doReturn MutableSharedFlow()
 	}
 	private val router: ConversationRouter = mock()
-	
 	private val viewModel = ConversationViewModel(
 		loadMessagesUseCase,
 		readCachedMessagesUseCase,
+		readCachedChatsUseCase,
 		sendMessageUseCase,
 		markReadUseCase,
 		readReactionsUseCase,
@@ -89,11 +96,13 @@ class ConversationViewModelTest {
 		text = "привет",
 		sentAt = null,
 		author = null,
+		authorId = "",
 		replyAuthor = null,
 		replyText = null,
 		threadRoot = null,
 		deleted = false,
 		edited = false,
+		service = false,
 	)
 	private val emptyThread = ChatThread(
 		lines = emptyList(),
@@ -102,11 +111,13 @@ class ConversationViewModelTest {
 		reactions = emptyMap(),
 		reactionViewers = emptyMap(),
 		people = emptyList(),
+		selfName = "",
 	)
 	private val chief = ChatPerson(
 		userId = "chief-id",
 		username = "chief",
 		displayName = "Волков Сергей",
+		role = "",
 	)
 	private val openAnna = ConversationIntent.LoadInitialData(
 		chatId = "1",
@@ -129,6 +140,39 @@ class ConversationViewModelTest {
 		rootId = null,
 		personId = "",
 	)
+
+	@Test
+	fun `sync titles EXPECT renamed group`() = runTest {
+		whenever(loadMessagesUseCase.invoke("1")) doReturn emptyThread
+		whenever(readCachedChatsUseCase.invoke()) doReturn listOf(
+			Chat(
+				id = "1",
+				type = ChatType.GROUP,
+				title = "Платформа",
+				preview = "",
+				sentAt = null,
+				unread = 0,
+				corporate = false,
+				mentioned = false,
+				personId = null,
+				discussionRoot = null,
+				discussionText = null,
+			),
+		)
+		viewModel.applyIntent(
+			ConversationIntent.LoadInitialData(
+				chatId = "1",
+				title = "Смена",
+				corporate = false,
+				rootId = null,
+				personId = "",
+			),
+		)
+
+		viewModel.applyIntent(ConversationIntent.SyncTitles)
+
+		assertEquals("Платформа", (viewModel.state.value as ConversationState.Content).title)
+	}
 
 	@Test
 	fun `delete EXPECT tombstone sent to everyone`() = runTest {
@@ -274,6 +318,24 @@ class ConversationViewModelTest {
 			"Анна",
 			"макет",
 			"",
+		)
+	}
+
+	@Test
+	fun `group header EXPECT group`() = runTest {
+		whenever(loadMessagesUseCase.invoke("1")) doReturn emptyThread.copy(
+			members = 3,
+			people = listOf(chief),
+		)
+		viewModel.applyIntent(openPlatform)
+
+		viewModel.applyIntent(ConversationIntent.OpenPerson)
+
+		verify(router).navigateToGroup(
+			chatId = "1",
+			title = "Платформа",
+			members = listOf("Волков Сергей"),
+			corporate = false,
 		)
 	}
 

@@ -36,7 +36,6 @@ fun getConversationScreen(
 }
 
 class ConversationFragment : FullScreenFragment() {
-
 	private val viewModel: ConversationViewModel by viewModels {
 		ConversationComponentHolder.get().viewModelFactory()
 	}
@@ -46,6 +45,7 @@ class ConversationFragment : FullScreenFragment() {
 			setContent {
 				Screen {
 					val arguments = requireArguments()
+
 					ConversationScreen(
 						chatId = arguments.getString("chatId").orEmpty(),
 						title = arguments.getString("title").orEmpty(),
