@@ -38,6 +38,11 @@ kotlin {
 	}
 }
 
+val kotlinVersion = libs.versions.kotlin.get()
+configurations.configureEach {
+	resolutionStrategy.force("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
+}
+
 kapt {
 	correctErrorTypes = true
 }
@@ -54,12 +59,14 @@ dependencies {
 	kapt(libs.dagger.compiler)
 
 	implementation(libs.androidx.core.ktx)
+	implementation(libs.androidx.appcompat)
 	implementation(libs.androidx.lifecycle.runtime.ktx)
 	implementation(libs.androidx.activity.compose)
 	implementation(platform(libs.androidx.compose.bom))
 	implementation(libs.bundles.compose)
 
 	implementation(projects.component.ui)
+	implementation(projects.component.photopicker)
 	implementation(projects.core.navigation)
 	implementation(projects.core.network)
 	implementation(projects.core.di)
