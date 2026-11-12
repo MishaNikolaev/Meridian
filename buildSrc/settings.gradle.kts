@@ -12,6 +12,7 @@ dependencyResolutionManagement {
 		google()
 		mavenCentral()
 	}
+
 	versionCatalogs {
 		create("libs") {
 			from(files(File(settingsDir.parentFile, "gradle/libs.versions.toml")))

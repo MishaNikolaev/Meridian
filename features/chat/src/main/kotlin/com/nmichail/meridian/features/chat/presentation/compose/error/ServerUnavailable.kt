@@ -237,11 +237,8 @@ private fun MarkCircle(size: Dp, modifier: Modifier) {
 
 private fun ChatSection.sectionLabel(): Int = when (this) {
 	ChatSection.ALL         -> R.string.chat_section_all
-
 	ChatSection.CATALOG     -> R.string.chat_section_catalog
-
 	ChatSection.BOTS        -> R.string.chat_section_bots
-
 	ChatSection.DISCUSSIONS -> R.string.chat_section_discussions
 }
 

@@ -14,7 +14,6 @@ import org.mockito.kotlin.whenever
 
 @ExtendWith(TestCoroutineExtension::class)
 class LoadMessagesUseCaseTest {
-
 	private val repository: ChatRepository = mock()
 	private val memory = MessageMemory()
 	private val useCase = LoadMessagesUseCase(repository, memory)
@@ -26,6 +25,7 @@ class LoadMessagesUseCaseTest {
 		reactions = emptyMap(),
 		reactionViewers = emptyMap(),
 		people = emptyList(),
+		selfName = "",
 	)
 
 	@Test

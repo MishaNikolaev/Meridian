@@ -37,7 +37,7 @@ private fun MUiButtonPreview(
 	@PreviewParameter(MUiButtonPreviewParameterProvider::class)
 	data: MUiButtonPreviewData,
 ) {
-	MeridianTheme(darkTheme = data.dark) {
+	MeridianTheme(themeState = data.dark) {
 		val widthModifier = when (data.model.style) {
 			MUiButtonStyle.Icon, MUiButtonStyle.Fab, MUiButtonStyle.Text -> Modifier
 			else -> Modifier.width(328.dp)

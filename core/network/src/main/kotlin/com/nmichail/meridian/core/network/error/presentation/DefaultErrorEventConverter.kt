@@ -10,7 +10,6 @@ class DefaultErrorEventConverter @Inject constructor() {
 		when (exception) {
 			is NoConnectionException,
 			is IOException -> DefaultErrorEvent.NoConnection
-
 			else -> DefaultErrorEvent.Default
 		}
 }

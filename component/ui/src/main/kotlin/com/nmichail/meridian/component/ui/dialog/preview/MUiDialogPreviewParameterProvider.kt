@@ -114,7 +114,7 @@ private fun MUiDialogPreview(
 	@PreviewParameter(MUiDialogPreviewParameterProvider::class)
 	data: MUiDialogPreviewData,
 ) {
-	MeridianTheme(darkTheme = data.dark) {
+	MeridianTheme(themeState = data.dark) {
 		MUiDialogCard(
 			model = data.model,
 			onCancel = {},

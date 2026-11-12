@@ -54,16 +54,10 @@ internal fun MessageBar(
 	replyKey: String = "",
 	modifier: Modifier = Modifier,
 ) {
-	val keyboard = LocalSoftwareKeyboardController.current
 	val focus = remember { FocusRequester() }
 	var open by remember { mutableStateOf(false) }
 
-	LaunchedEffect(replyKey) {
-		if (replyKey.isNotEmpty()) {
-			focus.requestFocus()
-			keyboard?.show()
-		}
-	}
+	FocusReply(replyKey = replyKey, focus = focus)
 
 	Column(modifier = modifier.fillMaxWidth()) {
 		BarRow(
@@ -71,12 +65,7 @@ internal fun MessageBar(
 			placeholder = placeholder,
 			focus = focus,
 			onIntent = onIntent,
-			onToggleEmoji = {
-				open = !open
-				if (open) {
-					keyboard?.hide()
-				}
-			},
+			onToggleEmoji = { open = !open },
 			onFieldFocus = { open = false },
 		)
 
@@ -100,6 +89,7 @@ private fun BarRow(
 	onFieldFocus: () -> Unit,
 ) {
 	val border = palette.borderDefault
+
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -204,24 +194,50 @@ private fun MessageField(
 							color = palette.textSecondary,
 						)
 					}
+
 					inner()
 				}
 			},
 		)
 
-		Image(
-			painter = painterResource(R.drawable.ic_smile),
-			contentDescription = stringResource(R.string.conversation_emoji),
-			modifier = Modifier
-				.size(22.dp)
-				.clickable(onClick = onToggleEmoji),
-		)
+		EmojiButton(onToggleEmoji = onToggleEmoji)
 	}
 }
 
 @Composable
+private fun FocusReply(replyKey: String, focus: FocusRequester) {
+	val keyboard = LocalSoftwareKeyboardController.current
+
+	LaunchedEffect(replyKey) {
+		if (replyKey.isNotEmpty()) {
+			focus.requestFocus()
+			keyboard?.show()
+		}
+	}
+}
+
+@Composable
+private fun EmojiButton(onToggleEmoji: () -> Unit) {
+	val keyboard = LocalSoftwareKeyboardController.current
+
+	Image(
+		painter = painterResource(R.drawable.ic_smile),
+		contentDescription = stringResource(R.string.conversation_emoji),
+		modifier = Modifier
+			.size(22.dp)
+			.clickable {
+				onToggleEmoji()
+				keyboard?.hide()
+			},
+	)
+}
+
+private const val EMOJI_COLUMNS = 12
+
+@Composable
 private fun EmojiPanel(onEmoji: (String) -> Unit) {
 	val border = palette.borderDefault
+
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -240,7 +256,9 @@ private fun EmojiPanel(onEmoji: (String) -> Unit) {
 				.fillMaxWidth()
 				.height(280.dp),
 			factory = { context ->
-				EmojiPickerView(context)
+				EmojiPickerView(context).apply {
+					emojiGridColumns = EMOJI_COLUMNS
+				}
 			},
 			update = { picker ->
 				picker.setOnEmojiPickedListener { item ->

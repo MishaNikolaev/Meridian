@@ -4,5 +4,5 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class RealtimePayload(
-	val chatId: String? = null,
+	val chatId: String?,
 )

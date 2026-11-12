@@ -2,6 +2,7 @@ package com.nmichail.meridian.di
 
 import android.content.Context
 import com.nmichail.meridian.MeridianApplication
+import com.nmichail.meridian.component.photopicker.di.PhotoLoaderModule
 import com.nmichail.meridian.core.navigation.di.NavigationModule
 import com.nmichail.meridian.core.network.di.CoreApi
 import com.nmichail.meridian.core.network.di.NetworkModule
@@ -19,6 +20,7 @@ interface AppModule
 @Component(
 	modules = [
 		AppModule::class,
+		PhotoLoaderModule::class,
 		NavigationModule::class,
 		NetworkModule::class,
 		RoutersModule::class,

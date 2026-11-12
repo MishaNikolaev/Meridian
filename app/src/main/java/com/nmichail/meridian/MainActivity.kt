@@ -2,9 +2,11 @@ package com.nmichail.meridian
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
-import androidx.fragment.app.FragmentActivity
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.lifecycleScope
 import com.github.terrakok.cicerone.NavigatorHolder
+import com.nmichail.meridian.component.ui.theme.SelectedTheme
 import com.nmichail.meridian.core.navigation.di.FullScreen
 import com.nmichail.meridian.core.navigation.navigator.ScreenNavigator
 import com.nmichail.meridian.core.network.session.SessionEvents
@@ -13,7 +15,7 @@ import com.nmichail.meridian.navigation.router.main.MainRouter
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 
-class MainActivity : FragmentActivity() {
+class MainActivity : AppCompatActivity() {
 
 	@Inject
 	lateinit var router: MainRouter
@@ -33,6 +35,7 @@ class MainActivity : FragmentActivity() {
 		val appComponent = (application as MeridianApplication).component
 		activityComponent = appComponent.activityComponent().create()
 		activityComponent.inject(this)
+		setThemeListener()
 		super.onCreate(savedInstanceState)
 		enableEdgeToEdge()
 		setContentView(R.layout.activity_main)
@@ -42,6 +45,20 @@ class MainActivity : FragmentActivity() {
 		lifecycleScope.launch {
 			sessionEvents.expired.collect {
 				router.navigateToSignIn()
+			}
+		}
+	}
+
+	private fun setThemeListener() {
+		lifecycleScope.launch {
+			SelectedTheme.darkThemeFlow.collect { darkTheme ->
+				AppCompatDelegate.setDefaultNightMode(
+					when (darkTheme) {
+						true -> AppCompatDelegate.MODE_NIGHT_YES
+						false -> AppCompatDelegate.MODE_NIGHT_NO
+						null -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+					},
+				)
 			}
 		}
 	}

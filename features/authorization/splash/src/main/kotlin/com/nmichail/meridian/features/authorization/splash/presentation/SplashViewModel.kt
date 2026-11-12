@@ -13,7 +13,7 @@ class SplashViewModel @Inject constructor(
 
 	override fun applyIntent(intent: SplashIntent) {
 		when (intent) {
-			SplashIntent.LoadInitialData -> handleLoadInitialData()
+			is SplashIntent.LoadInitialData -> handleLoadInitialData()
 		}
 	}
 

@@ -12,6 +12,7 @@ import com.nmichail.meridian.testutils.TestCoroutineExtension
 import com.nmichail.meridian.testutils.doThrowSafe
 import com.nmichail.meridian.features.person.domain.entity.PersonProfile
 import com.nmichail.meridian.features.person.domain.usecase.LoadPersonUseCase
+import com.nmichail.meridian.features.person.domain.usecase.ReadPersonUseCase
 import java.io.IOException
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -26,11 +27,12 @@ import org.mockito.kotlin.whenever
 
 @ExtendWith(TestCoroutineExtension::class)
 class PersonViewModelTest {
-
 	private val loadPersonUseCase: LoadPersonUseCase = mock()
+	private val readPersonUseCase: ReadPersonUseCase = mock()
 	private val router: PersonRouter = mock()
 	private val viewModel = PersonViewModel(
 		loadPersonUseCase,
+		readPersonUseCase,
 		ErrorDelegate(
 			errorLogger = ErrorLogger(),
 			defaultErrorReactionConverter = DefaultErrorReactionConverter(),
@@ -52,6 +54,7 @@ class PersonViewModelTest {
 		managerId = "2f288e3d-c526-4f8d-b4bf-28c4779fd60a",
 		email = "chief@name.ru",
 		phone = "",
+		photo = "",
 	)
 
 	@Test
@@ -77,6 +80,38 @@ class PersonViewModelTest {
 				managerId = card.managerId,
 				email = card.email,
 				phone = card.phone,
+				photo = card.photo,
+				corporate = true,
+			),
+			viewModel.state.value,
+		)
+	}
+
+	@Test
+	fun `cached person EXPECT kept when reload fails`() = runTest {
+		whenever(readPersonUseCase.invoke("chief")) doReturn card
+		whenever(loadPersonUseCase.invoke("chief")) doThrowSafe IOException("down")
+
+		viewModel.applyIntent(
+			PersonIntent.Load(
+				userId = "chief",
+				corporate = true,
+			),
+		)
+
+		assertEquals(
+			PersonState.Content(
+				name = card.name,
+				position = card.position,
+				department = card.department,
+				office = card.office,
+				server = card.server,
+				status = card.status,
+				manager = card.manager,
+				managerId = card.managerId,
+				email = card.email,
+				phone = card.phone,
+				photo = card.photo,
 				corporate = true,
 			),
 			viewModel.state.value,
@@ -150,6 +185,7 @@ class PersonViewModelTest {
 				managerId = card.managerId,
 				email = card.email,
 				phone = card.phone,
+				photo = card.photo,
 				corporate = true,
 			),
 			viewModel.state.value,

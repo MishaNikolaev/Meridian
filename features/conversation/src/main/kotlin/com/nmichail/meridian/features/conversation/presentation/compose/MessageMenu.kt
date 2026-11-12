@@ -41,19 +41,26 @@ import androidx.compose.ui.unit.dp
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.R as UiR
 import com.nmichail.meridian.component.ui.theme.palette
+import com.nmichail.meridian.component.ui.theme.select
 import com.nmichail.meridian.features.conversation.R
 import com.nmichail.meridian.features.conversation.presentation.ConversationIntent
+import com.nmichail.meridian.component.ui.emoji.MUiReactionBoard
 import com.nmichail.meridian.component.ui.emoji.MessageReaction
 import com.nmichail.meridian.shared.chat.domain.entity.ChatLine
+
+private const val REACTION_ROW = 6
 
 @Composable
 internal fun MessageMenuHost(
 	lines: List<ChatLine>,
 	menuLineId: String?,
 	pinnedId: String?,
+	reactions: List<MessageReaction>,
+	selected: Set<String>,
 	onIntent: (ConversationIntent) -> Unit,
 ) {
 	val line = lines.firstOrNull { it.id == menuLineId } ?: return
+
 	Box(
 		modifier = Modifier
 			.fillMaxSize()
@@ -77,8 +84,11 @@ internal fun MessageMenuHost(
 		) {
 			ReactionPicker(
 				lineId = line.id,
+				reactions = reactions,
+				selected = selected,
 				onIntent = onIntent,
 			)
+
 			ActionMenu(
 				line = line,
 				pinned = line.id == pinnedId,
@@ -91,6 +101,7 @@ internal fun MessageMenuHost(
 @Composable
 internal fun SelectionBar(count: Int, onIntent: (ConversationIntent) -> Unit) {
 	val border = palette.borderDefault
+
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -98,6 +109,7 @@ internal fun SelectionBar(count: Int, onIntent: (ConversationIntent) -> Unit) {
 			.background(palette.surface)
 			.drawBehind {
 				val stroke = 1.dp.toPx()
+
 				drawLine(
 					border,
 					Offset(0f, size.height),
@@ -116,12 +128,14 @@ internal fun SelectionBar(count: Int, onIntent: (ConversationIntent) -> Unit) {
 				.size(16.dp)
 				.clickable { onIntent(ConversationIntent.ClearSelection) },
 		)
+
 		Text(
 			text = stringResource(R.string.conversation_selected, count),
 			style = MeridianType.titleSection,
 			color = palette.textPrimary,
 			modifier = Modifier.weight(1f),
 		)
+
 		Image(
 			painter = painterResource(R.drawable.ic_message_delete),
 			contentDescription = null,
@@ -129,6 +143,7 @@ internal fun SelectionBar(count: Int, onIntent: (ConversationIntent) -> Unit) {
 				.size(26.dp)
 				.clickable { onIntent(ConversationIntent.DeleteSelection) },
 		)
+
 		ForwardButton()
 	}
 }
@@ -136,6 +151,7 @@ internal fun SelectionBar(count: Int, onIntent: (ConversationIntent) -> Unit) {
 @Composable
 internal fun ReactionMark(reaction: String, modifier: Modifier = Modifier) {
 	val shape = RoundedCornerShape(12.dp)
+
 	Row(
 		modifier = modifier
 			.clip(shape)
@@ -149,6 +165,7 @@ internal fun ReactionMark(reaction: String, modifier: Modifier = Modifier) {
 			text = reaction,
 			style = MeridianType.chatEmoji,
 		)
+
 		Text(
 			text = "1",
 			style = MeridianType.captionDefault.copy(fontWeight = FontWeight.SemiBold),
@@ -189,9 +206,20 @@ internal fun Modifier.pressMessage(
 }
 
 @Composable
-private fun ReactionPicker(lineId: String, onIntent: (ConversationIntent) -> Unit) {
+private fun ReactionPicker(
+	lineId: String,
+	reactions: List<MessageReaction>,
+	selected: Set<String>,
+	onIntent: (ConversationIntent) -> Unit,
+) {
 	var expanded by remember { mutableStateOf(false) }
+
 	val shape = RoundedCornerShape(28.dp)
+
+	val top = reactions.take(REACTION_ROW)
+
+	val rest = reactions.drop(REACTION_ROW)
+
 	Column(
 		modifier = Modifier
 			.shadow(elevation = 8.dp, shape = shape)
@@ -204,9 +232,15 @@ private fun ReactionPicker(lineId: String, onIntent: (ConversationIntent) -> Uni
 			horizontalArrangement = Arrangement.spacedBy(4.dp),
 			verticalAlignment = Alignment.CenterVertically,
 		) {
-			MessageReaction.entries.filter { reaction -> reaction.quick }.forEach { reaction ->
-				ReactionChoice(lineId = lineId, reaction = reaction, onIntent = onIntent)
+			top.forEach { reaction ->
+				ReactionChoice(
+					lineId = lineId,
+					reaction = reaction,
+					selected = reaction.glyph in selected,
+					onIntent = onIntent,
+				)
 			}
+
 			Box(
 				modifier = Modifier
 					.size(30.dp)
@@ -222,15 +256,20 @@ private fun ReactionPicker(lineId: String, onIntent: (ConversationIntent) -> Uni
 				)
 			}
 		}
+
 		if (expanded) {
-			Row(
-				horizontalArrangement = Arrangement.spacedBy(4.dp),
-				verticalAlignment = Alignment.CenterVertically,
-			) {
-				MessageReaction.entries.filter { reaction -> !reaction.quick }.forEach { reaction ->
-					ReactionChoice(lineId = lineId, reaction = reaction, onIntent = onIntent)
-				}
-			}
+			MUiReactionBoard(
+				reactions = rest,
+				selected = selected,
+				onPick = { glyph ->
+					onIntent(
+						ConversationIntent.PickReaction(
+							lineId = lineId,
+							reaction = glyph,
+						),
+					)
+				},
+			)
 		}
 	}
 }
@@ -239,12 +278,22 @@ private fun ReactionPicker(lineId: String, onIntent: (ConversationIntent) -> Uni
 private fun ReactionChoice(
 	lineId: String,
 	reaction: MessageReaction,
+	selected: Boolean,
 	onIntent: (ConversationIntent) -> Unit,
 ) {
 	Text(
 		text = reaction.glyph,
 		style = MeridianType.reactionMenu,
-		modifier = Modifier.clickable {
+		modifier = Modifier
+			.clip(CircleShape)
+			.background(
+				select(
+					active = selected,
+					on = palette.accentPrimarySoft,
+					off = Color.Transparent,
+				),
+			)
+			.clickable {
 			onIntent(
 				ConversationIntent.PickReaction(
 					lineId = lineId,
@@ -262,12 +311,17 @@ private fun ActionMenu(
 	onIntent: (ConversationIntent) -> Unit,
 ) {
 	val clipboard = LocalClipboard.current
+
 	val text = if (line.id == "hello") {
 		stringResource(R.string.conversation_greeting)
 	} else {
 		line.text
 	}
-	val author = line.author?.takeIf { it.isNotBlank() } ?: stringResource(R.string.conversation_you)
+
+	val author = line.author
+		?.takeIf { it.isNotBlank() }
+		?: stringResource(R.string.conversation_you)
+
 	Column(
 		modifier = Modifier
 			.width(236.dp)
@@ -278,11 +332,13 @@ private fun ActionMenu(
 	) {
 		MessageAction.entries.forEach { action ->
 			if (action == MessageAction.EDIT && (!line.mine || line.deleted)) return@forEach
+
 			val label = if (action == MessageAction.PIN && pinned) {
 				R.string.conversation_unpin
 			} else {
 				action.label
 			}
+
 			ActionRow(
 				action = action,
 				label = label,
@@ -319,6 +375,7 @@ private fun ActionRow(
 			contentDescription = null,
 			modifier = Modifier.size(20.dp),
 		)
+
 		Text(
 			text = stringResource(label),
 			style = MeridianType.bodyDefault,
@@ -343,6 +400,7 @@ private fun ForwardButton() {
 			modifier = Modifier.size(18.dp),
 			colorFilter = ColorFilter.tint(palette.textOnAccent),
 		)
+
 		Text(
 			text = stringResource(R.string.conversation_forward),
 			style = MeridianType.labelBadge,

@@ -71,7 +71,7 @@ private fun MUiTextFieldPreview(
 	@PreviewParameter(MUiTextFieldPreviewParameterProvider::class)
 	data: MUiTextFieldPreviewData,
 ) {
-	MeridianTheme(darkTheme = data.dark) {
+	MeridianTheme(themeState = data.dark) {
 		MUiTextField(
 			model = data.model,
 			onValueChange = {},

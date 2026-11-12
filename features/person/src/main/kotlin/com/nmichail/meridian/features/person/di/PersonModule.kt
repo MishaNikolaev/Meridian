@@ -5,6 +5,8 @@ import com.nmichail.meridian.core.di.PerFeature
 import com.nmichail.meridian.core.presentation.di.ViewModelKey
 import com.nmichail.meridian.features.person.data.api.PersonApi
 import com.nmichail.meridian.features.person.data.api.createPersonApi
+import com.nmichail.meridian.features.person.data.datasource.PersonLocalDataSource
+import com.nmichail.meridian.features.person.data.datasource.PersonLocalDataSourceImpl
 import com.nmichail.meridian.features.person.data.repository.PersonRepositoryImpl
 import com.nmichail.meridian.features.person.domain.repository.PersonRepository
 import com.nmichail.meridian.features.person.presentation.PersonViewModel
@@ -16,14 +18,15 @@ import de.jensklingenberg.ktorfit.Ktorfit
 
 @Module
 abstract class PersonModule {
-
 	companion object {
-
 		@Provides
 		@PerFeature
 		@JvmStatic
 		fun providePersonApi(ktorfit: Ktorfit): PersonApi = ktorfit.createPersonApi()
 	}
+
+	@Binds
+	abstract fun bindPersonLocalDataSource(impl: PersonLocalDataSourceImpl): PersonLocalDataSource
 
 	@Binds
 	abstract fun bindPersonRepository(impl: PersonRepositoryImpl): PersonRepository

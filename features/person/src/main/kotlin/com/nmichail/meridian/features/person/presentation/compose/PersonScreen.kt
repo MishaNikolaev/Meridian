@@ -32,11 +32,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.nmichail.meridian.component.photopicker.compose.PhotoFace
 import com.nmichail.meridian.component.ui.R as UiR
 import com.nmichail.meridian.component.ui.error.MUiErrorInPlace
 import com.nmichail.meridian.component.ui.text.MUiLinkedText
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
+import com.nmichail.meridian.component.ui.theme.select
 import com.nmichail.meridian.features.person.R
 import com.nmichail.meridian.features.person.presentation.PersonIntent
 import com.nmichail.meridian.features.person.presentation.PersonState
@@ -59,6 +61,7 @@ fun PersonScreen(
 			),
 		)
 	}
+
 	Box(
 		modifier = Modifier
 			.fillMaxSize()
@@ -67,9 +70,9 @@ fun PersonScreen(
 		when (val current = uiState) {
 			PersonState.Initial,
 			PersonState.Loading,
-			-> Unit
+								   -> Unit
 
-			is PersonState.Error -> MUiErrorInPlace(
+			is PersonState.Error   -> MUiErrorInPlace(
 				message = stringResource(current.message),
 				retry = stringResource(UiR.string.error_retry),
 				back = stringResource(UiR.string.error_back),
@@ -86,6 +89,7 @@ fun PersonScreen(
 			)
 
 			is PersonState.Content -> PersonContent(
+				userId = userId,
 				card = current,
 				onIntent = onIntent,
 			)
@@ -95,6 +99,7 @@ fun PersonScreen(
 
 @Composable
 private fun PersonContent(
+	userId: String,
 	card: PersonState.Content,
 	onIntent: (PersonIntent) -> Unit,
 ) {
@@ -106,11 +111,16 @@ private fun PersonContent(
 		PersonToolbar(onIntent)
 
 		Column(
-			modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
-			verticalArrangement = Arrangement.spacedBy(12.dp),
+			modifier = Modifier.padding(
+				start = 16.dp,
+				end = 16.dp,
+				bottom = 16.dp
+			),
 		) {
-			PersonIdentity(card)
+			PersonIdentity(userId = userId, card = card)
+
 			PersonActions(onIntent)
+
 			val filled = listOf(
 				card.department,
 				card.office,
@@ -119,6 +129,7 @@ private fun PersonContent(
 				card.email,
 				card.phone,
 			).any { value -> value.isNotEmpty() } || (card.corporate && card.server.isNotEmpty())
+
 			if (filled) {
 				PersonFacts(card, onIntent)
 			}
@@ -135,15 +146,15 @@ private fun PersonToolbar(onIntent: (PersonIntent) -> Unit) {
 		verticalAlignment = Alignment.CenterVertically,
 	) {
 		Box(
-			modifier = Modifier
-				.size(24.dp)
-				.clickable { onIntent(PersonIntent.Back) },
+			modifier = Modifier.size(24.dp),
 			contentAlignment = Alignment.Center,
 		) {
 			Image(
 				painter = painterResource(R.drawable.ic_person_back),
 				contentDescription = null,
-				modifier = Modifier.size(16.dp),
+				modifier = Modifier
+					.size(16.dp)
+					.clickable { onIntent(PersonIntent.Back) },
 			)
 		}
 
@@ -163,16 +174,13 @@ private fun PersonToolbar(onIntent: (PersonIntent) -> Unit) {
 }
 
 @Composable
-private fun PersonIdentity(card: PersonState.Content) {
+private fun PersonIdentity(userId: String, card: PersonState.Content) {
 	Column(
 		modifier = Modifier.fillMaxWidth(),
 		horizontalAlignment = Alignment.CenterHorizontally,
 		verticalArrangement = Arrangement.spacedBy(4.dp),
 	) {
-		PersonMark(
-			name = card.name,
-			corporate = card.corporate,
-		)
+		PersonMark(name = card.name, userId = userId, photo = card.photo)
 
 		Text(
 			text = card.name,
@@ -184,6 +192,7 @@ private fun PersonIdentity(card: PersonState.Content) {
 		if (card.position.isNotEmpty()) {
 			Text(
 				text = card.position,
+				modifier = Modifier.padding(vertical = 5.dp),
 				style = MeridianType.bodySmall,
 				color = palette.textSecondary,
 				textAlign = TextAlign.Center,
@@ -198,34 +207,18 @@ private fun PersonIdentity(card: PersonState.Content) {
 }
 
 @Composable
-private fun PersonMark(name: String, corporate: Boolean) {
-	val parts = name.trim().split(" ").filter { it.isNotEmpty() }
-	val letters = if (parts.size >= 2) {
-		parts[0].take(1) + parts[1].take(1)
-	} else {
-		name.take(2)
-	}
-
-	val fill = if (corporate) palette.accentPrimarySoft else palette.accentExternal
-	val ink = if (corporate) palette.accentPrimary else palette.textOnAccent
-
-	Box(
-		modifier = Modifier
-			.size(96.dp)
-			.clip(CircleShape)
-			.background(fill),
-		contentAlignment = Alignment.Center,
-	) {
-		Text(
-			text = letters.uppercase(),
-			style = MeridianType.titleSection.copy(
-				fontWeight = FontWeight.SemiBold,
-				fontSize = 35.sp,
-				lineHeight = 40.sp,
-			),
-			color = ink,
-		)
-	}
+private fun PersonMark(name: String, userId: String, photo: String) {
+	PhotoFace(
+		name = name,
+		userId = userId,
+		photoId = photo,
+		size = 96.dp,
+		style = MeridianType.titleSection.copy(
+			fontWeight = FontWeight.SemiBold,
+			fontSize = 35.sp,
+			lineHeight = 40.sp,
+		),
+	)
 }
 
 @Composable
@@ -233,6 +226,7 @@ private fun PersonStatus(status: String, corporate: Boolean) {
 	if (status.isEmpty() && corporate) {
 		return
 	}
+
 	Row(
 		horizontalArrangement = Arrangement.spacedBy(8.dp),
 		verticalAlignment = Alignment.CenterVertically,
@@ -278,7 +272,9 @@ private fun PersonStatus(status: String, corporate: Boolean) {
 @Composable
 private fun PersonActions(onIntent: (PersonIntent) -> Unit) {
 	Row(
-		modifier = Modifier.fillMaxWidth(),
+		modifier = Modifier
+			.fillMaxWidth()
+			.padding(top = 12.dp),
 		horizontalArrangement = Arrangement.spacedBy(8.dp),
 	) {
 		PersonButton(
@@ -315,13 +311,28 @@ private fun PersonButton(
 	onClick: (() -> Unit)?,
 	modifier: Modifier = Modifier,
 ) {
-	val tint = if (filled) palette.textOnAccent else palette.accentPrimary
-	val ink = if (filled) palette.textOnAccent else palette.textPrimary
+	val tint = select(
+		active = filled,
+		on = palette.textOnAccent,
+		off = palette.accentPrimary,
+	)
+
+	val ink = select(
+		active = filled,
+		on = palette.textOnAccent,
+		off = palette.textPrimary,
+	)
 
 	Column(
 		modifier = modifier
 			.clip(RoundedCornerShape(16.dp))
-			.background(if (filled) palette.accentButton else palette.surface)
+			.background(
+				select(
+					active = filled,
+					on = palette.accentButton,
+					off = palette.surface,
+				),
+			)
 			.then(if (onClick == null) Modifier else Modifier.clickable(onClick = onClick))
 			.padding(top = 12.dp, bottom = 10.dp),
 		horizontalAlignment = Alignment.CenterHorizontally,
@@ -344,14 +355,18 @@ private fun PersonButton(
 
 @Composable
 private fun PersonFacts(card: PersonState.Content, onIntent: (PersonIntent) -> Unit) {
-	Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+	Column(
+		modifier = Modifier.padding(top = if (card.corporate) 14.dp else 5.dp),
+	) {
 		if (card.corporate) {
 			Text(
 				text = stringResource(R.string.person_company),
+				modifier = Modifier.padding(bottom = 14.dp),
 				style = MeridianType.bodyName,
 				color = palette.textPrimary,
 			)
 		}
+
 		Column(
 			modifier = Modifier
 				.fillMaxWidth()
@@ -361,20 +376,22 @@ private fun PersonFacts(card: PersonState.Content, onIntent: (PersonIntent) -> U
 			if (card.corporate && card.server.isNotEmpty()) {
 				PersonRow(R.drawable.ic_person_server, R.string.person_server, card.server, link = false, copy = false, onClick = null)
 			}
+
 			if (card.department.isNotEmpty()) {
 				PersonRow(UiR.drawable.ic_building, R.string.person_department, card.department, link = false, copy = false, onClick = null)
 			}
+
 			if (card.office.isNotEmpty()) {
 				PersonRow(R.drawable.ic_person_office, R.string.person_office, card.office, link = false, copy = false, onClick = null)
 			}
+
 			if (card.manager.isNotEmpty()) {
 				PersonRow(
-					icon = null,
+					icon = R.drawable.ic_person_user,
 					label = R.string.person_manager,
 					value = card.manager,
 					link = card.managerId.isNotEmpty(),
 					copy = false,
-					portrait = R.drawable.manager_photo,
 					onClick = if (card.managerId.isEmpty()) {
 						null
 					} else {
@@ -382,12 +399,15 @@ private fun PersonFacts(card: PersonState.Content, onIntent: (PersonIntent) -> U
 					},
 				)
 			}
+
 			if (card.position.isNotEmpty()) {
 				PersonRow(R.drawable.ic_person_case, R.string.person_position, card.position, link = false, copy = false, onClick = null)
 			}
+
 			if (card.email.isNotEmpty()) {
 				PersonRow(UiR.drawable.ic_mail, R.string.person_email, card.email, link = true, copy = false, mail = true, onClick = null)
 			}
+
 			if (card.phone.isNotEmpty()) {
 				PersonRow(R.drawable.ic_person_phone, R.string.person_phone, card.phone, link = false, copy = true, onClick = null)
 			}
@@ -397,16 +417,16 @@ private fun PersonFacts(card: PersonState.Content, onIntent: (PersonIntent) -> U
 
 @Composable
 private fun PersonRow(
-	icon: Int?,
+	icon: Int,
 	label: Int,
 	value: String,
 	link: Boolean,
 	copy: Boolean,
 	onClick: (() -> Unit)?,
-	portrait: Int? = null,
 	mail: Boolean = false,
 ) {
 	val clipboard = LocalClipboardManager.current
+
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -415,22 +435,13 @@ private fun PersonRow(
 		horizontalArrangement = Arrangement.spacedBy(14.dp),
 		verticalAlignment = Alignment.CenterVertically,
 	) {
-		if (portrait != null) {
-			Image(
-				painter = painterResource(portrait),
-				contentDescription = null,
-				modifier = Modifier.size(32.dp).clip(CircleShape),
-			)
-		} else if (icon == null) {
-			Box(modifier = Modifier.size(22.dp))
-		} else {
-			Image(
-				painter = painterResource(icon),
-				contentDescription = null,
-				colorFilter = ColorFilter.tint(palette.textSecondary),
-				modifier = Modifier.size(22.dp),
-			)
-		}
+		Image(
+			painter = painterResource(icon),
+			contentDescription = null,
+			colorFilter = ColorFilter.tint(palette.textSecondary),
+			modifier = Modifier.size(22.dp),
+		)
+
 		Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
 			if (mail) {
 				MUiLinkedText(
@@ -443,15 +454,21 @@ private fun PersonRow(
 				Text(
 					text = value,
 					style = MeridianType.bodyDefault,
-					color = if (link) palette.accentPrimary else palette.textPrimary,
+					color = select(
+						active = link,
+						on = palette.accentPrimary,
+						off = palette.textPrimary,
+					),
 				)
 			}
+
 			Text(
 				text = stringResource(label),
 				style = MeridianType.captionSmall,
 				color = palette.textSecondary,
 			)
 		}
+
 		if (copy) {
 			Image(
 				painter = painterResource(R.drawable.ic_person_copy),

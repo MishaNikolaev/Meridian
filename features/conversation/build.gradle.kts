@@ -15,6 +15,7 @@ dependencies {
 	implementation(libs.androidx.emoji2.picker)
 
 	implementation(projects.component.ui)
+	implementation(projects.component.photopicker)
 	api(projects.core.di)
 	implementation(projects.core.presentation)
 	implementation(projects.core.navigation)

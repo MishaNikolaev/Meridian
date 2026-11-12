@@ -24,12 +24,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.nmichail.meridian.component.ui.initials.initials
+import com.nmichail.meridian.component.photopicker.compose.PhotoFace
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.R as UiR
 import com.nmichail.meridian.component.ui.theme.palette
@@ -54,7 +55,7 @@ internal fun ColumnScope.DiscussionColumn(
 	val lines = state.lines
 	val selectedIds = state.selectedIds
 	val rootId = state.rootId
-	val comments = lines.filter { line -> line.threadRoot == rootId }
+	val comments = lines.filter { line -> line.id != rootId && line.threadRoot == rootId }
 	val root = lines.firstOrNull { line -> line.id == rootId }
 	val pinned = lines.firstOrNull { line -> line.id == state.pinnedId }
 
@@ -80,6 +81,7 @@ internal fun ColumnScope.DiscussionColumn(
 		reactions = state.reactions,
 		reactionViewers = state.reactionViewers,
 		corporate = state.corporate,
+		selfName = state.selfName,
 		onReactions = onReactions,
 		onIntent = onIntent,
 		modifier = Modifier.weight(1f),
@@ -100,12 +102,14 @@ private fun DiscussionBar(
 	onIntent: (ConversationIntent) -> Unit,
 ) {
 	val border = palette.borderDefault
+
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
 			.background(palette.bar)
 			.drawBehind {
 				val stroke = 1.dp.toPx()
+
 				drawLine(
 					border,
 					Offset(0f, size.height),
@@ -144,6 +148,7 @@ private fun DiscussionBar(
 				maxLines = 1,
 				overflow = TextOverflow.Ellipsis,
 			)
+
 			if (!pinned.isNullOrBlank()) {
 				Text(
 					text = pinned,
@@ -163,9 +168,10 @@ private fun CommentList(
 	title: String,
 	comments: List<ChatLine>,
 	selectedIds: Set<String>,
-	reactions: Map<String, String>,
+	reactions: Map<String, Set<String>>,
 	reactionViewers: Map<String, List<ChatReaction>>,
 	corporate: Boolean,
+	selfName: String,
 	onReactions: (String) -> Unit,
 	onIntent: (ConversationIntent) -> Unit,
 	modifier: Modifier,
@@ -182,19 +188,22 @@ private fun CommentList(
 					title = title,
 					count = comments.size,
 					viewers = reactionViewers[root.id].orEmpty(),
+					selfName = selfName,
 					onIntent = onIntent,
 				)
 			}
+
 			item(key = "pill") {
 				CommentPill(count = comments.size)
 			}
 		}
+
 		items(comments, key = { line -> line.id }) { line ->
 			MessageRow(
 				line = line,
 				continued = false,
 				selected = line.id in selectedIds,
-				reaction = reactions[line.id],
+				reactions = reactions[line.id].orEmpty(),
 				viewers = reactionViewers[line.id].orEmpty(),
 				corporate = corporate,
 				comments = 0,
@@ -215,16 +224,19 @@ private fun DiscussionPost(
 	title: String,
 	count: Int,
 	viewers: List<ChatReaction>,
+	selfName: String,
 	onIntent: (ConversationIntent) -> Unit,
 ) {
 	val author = line.author
+
 	val name = if (!author.isNullOrBlank()) {
 		author
 	} else if (line.mine) {
-		stringResource(R.string.conversation_you)
+		selfName
 	} else {
 		title
 	}
+
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -239,19 +251,22 @@ private fun DiscussionPost(
 			name = name,
 			sentAt = line.sentAt,
 		)
+
 		Text(
 			text = if (line.id == "hello") stringResource(R.string.conversation_greeting) else line.text,
 			style = MeridianType.chatMessage,
 			color = palette.textPrimary,
 		)
+
 		if (viewers.isNotEmpty()) {
 			MessageReactions(
 				viewers = viewers,
-				reaction = null,
+				reactions = emptySet(),
 				mine = false,
 				onReactions = null,
 			)
 		}
+
 		PostMeta(count = count)
 	}
 }
@@ -262,19 +277,29 @@ private fun PostAuthor(name: String, sentAt: String?) {
 		horizontalArrangement = Arrangement.spacedBy(10.dp),
 		verticalAlignment = Alignment.CenterVertically,
 	) {
-		Box(
-			modifier = Modifier
-				.size(36.dp)
-				.clip(CircleShape)
-				.background(palette.accentPrimary),
-			contentAlignment = Alignment.Center,
-		) {
-			Text(
-				text = initials(name),
+		if (name.isBlank()) {
+			Box(
+				modifier = Modifier
+					.size(36.dp)
+					.clip(CircleShape)
+					.background(palette.field),
+				contentAlignment = Alignment.Center,
+			) {
+				Image(
+					painter = painterResource(UiR.drawable.ic_tab_profile),
+					contentDescription = null,
+					colorFilter = ColorFilter.tint(palette.textSecondary),
+					modifier = Modifier.size(20.dp),
+				)
+			}
+		} else {
+			PhotoFace(
+				name = name,
+				size = 36.dp,
 				style = MeridianType.captionDefault.copy(fontWeight = FontWeight.SemiBold),
-				color = palette.textOnAccent,
 			)
 		}
+
 		Column {
 			Text(
 				text = name,
@@ -283,6 +308,7 @@ private fun PostAuthor(name: String, sentAt: String?) {
 				maxLines = 1,
 				overflow = TextOverflow.Ellipsis,
 			)
+
 			Text(
 				text = postedAt(sentAt),
 				style = MeridianType.captionSmall,
@@ -301,11 +327,13 @@ private fun PostMeta(count: Int) {
 		verticalAlignment = Alignment.CenterVertically,
 	) {
 		Spacer(modifier = Modifier.weight(1f))
+
 		Image(
 			painter = painterResource(R.drawable.ic_message_forum),
 			contentDescription = null,
 			modifier = Modifier.size(16.dp),
 		)
+
 		Text(
 			text = count.toString(),
 			style = MeridianType.captionSmall,
@@ -332,9 +360,12 @@ private fun CommentPill(count: Int) {
 @Composable
 private fun postedAt(iso: String?): String {
 	val day = messageDay(iso)
+
 	val clock = messageClock(iso)
+
 	if (day.isNullOrBlank()) {
 		return clock
 	}
+
 	return "$day, $clock"
 }

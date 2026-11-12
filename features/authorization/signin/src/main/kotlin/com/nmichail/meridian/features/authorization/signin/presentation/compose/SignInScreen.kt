@@ -1,5 +1,6 @@
 package com.nmichail.meridian.features.authorization.signin.presentation.compose
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -86,6 +87,7 @@ private fun SignInForm(
 	Column(
 		modifier = Modifier
 			.fillMaxSize()
+			.background(palette.canvas)
 			.verticalScroll(rememberScrollState())
 			.padding(horizontal = 24.dp, vertical = 32.dp),
 		verticalArrangement = Arrangement.spacedBy(16.dp),

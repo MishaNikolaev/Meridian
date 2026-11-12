@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class ReadCachedMessagesUseCaseTest {
-
 	private val memory = MessageMemory()
 	private val useCase = ReadCachedMessagesUseCase(memory)
 	private val thread = ChatThread(
@@ -16,6 +15,7 @@ class ReadCachedMessagesUseCaseTest {
 		reactions = emptyMap(),
 		reactionViewers = emptyMap(),
 		people = emptyList(),
+		selfName = "",
 	)
 
 	@Test

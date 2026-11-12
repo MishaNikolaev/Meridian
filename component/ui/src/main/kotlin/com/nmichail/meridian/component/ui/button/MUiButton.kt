@@ -40,9 +40,7 @@ fun MUiButton(
 		)
 
 		MUiButtonStyle.Fab       -> MUiFabButton(onClick, modifier)
-
 		MUiButtonStyle.Text      -> MUiTextButton(model.label, onClick, modifier)
-
 		MUiButtonStyle.Primary   -> MUiFilledButton(
 			label = model.label,
 			container = palette.accentButton,
@@ -60,7 +58,6 @@ fun MUiButton(
 		)
 
 		MUiButtonStyle.Outline   -> MUiOutlineButton(model.label, onClick, modifier)
-
 		MUiButtonStyle.Danger    -> MUiFilledButton(
 			label = model.label,
 			container = palette.statusError,

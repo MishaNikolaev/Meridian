@@ -36,18 +36,6 @@ enum class MUiSnackbarDuration {
 	Indefinite,
 }
 
-data class MUiSnackbarModel(
-	val tone: MUiSnackbarTone,
-	val message: String,
-	val action: String? = null,
-	val dark: Boolean = false,
-	val duration: MUiSnackbarDuration = if (action == null) {
-		MUiSnackbarDuration.Short
-	} else {
-		MUiSnackbarDuration.Long
-	},
-)
-
 @Composable
 fun MUiSnackbar(
 	model: MUiSnackbarModel,
@@ -58,14 +46,14 @@ fun MUiSnackbar(
 	MUiSnackbarTimer(model = model, onDismiss = onDismiss)
 
 	val icon = when (model.tone) {
-		MUiSnackbarTone.Error -> R.drawable.ic_snackbar_error
-		MUiSnackbarTone.Info -> R.drawable.ic_snackbar_info
+		MUiSnackbarTone.Error   -> R.drawable.ic_snackbar_error
+		MUiSnackbarTone.Info    -> R.drawable.ic_snackbar_info
 		MUiSnackbarTone.Success -> R.drawable.ic_snackbar_success
 	}
 
 	val tint = when (model.tone) {
-		MUiSnackbarTone.Error -> palette.snackbarError
-		MUiSnackbarTone.Info -> palette.snackbarInfo
+		MUiSnackbarTone.Error   -> palette.snackbarError
+		MUiSnackbarTone.Info    -> palette.snackbarInfo
 		MUiSnackbarTone.Success -> palette.snackbarSuccess
 	}
 	val shape = RoundedCornerShape(14.dp)
@@ -115,12 +103,13 @@ private fun MUiSnackbarTimer(
 	model: MUiSnackbarModel,
 	onDismiss: () -> Unit,
 ) {
-	LaunchedEffect(model.message,
+	LaunchedEffect(
+		model.message,
 		model.duration
 	) {
 		when (model.duration) {
-			MUiSnackbarDuration.Short -> delay(timeMillis = 4_000L)
-			MUiSnackbarDuration.Long -> delay(timeMillis = 10_000L)
+			MUiSnackbarDuration.Short      -> delay(timeMillis = 4_000L)
+			MUiSnackbarDuration.Long       -> delay(timeMillis = 10_000L)
 			MUiSnackbarDuration.Indefinite -> return@LaunchedEffect
 		}
 		onDismiss()

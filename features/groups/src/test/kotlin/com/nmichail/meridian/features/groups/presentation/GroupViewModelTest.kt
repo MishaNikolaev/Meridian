@@ -22,6 +22,8 @@ import com.nmichail.meridian.shared.chat.domain.entity.ChatType
 import com.nmichail.meridian.shared.chat.domain.entity.CreatedChat
 import com.nmichail.meridian.shared.chat.domain.usecase.CreateChatUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.FindPersonUseCase
+import com.nmichail.meridian.component.photopicker.domain.usecase.UploadPhotoUseCase
+import com.nmichail.meridian.shared.chat.domain.usecase.UpdateChatUseCase
 import java.io.IOException
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -36,15 +38,18 @@ import org.mockito.kotlin.whenever
 
 @ExtendWith(TestCoroutineExtension::class)
 class GroupViewModelTest {
-
 	private val findPersonUseCase: FindPersonUseCase = mock()
 	private val createChatUseCase: CreateChatUseCase = mock()
+	private val updateChatUseCase: UpdateChatUseCase = mock()
+	private val uploadPhotoUseCase: UploadPhotoUseCase = mock()
 	private val validateUsernameUseCase: ValidateUsernameUseCase = mock()
 	private val validateDisplayNameUseCase: ValidateDisplayNameUseCase = mock()
 	private val router: GroupRouter = mock()
 	private val viewModel = GroupViewModel(
 		findPersonUseCase,
 		createChatUseCase,
+		updateChatUseCase,
+		uploadPhotoUseCase,
 		validateUsernameUseCase,
 		validateDisplayNameUseCase,
 		ErrorDelegate(
@@ -69,11 +74,13 @@ class GroupViewModelTest {
 		userId = "abea9342-21a2-43e3-9fd0-f20b51c9a81c",
 		username = "chief",
 		displayName = "Волков Сергей Андреевич",
+		role = "",
 	)
 	private val member = ChatPerson(
 		userId = "2f288e3d-c526-4f8d-b4bf-28c4779fd60a",
 		username = "member",
 		displayName = "Новикова Анна Павловна",
+		role = "",
 	)
 	private val created = CreatedChat(
 		id = "chat",
@@ -92,6 +99,7 @@ class GroupViewModelTest {
 				login = UsernameValidationItem(),
 				adding = false,
 				members = emptyList(),
+				photo = "",
 			),
 			viewModel.state.value,
 		)
@@ -112,6 +120,7 @@ class GroupViewModelTest {
 				login = UsernameValidationItem(),
 				adding = false,
 				members = emptyList(),
+				photo = "",
 			),
 			viewModel.state.value,
 		)
@@ -131,6 +140,7 @@ class GroupViewModelTest {
 				login = UsernameValidationItem(),
 				adding = false,
 				members = emptyList(),
+				photo = "",
 			),
 			viewModel.state.value,
 		)
@@ -149,6 +159,7 @@ class GroupViewModelTest {
 				login = UsernameValidationItem(),
 				adding = false,
 				members = emptyList(),
+				photo = "",
 			),
 			viewModel.state.value,
 		)
@@ -168,6 +179,7 @@ class GroupViewModelTest {
 				login = login,
 				adding = false,
 				members = emptyList(),
+				photo = "",
 			),
 			viewModel.state.value,
 		)
@@ -186,6 +198,7 @@ class GroupViewModelTest {
 				login = UsernameValidationItem(),
 				adding = true,
 				members = emptyList(),
+				photo = "",
 			),
 			viewModel.state.value,
 		)
@@ -210,6 +223,7 @@ class GroupViewModelTest {
 				login = invalid,
 				adding = false,
 				members = emptyList(),
+				photo = "",
 			),
 			viewModel.state.value,
 		)
@@ -246,6 +260,7 @@ class GroupViewModelTest {
 				login = UsernameValidationItem(),
 				adding = false,
 				members = listOf(chief),
+				photo = "",
 			),
 			viewModel.state.value,
 		)
@@ -269,6 +284,7 @@ class GroupViewModelTest {
 				login = UsernameValidationItem(),
 				adding = false,
 				members = listOf(chief),
+				photo = "",
 			),
 			viewModel.state.value,
 		)
@@ -334,6 +350,7 @@ class GroupViewModelTest {
 				login = UsernameValidationItem(),
 				adding = false,
 				members = listOf(member),
+				photo = "",
 			),
 			viewModel.state.value,
 		)
@@ -357,6 +374,7 @@ class GroupViewModelTest {
 				login = UsernameValidationItem(),
 				adding = false,
 				members = emptyList(),
+				photo = "",
 			),
 			viewModel.state.value,
 		)
@@ -468,6 +486,7 @@ class GroupViewModelTest {
 				login = UsernameValidationItem(),
 				adding = false,
 				members = emptyList(),
+				photo = "",
 			),
 			viewModel.state.value,
 		)
@@ -478,5 +497,52 @@ class GroupViewModelTest {
 		viewModel.applyIntent(GroupIntent.NavigateBack)
 
 		verify(router).navigateBack()
+	}
+
+	@Test
+	fun `open EXPECT filled form`() = runTest {
+		whenever(validateDisplayNameUseCase.invoke("Платформа")) doReturn title
+
+		viewModel.applyIntent(
+			GroupIntent.Open(
+				chatId = "chat",
+				title = "Платформа",
+				description = "оплата",
+			),
+		)
+
+		assertEquals(
+			GroupState.Content(
+				title = title,
+				description = "оплата",
+				login = UsernameValidationItem(),
+				adding = false,
+				members = emptyList(),
+				photo = "",
+			),
+			viewModel.state.value,
+		)
+	}
+
+	@Test
+	fun `install photo EXPECT uploaded photo`() = runTest {
+		val bytes = byteArrayOf(1)
+		val photoId = "photo-1"
+		whenever(uploadPhotoUseCase.invoke(bytes, "image/jpeg")) doReturn photoId
+		viewModel.applyIntent(GroupIntent.Load)
+
+		viewModel.applyIntent(GroupIntent.InstallPhoto(bytes = bytes, type = "image/jpeg"))
+
+		assertEquals(
+			GroupState.Content(
+				title = DisplayNameValidationItem(),
+				description = "",
+				login = UsernameValidationItem(),
+				adding = false,
+				members = emptyList(),
+				photo = photoId,
+			),
+			viewModel.state.value,
+		)
 	}
 }

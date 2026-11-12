@@ -17,11 +17,8 @@ class ErrorLogger @Inject constructor() {
 	fun needLog(exception: Exception): Boolean =
 		when (exception) {
 			is NoConnectionException -> false
-
 			is IOException -> false
-
 			is GatewayException -> exception.code == GatewayCode.UNKNOWN
-
 			else -> true
 		}
 

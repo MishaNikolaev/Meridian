@@ -17,6 +17,7 @@ import com.nmichail.meridian.shared.chat.data.realtime.ChatRealtime
 import com.nmichail.meridian.shared.chat.domain.entity.Chat
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType
 import com.nmichail.meridian.shared.chat.domain.usecase.LoadChatsUseCase
+import com.nmichail.meridian.shared.chat.domain.usecase.ReadCachedChatsUseCase
 import java.io.IOException
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.test.runTest
@@ -33,9 +34,8 @@ import org.mockito.kotlin.whenever
 class ChatViewModelTest {
 
 	private val loadChatsUseCase: LoadChatsUseCase = mock()
-	private val realtime: ChatRealtime = mock {
-		on { chatIds } doReturn MutableSharedFlow()
-	}
+	private val readCachedChatsUseCase: ReadCachedChatsUseCase = mock()
+	private val chatRealtime: ChatRealtime = mock { on { chatIds } doReturn MutableSharedFlow() }
 	private val errorDelegate = ErrorDelegate(
 		errorLogger = ErrorLogger(),
 		defaultErrorReactionConverter = DefaultErrorReactionConverter(),
@@ -48,11 +48,11 @@ class ChatViewModelTest {
 	private val eventObserver: Observer<ChatEvent> = mock()
 	private val viewModel = ChatViewModel(
 		loadChatsUseCase,
-		realtime,
+		readCachedChatsUseCase,
+		chatRealtime,
 		errorDelegate,
 		router,
 	)
-
 	private val chats = listOf(
 		Chat(
 			id = "1",
@@ -68,7 +68,6 @@ class ChatViewModelTest {
 			discussionText = null,
 		),
 	)
-
 	private val externalChat = Chat(
 		id = "ext",
 		type = ChatType.DIRECT,
@@ -82,13 +81,62 @@ class ChatViewModelTest {
 		discussionRoot = null,
 		discussionText = null,
 	)
-
 	private val ioException = IOException()
 	private val illegalStateException = IllegalStateException()
 
 	@Test
+	fun `sync titles EXPECT renamed chat`() = runTest {
+		val group = Chat(
+			id = "g",
+			type = ChatType.GROUP,
+			title = "Смена",
+			preview = "тема",
+			sentAt = "2026-11-01T00:00:00Z",
+			unread = 0,
+			corporate = true,
+			mentioned = false,
+			personId = null,
+			discussionRoot = "m",
+			discussionText = "тема",
+		)
+		whenever(loadChatsUseCase.invoke()) doReturn listOf(group)
+		viewModel.applyIntent(ChatIntent.LoadInitialData)
+		whenever(readCachedChatsUseCase.invoke()) doReturn listOf(group.copy(title = "Платформа"))
+
+		viewModel.applyIntent(ChatIntent.SyncTitles)
+		val content = viewModel.state.value as ChatState.Content
+
+		assertEquals("Платформа", content.corporateChats.single().title)
+	}
+
+	@Test
+	fun `sync titles EXPECT renamed discussion`() = runTest {
+		val group = Chat(
+			id = "g",
+			type = ChatType.GROUP,
+			title = "Смена",
+			preview = "тема",
+			sentAt = "2026-11-01T00:00:00Z",
+			unread = 0,
+			corporate = true,
+			mentioned = false,
+			personId = null,
+			discussionRoot = "m",
+			discussionText = "тема",
+		)
+		whenever(loadChatsUseCase.invoke()) doReturn listOf(group)
+		viewModel.applyIntent(ChatIntent.LoadInitialData)
+		whenever(readCachedChatsUseCase.invoke()) doReturn listOf(group.copy(title = "Платформа"))
+
+		viewModel.applyIntent(ChatIntent.SyncTitles)
+		val content = viewModel.state.value as ChatState.Content
+		assertEquals("Платформа", content.corporateDiscussions.single().title)
+	}
+
+	@Test
 	fun `load initial data EXPECT content`() = runTest {
 		whenever(loadChatsUseCase.invoke()) doReturn chats
+
 		viewModel.applyIntent(ChatIntent.LoadInitialData)
 
 		assertEquals(
@@ -108,6 +156,7 @@ class ChatViewModelTest {
 	@Test
 	fun `external direct chat EXPECT external list`() = runTest {
 		whenever(loadChatsUseCase.invoke()) doReturn chats + externalChat
+
 		viewModel.applyIntent(ChatIntent.LoadInitialData)
 
 		assertEquals(
@@ -116,6 +165,27 @@ class ChatViewModelTest {
 				section = ChatSection.ALL,
 				corporateChats = chats,
 				externalTabChats = listOf(externalChat),
+				corporateDiscussions = emptyList(),
+				externalTabDiscussions = emptyList(),
+				createOpen = false,
+			),
+			viewModel.state.value,
+		)
+	}
+
+	@Test
+	fun `cached chats EXPECT kept when reload fails`() = runTest {
+		whenever(readCachedChatsUseCase.invoke()) doReturn chats
+		whenever(loadChatsUseCase.invoke()).doThrowSafe(ioException)
+
+		viewModel.applyIntent(ChatIntent.LoadInitialData)
+
+		assertEquals(
+			ChatState.Content(
+				corporate = true,
+				section = ChatSection.ALL,
+				corporateChats = chats,
+				externalTabChats = emptyList(),
 				corporateDiscussions = emptyList(),
 				externalTabDiscussions = emptyList(),
 				createOpen = false,
@@ -144,7 +214,7 @@ class ChatViewModelTest {
 
 	@Test
 	fun `refresh failure EXPECT no connection event`() = runTest {
-		whenever(loadChatsUseCase.invoke()).doReturn(chats).doThrowSafe(ioException)
+		whenever(loadChatsUseCase.invoke()).doReturn(chats) doThrowSafe (ioException)
 		viewModel.event.observeForever(eventObserver)
 		viewModel.applyIntent(ChatIntent.LoadInitialData)
 
@@ -155,7 +225,7 @@ class ChatViewModelTest {
 
 	@Test
 	fun `refresh failure EXPECT unknown event`() = runTest {
-		whenever(loadChatsUseCase.invoke()).doReturn(chats).doThrowSafe(illegalStateException)
+		whenever(loadChatsUseCase.invoke()).doReturn(chats) doThrowSafe (illegalStateException)
 		viewModel.event.observeForever(eventObserver)
 		viewModel.applyIntent(ChatIntent.LoadInitialData)
 
@@ -166,7 +236,7 @@ class ChatViewModelTest {
 
 	@Test
 	fun `refresh failure EXPECT content`() = runTest {
-		whenever(loadChatsUseCase.invoke()).doReturn(chats).doThrowSafe(ioException)
+		whenever(loadChatsUseCase.invoke()).doReturn(chats) doThrowSafe (ioException)
 		viewModel.applyIntent(ChatIntent.LoadInitialData)
 
 		viewModel.applyIntent(ChatIntent.Retry)

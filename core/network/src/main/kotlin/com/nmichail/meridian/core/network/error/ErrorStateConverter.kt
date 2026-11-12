@@ -29,11 +29,8 @@ class ErrorStateConverter @Inject constructor() {
 	private fun Exception.messageId(): Int =
 		when (this) {
 			is GatewayException -> displayMessage()
-
 			is NoConnectionException -> R.string.error_no_connection
-
 			is IOException -> R.string.error_no_connection
-
 			else -> R.string.error_unknown
 		}
 }

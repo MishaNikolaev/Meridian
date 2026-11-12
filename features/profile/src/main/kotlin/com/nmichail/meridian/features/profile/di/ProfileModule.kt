@@ -8,6 +8,7 @@ import com.nmichail.meridian.features.profile.data.api.createProfileApi
 import com.nmichail.meridian.features.profile.data.repository.ProfileRepositoryImpl
 import com.nmichail.meridian.features.profile.domain.repository.ProfileRepository
 import com.nmichail.meridian.features.profile.presentation.ProfileViewModel
+import com.nmichail.meridian.component.photopicker.di.PhotoModule
 import com.nmichail.meridian.shared.session.di.AuthorizationModule
 import dagger.Binds
 import dagger.Module
@@ -15,11 +16,9 @@ import dagger.Provides
 import dagger.multibindings.IntoMap
 import de.jensklingenberg.ktorfit.Ktorfit
 
-@Module(includes = [AuthorizationModule::class])
+@Module(includes = [AuthorizationModule::class, PhotoModule::class])
 abstract class ProfileModule {
-
 	companion object {
-
 		@Provides
 		@PerFeature
 		@JvmStatic

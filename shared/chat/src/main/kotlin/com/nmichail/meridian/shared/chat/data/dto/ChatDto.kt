@@ -8,8 +8,9 @@ data class ChatDto(
 	val type: ChatTypeDto,
 	val title: String?,
 	val personId: String?,
-	val personName: String? = null,
+	val personName: String?,
 	val unreadCount: Int,
 	val lastMessage: MessageDto?,
 	val corporate: Boolean,
+	val description: String?,
 )

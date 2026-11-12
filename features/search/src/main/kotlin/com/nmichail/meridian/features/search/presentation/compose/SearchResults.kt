@@ -26,7 +26,7 @@ import com.nmichail.meridian.features.search.presentation.SearchHit
 
 private sealed interface SearchRow {
 
-	data class Header(val title: Int) : SearchRow
+	data class Section(val title: Int) : SearchRow
 
 	data class Item(val hit: SearchHit) : SearchRow
 }
@@ -41,14 +41,19 @@ internal fun SearchResults(
 	LazyColumn(modifier = modifier) {
 		items(rows) { row ->
 			when (row) {
-				is SearchRow.Header -> Text(
+				is SearchRow.Section -> Text(
 					text = stringResource(row.title),
-					modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 8.dp),
+					modifier = Modifier.padding(
+						start = 16.dp,
+						top = 16.dp,
+						end = 16.dp,
+						bottom = 8.dp
+					),
 					style = MeridianType.bodySmall,
 					color = palette.textSecondary,
 				)
 
-				is SearchRow.Item -> ResultItem(
+				is SearchRow.Item    -> ResultItem(
 					hit = row.hit,
 					query = query,
 				)
@@ -63,10 +68,10 @@ private fun ResultItem(
 	query: String,
 ) {
 	when (hit) {
-		is SearchHit.Person -> PersonRow(hit, query)
-		is SearchHit.Chat -> ChatRow(hit, query)
+		is SearchHit.Person  -> PersonRow(hit, query)
+		is SearchHit.Chat    -> ChatRow(hit, query)
 		is SearchHit.Message -> MessageRow(hit, query)
-		is SearchHit.File -> FileRow(hit, query)
+		is SearchHit.File    -> FileRow(hit, query)
 	}
 }
 
@@ -210,24 +215,27 @@ private fun Mark(text: String, size: Dp) {
 
 private fun rows(hits: List<SearchHit>): List<SearchRow> {
 	val result = mutableListOf<SearchRow>()
-	var title: Int? = null
+
+	var shown: Int? = null
+
 	hits.forEach { hit ->
-		val next = header(hit)
-		if (next != title) {
-			result += SearchRow.Header(next)
-			title = next
+		val title = sectionTitle(hit)
+
+		if (title != shown) {
+			result += SearchRow.Section(title)
+
+			shown = title
 		}
+
 		result += SearchRow.Item(hit)
 	}
+
 	return result
 }
 
-private fun header(hit: SearchHit): Int = when (hit) {
-	is SearchHit.Person -> R.string.search_people
-
-	is SearchHit.Chat -> R.string.search_chats
-
+private fun sectionTitle(hit: SearchHit): Int = when (hit) {
+	is SearchHit.Person  -> R.string.search_people
+	is SearchHit.Chat    -> R.string.search_chats
 	is SearchHit.Message -> R.string.search_messages
-
-	is SearchHit.File -> R.string.search_files
+	is SearchHit.File    -> R.string.search_files
 }

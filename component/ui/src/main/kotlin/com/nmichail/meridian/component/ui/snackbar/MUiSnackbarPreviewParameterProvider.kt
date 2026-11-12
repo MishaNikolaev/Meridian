@@ -16,6 +16,7 @@ internal class MUiSnackbarPreviewParameterProvider : PreviewParameterProvider<MU
 				MUiSnackbarModel(
 					tone = MUiSnackbarTone.Error,
 					message = "Неверный логин или пароль",
+					duration = MUiSnackbarDuration.Long,
 					action = "Повторить",
 					dark = dark,
 				),
@@ -25,6 +26,7 @@ internal class MUiSnackbarPreviewParameterProvider : PreviewParameterProvider<MU
 				MUiSnackbarModel(
 					tone = MUiSnackbarTone.Info,
 					message = "Ссылка скопирована",
+					duration = MUiSnackbarDuration.Short,
 					dark = dark,
 				),
 			)
@@ -33,6 +35,7 @@ internal class MUiSnackbarPreviewParameterProvider : PreviewParameterProvider<MU
 				MUiSnackbarModel(
 					tone = MUiSnackbarTone.Success,
 					message = "Статус сохранён",
+					duration = MUiSnackbarDuration.Long,
 					action = "Отменить",
 					dark = dark,
 				),
@@ -47,7 +50,7 @@ private fun MUiSnackbarPreview(
 	@PreviewParameter(MUiSnackbarPreviewParameterProvider::class)
 	model: MUiSnackbarModel,
 ) {
-	MeridianTheme(darkTheme = model.dark) {
+	MeridianTheme(themeState = model.dark) {
 		MUiSnackbar(
 			model = model,
 			modifier = Modifier.width(328.dp),

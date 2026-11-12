@@ -46,6 +46,11 @@ tasks.named("preBuild") {
 	dependsOn("detekt")
 }
 
+val kotlinVersion = libs.findVersion("kotlin").get().requiredVersion
+configurations.configureEach {
+	resolutionStrategy.force("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
+}
+
 dependencies {
 	implementation(libs.findLibrary("kotlin-stdlib").get())
 	implementation(platform(libs.findLibrary("androidx-compose-bom").get()))

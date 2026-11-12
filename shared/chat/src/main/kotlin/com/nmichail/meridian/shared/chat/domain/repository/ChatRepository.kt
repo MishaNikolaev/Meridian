@@ -5,9 +5,9 @@ import com.nmichail.meridian.shared.chat.domain.entity.ChatPerson
 import com.nmichail.meridian.shared.chat.domain.entity.ChatThread
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType
 import com.nmichail.meridian.shared.chat.domain.entity.CreatedChat
+import com.nmichail.meridian.shared.chat.domain.entity.ReactionMemory
 
 interface ChatRepository {
-
 	suspend fun loadChats(): List<Chat>
 
 	suspend fun create(type: ChatType, title: String, usernames: List<String>): CreatedChat
@@ -22,9 +22,9 @@ interface ChatRepository {
 
 	suspend fun delete(messageId: String)
 
-	fun readReactions(): Map<String, String>
+	fun readReactions(): ReactionMemory
 
-	fun saveReaction(messageId: String, reaction: String)
+	fun saveReaction(messageId: String, reactions: Set<String>, saveUsed: Boolean)
 
-	suspend fun react(messageId: String, reaction: String)
+	suspend fun react(messageId: String, reaction: String, active: Boolean)
 }

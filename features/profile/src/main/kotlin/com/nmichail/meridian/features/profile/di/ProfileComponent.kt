@@ -13,10 +13,8 @@ import dagger.Component
 	modules = [ProfileModule::class, ViewModelModule::class],
 )
 interface ProfileComponent : ProfileFeatureApi {
-
 	@Component.Factory
 	interface Factory {
-
 		fun create(core: CoreApi, @BindsInstance router: ProfileRouter): ProfileComponent
 	}
 }

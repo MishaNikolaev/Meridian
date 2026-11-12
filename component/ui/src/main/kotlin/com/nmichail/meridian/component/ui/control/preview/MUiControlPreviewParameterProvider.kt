@@ -47,7 +47,7 @@ private fun MUiControlPreview(
 	@PreviewParameter(MUiControlPreviewParameterProvider::class)
 	data: MUiControlPreviewData,
 ) {
-	MeridianTheme(darkTheme = data.dark) {
+	MeridianTheme(themeState = data.dark) {
 		Row(
 			horizontalArrangement = Arrangement.spacedBy(16.dp),
 			verticalAlignment = Alignment.CenterVertically,

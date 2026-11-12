@@ -13,4 +13,5 @@ data class PublicProfileDto(
 	val managerUserId: String?,
 	val email: String?,
 	val phone: String?,
+	val photoId: String?,
 )

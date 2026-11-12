@@ -6,18 +6,19 @@ import com.nmichail.meridian.core.di.ApplicationContext
 import javax.inject.Inject
 
 interface DeletionDataSource {
-
 	fun getDeleted(): Set<String>
 
-	fun saveDeleted(messageId: String)
+	fun saveDeleted(messageId: String) {
+		saveDeleted(setOf(messageId))
+	}
+
+	fun saveDeleted(messageIds: Collection<String>)
 }
 
 class DeletionDataSourceImpl @Inject constructor(
 	@ApplicationContext context: Context,
 ) : DeletionDataSource {
-
 	private companion object {
-
 		const val PREFERENCES = "meridian"
 		const val DELETED_MESSAGES = "deleted_messages"
 	}
@@ -48,8 +49,13 @@ class DeletionDataSourceImpl @Inject constructor(
 		return text
 	}
 
-	override fun saveDeleted(messageId: String) {
-		val saved = getDeleted() + messageId
+	override fun saveDeleted(messageIds: Collection<String>) {
+		if (messageIds.isEmpty()) {
+			return
+		}
+
+		val saved = getDeleted() + messageIds
+
 		preferences.edit { putStringSet(DELETED_MESSAGES, saved) }
 	}
 }

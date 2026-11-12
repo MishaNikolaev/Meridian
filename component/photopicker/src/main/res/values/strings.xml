@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="photo_profile">Фото профиля</string>
+	<string name="photo_title">Фото</string>
+	<string name="photo_done">Готово</string>
+	<string name="photo_reset">Сбросить</string>
+	<string name="photo_cancel">Отмена</string>
+	<string name="photo_empty">На телефоне нет доступных фото</string>
+	<string name="photo_allow">Разрешить доступ к фото</string>
+</resources>

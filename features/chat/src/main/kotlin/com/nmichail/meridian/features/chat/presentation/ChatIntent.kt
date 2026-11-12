@@ -3,7 +3,6 @@ package com.nmichail.meridian.features.chat.presentation
 import com.nmichail.meridian.shared.chat.domain.entity.Chat
 
 sealed interface ChatIntent {
-
 	data object LoadInitialData : ChatIntent
 
 	data class ChangeCorporate(
@@ -44,4 +43,6 @@ sealed interface ChatIntent {
 	data object ChangeServer : ChatIntent
 
 	data object NavigateBack : ChatIntent
+
+	data object SyncTitles : ChatIntent
 }

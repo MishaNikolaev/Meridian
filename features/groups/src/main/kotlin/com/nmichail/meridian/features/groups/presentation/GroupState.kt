@@ -5,7 +5,6 @@ import com.nmichail.meridian.core.validation.username.UsernameValidationItem
 import com.nmichail.meridian.shared.chat.domain.entity.ChatPerson
 
 sealed interface GroupState {
-
 	data object Initial : GroupState
 
 	data class Loading(
@@ -14,6 +13,7 @@ sealed interface GroupState {
 		val login: UsernameValidationItem,
 		val adding: Boolean,
 		val members: List<ChatPerson>,
+		val photo: String,
 	) : GroupState
 
 	data class Content(
@@ -22,6 +22,7 @@ sealed interface GroupState {
 		val login: UsernameValidationItem,
 		val adding: Boolean,
 		val members: List<ChatPerson>,
+		val photo: String,
 	) : GroupState
 
 	data class Error(

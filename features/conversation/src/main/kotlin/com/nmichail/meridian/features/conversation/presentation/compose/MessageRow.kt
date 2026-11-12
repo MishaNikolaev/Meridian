@@ -26,9 +26,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.nmichail.meridian.component.ui.swipe.MUiSwipeReply
 import com.nmichail.meridian.component.ui.initials.initials
+import com.nmichail.meridian.component.ui.initials.markColor
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.R as UiR
 import com.nmichail.meridian.component.ui.theme.palette
+import com.nmichail.meridian.component.ui.theme.select
 import com.nmichail.meridian.features.conversation.R
 import com.nmichail.meridian.features.conversation.presentation.ConversationIntent
 import com.nmichail.meridian.features.conversation.presentation.compose.component.messageClock
@@ -60,19 +62,23 @@ internal fun MessageRow(
 	line: ChatLine,
 	continued: Boolean,
 	selected: Boolean,
-	reaction: String?,
+	reactions: Set<String>,
 	viewers: List<ChatReaction>,
 	corporate: Boolean,
 	comments: Int,
 	onReactions: (() -> Unit)?,
 	onIntent: (ConversationIntent) -> Unit,
 ) {
-	val author = line.author?.takeIf { it.isNotBlank() } ?: stringResource(R.string.conversation_you)
+	val author = line.author
+		?.takeIf { it.isNotBlank() }
+		?: stringResource(R.string.conversation_you)
+
 	val quoted = if (line.id == "hello") {
 		stringResource(R.string.conversation_greeting)
 	} else {
 		line.text
 	}
+
 	MUiSwipeReply(
 		enabled = !line.deleted,
 		onReply = {
@@ -88,7 +94,7 @@ internal fun MessageRow(
 			Outgoing(
 				line = line,
 				selected = selected,
-				reaction = reaction,
+				reactions = reactions,
 				viewers = viewers,
 				corporate = corporate,
 				comments = comments,
@@ -100,7 +106,7 @@ internal fun MessageRow(
 				line = line,
 				continued = continued,
 				selected = selected,
-				reaction = reaction,
+				reactions = reactions,
 				viewers = viewers,
 				corporate = corporate,
 				comments = comments,
@@ -116,7 +122,7 @@ private fun Incoming(
 	line: ChatLine,
 	continued: Boolean,
 	selected: Boolean,
-	reaction: String?,
+	reactions: Set<String>,
 	viewers: List<ChatReaction>,
 	corporate: Boolean,
 	comments: Int,
@@ -126,15 +132,23 @@ private fun Incoming(
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
-			.background(if (selected) palette.accentPrimary.copy(alpha = 0.14f) else Color.Transparent)
+			.background(
+				select(
+					active = selected,
+					on = palette.accentPrimary.copy(alpha = 0.14f),
+					off = Color.Transparent,
+				),
+			)
 			.padding(horizontal = 10.dp).pressMessage(line.id, onIntent),
 		horizontalArrangement = Arrangement.spacedBy(8.dp),
 		verticalAlignment = Alignment.Bottom,
 	) {
 		Box {
 			AuthorMark(line.author.orEmpty())
+
 			if (selected) SelectionCheck(modifier = Modifier.align(Alignment.BottomCenter))
 		}
+
 		Column(
 			modifier = Modifier
 				.widthIn(max = 272.dp)
@@ -144,37 +158,27 @@ private fun Incoming(
 			verticalArrangement = Arrangement.spacedBy(6.dp),
 		) {
 			val author = line.author
+
 			if (!author.isNullOrBlank()) {
-				Row(
-					verticalAlignment = Alignment.CenterVertically,
-					horizontalArrangement = Arrangement.spacedBy(4.dp),
-				) {
-					if (corporate) {
-						Image(
-							painter = painterResource(UiR.drawable.ic_building),
-							contentDescription = null,
-							modifier = Modifier.size(14.dp),
-						)
-					}
-					Text(
-						text = author,
-						style = MeridianType.bodyRegular.copy(fontWeight = FontWeight.SemiBold),
-						color = palette.textPrimary,
-					)
-				}
+				MessageAuthor(author = author, corporate = corporate)
 			}
+
 			MessageQuote(line, corporate)
+
 			MessageGlyphs(
 				text = if (line.id == "hello") stringResource(R.string.conversation_greeting) else line.text,
 				color = palette.textPrimary,
 			)
+
 			Meta(
 				time = messageClock(line.sentAt),
 				color = palette.textSecondary,
 				checked = false,
 				edited = line.edited && !line.deleted,
 			)
-			if (!line.deleted && (viewers.isNotEmpty() || reaction != null)) MessageReactions(viewers = viewers, reaction = reaction, mine = false, onReactions = onReactions)
+
+			if (!line.deleted && (viewers.isNotEmpty() || reactions.isNotEmpty())) MessageReactions(viewers = viewers, reactions = reactions, mine = false, onReactions = onReactions)
+
 			if (comments > 0) MessageComments(count = comments, mine = false, lineId = line.id, onIntent = onIntent)
 		}
 	}
@@ -184,7 +188,7 @@ private fun Incoming(
 private fun Outgoing(
 	line: ChatLine,
 	selected: Boolean,
-	reaction: String?,
+	reactions: Set<String>,
 	viewers: List<ChatReaction>,
 	corporate: Boolean,
 	comments: Int,
@@ -194,7 +198,13 @@ private fun Outgoing(
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
-			.background(if (selected) palette.accentPrimary.copy(alpha = 0.14f) else Color.Transparent)
+			.background(
+				select(
+					active = selected,
+					on = palette.accentPrimary.copy(alpha = 0.14f),
+					off = Color.Transparent,
+				),
+			)
 			.padding(horizontal = 10.dp)
 			.pressMessage(line.id, onIntent),
 		verticalAlignment = Alignment.Bottom,
@@ -202,7 +212,9 @@ private fun Outgoing(
 		if (selected) {
 			SelectionCheck()
 		}
+
 		Spacer(modifier = Modifier.weight(1f))
+
 		Column(
 			modifier = Modifier
 				.widthIn(max = 272.dp)
@@ -212,24 +224,28 @@ private fun Outgoing(
 			verticalArrangement = Arrangement.spacedBy(6.dp),
 		) {
 			MessageQuote(line, corporate)
+
 			MessageGlyphs(
 				text = if (line.id == "hello") stringResource(R.string.conversation_greeting) else line.text,
 				color = palette.chatOutgoingText,
 			)
+
 			Meta(
 				time = messageClock(line.sentAt),
 				color = palette.chatOutgoingText,
 				checked = true,
 				edited = line.edited && !line.deleted,
 			)
-			if (!line.deleted && (viewers.isNotEmpty() || reaction != null)) {
+
+			if (!line.deleted && (viewers.isNotEmpty() || reactions.isNotEmpty())) {
 				MessageReactions(
 					viewers = viewers,
-					reaction = reaction,
+					reactions = reactions,
 					mine = true,
 					onReactions = onReactions,
 				)
 			}
+
 			if (comments > 0) {
 				MessageComments(
 					count = comments,
@@ -239,6 +255,28 @@ private fun Outgoing(
 				)
 			}
 		}
+	}
+}
+
+@Composable
+private fun MessageAuthor(author: String, corporate: Boolean) {
+	Row(
+		verticalAlignment = Alignment.CenterVertically,
+		horizontalArrangement = Arrangement.spacedBy(4.dp),
+	) {
+		if (corporate) {
+			Image(
+				painter = painterResource(UiR.drawable.ic_building),
+				contentDescription = null,
+				modifier = Modifier.size(14.dp),
+			)
+		}
+
+		Text(
+			text = author,
+			style = MeridianType.bodyRegular.copy(fontWeight = FontWeight.SemiBold),
+			color = palette.textPrimary,
+		)
 	}
 }
 
@@ -261,11 +299,13 @@ private fun Meta(
 				color = color,
 			)
 		}
+
 		Text(
 			text = time,
 			style = MeridianType.chatMeta,
 			color = color,
 		)
+
 		if (checked) {
 			Image(
 				painter = painterResource(R.drawable.ic_done_all),
@@ -280,7 +320,7 @@ private fun Meta(
 @Composable
 private fun AuthorMark(author: String) {
 	Box(
-		modifier = Modifier.size(32.dp).clip(CircleShape).background(nameColor(author)),
+		modifier = Modifier.size(32.dp).clip(CircleShape).background(markColor(author)),
 		contentAlignment = Alignment.Center,
 	) {
 		Text(text = initials(author), style = MeridianType.captionSmall, color = palette.textOnAccent)
@@ -300,9 +340,3 @@ private fun outgoingShape() = RoundedCornerShape(
 	bottomStart = 18.dp,
 	bottomEnd = 4.dp,
 )
-
-@Composable
-private fun nameColor(author: String): Color {
-	val colors = listOf(palette.statusSuccess, Color(color = 0xFF7C3AED), palette.accentPrimary)
-	return colors[author.hashCode().mod(colors.size)]
-}

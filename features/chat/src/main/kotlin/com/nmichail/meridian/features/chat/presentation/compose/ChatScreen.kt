@@ -42,6 +42,8 @@ fun ChatScreen(
 
 	LaunchedEffect(Unit) {
 		onIntent(ChatIntent.LoadInitialData)
+
+		onIntent(ChatIntent.SyncTitles)
 	}
 
 	EventObserver(
@@ -52,9 +54,7 @@ fun ChatScreen(
 	Box(modifier = Modifier.fillMaxSize()) {
 		when (val current = uiState) {
 			ChatState.Initial, ChatState.Loading -> Unit
-
 			ChatState.Error                      -> ServerUnavailable(onIntent = onIntent)
-
 			is ChatState.Content                 -> ChatContent(
 				state = current,
 				onIntent = onIntent,
@@ -80,7 +80,6 @@ private fun EventObserver(
 	LiveDataEffect(event) { value ->
 		val title = when (value) {
 			ChatEvent.NoConnection -> NetworkR.string.error_event_connection_title
-
 			ChatEvent.Error -> NetworkR.string.error_event_title
 		}
 		showErrorSnackBar(

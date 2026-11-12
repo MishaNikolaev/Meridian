@@ -68,7 +68,7 @@ private fun MUiTextPreview(
 	@PreviewParameter(MUiTextPreviewParameterProvider::class)
 	data: MUiTextPreviewData,
 ) {
-	MeridianTheme(darkTheme = data.dark) {
+	MeridianTheme(themeState = data.dark) {
 		MUiTextPreviewLine(data.style)
 	}
 }

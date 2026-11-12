@@ -27,16 +27,8 @@ import androidx.compose.ui.unit.dp
 import com.nmichail.meridian.component.ui.compose.Screen
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
+import com.nmichail.meridian.component.ui.theme.select
 import com.nmichail.meridian.features.chat.R
-
-internal data class ListedBot(
-	val id: String,
-	val title: Int,
-	val preview: Int,
-	val initials: Int,
-	val time: Int?,
-	val unread: Int,
-)
 
 internal val BOTS = listOf(
 	ListedBot("review", R.string.bot_review_title, R.string.bot_review_preview, R.string.bot_review_initials, R.string.bot_review_time, 2),
@@ -73,6 +65,7 @@ private fun BotRow(
 	onOpen: (String, String) -> Unit,
 ) {
 	val title = stringResource(bot.title)
+
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -126,6 +119,7 @@ private fun BotMark(bot: ListedBot) {
 		"webhook" -> palette.statusWarning
 		else -> palette.accentButton
 	}
+
 	Box(
 		modifier = Modifier
 			.size(48.dp)
@@ -144,11 +138,13 @@ private fun BotMark(bot: ListedBot) {
 @Composable
 private fun BotTime(bot: ListedBot) {
 	val time = bot.time ?: return
-	val color = if (bot.unread > 0) {
-		palette.accentPrimary
-	} else {
-		palette.textSecondary
-	}
+
+	val color = select(
+		active = bot.unread > 0,
+		on = palette.accentPrimary,
+		off = palette.textSecondary,
+	)
+
 	Text(
 		text = stringResource(time),
 		style = MeridianType.chatMeta,

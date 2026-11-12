@@ -1,8 +1,6 @@
 package com.nmichail.meridian.features.chat.presentation.compose.component
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,13 +12,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -28,7 +23,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.nmichail.meridian.component.ui.compose.Screen
 import com.nmichail.meridian.component.ui.theme.MeridianType
-import com.nmichail.meridian.component.ui.initials.initials
+import com.nmichail.meridian.component.photopicker.compose.PhotoFace
 import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.features.chat.R
 import com.nmichail.meridian.features.chat.presentation.ChatIntent
@@ -81,6 +76,7 @@ private fun DiscussionList(
 				color = palette.textSecondary,
 			)
 		}
+
 		return
 	}
 
@@ -110,7 +106,6 @@ private fun DiscussionRow(
 		horizontalArrangement = Arrangement.spacedBy(12.dp),
 		verticalAlignment = Alignment.CenterVertically,
 	) {
-
 		DiscussionMark(discussion = discussion)
 
 		Column(
@@ -166,31 +161,21 @@ private fun DiscussionRow(
 
 @Composable
 private fun DiscussionMark(discussion: ChatDiscussion) {
-	val shape = if (discussion.type == ChatType.DIRECT) {
-		CircleShape
-	} else {
-		RoundedCornerShape(14.dp)
+	val personId = discussion.personId.orEmpty()
+
+	if (discussion.type == ChatType.DIRECT && personId.isNotEmpty()) {
+		PhotoFace(name = discussion.title, userId = personId, size = 48.dp)
+
+		return
 	}
 
-	Box(
-		modifier = Modifier
-			.size(48.dp)
-			.clip(shape)
-			.background(palette.accentPrimarySoft)
-			.border(
-				width = 1.dp,
-				color = palette.borderDefault,
-				shape = shape,
-			),
-		contentAlignment = Alignment.Center,
-	) {
-
-		Text(
-			text = initials(discussion.title),
-			style = MeridianType.bodyName,
-			color = palette.accentPrimary,
-		)
-	}
+	PhotoFace(
+		name = discussion.title,
+		chatId = discussion.chatId,
+		size = 48.dp,
+		corner = 14.dp,
+		style = MeridianType.bodyName,
+	)
 }
 
 @Preview

@@ -35,7 +35,6 @@ class SignInViewModel @Inject constructor(
 	private fun handleChangeUsername(value: String) {
 		when (val current = state.value) {
 			is SignInState.Loading -> return
-
 			SignInState.Initial -> setState(
 				SignInState.Content(
 					username = validateUsernameUseCase(value),
@@ -61,7 +60,6 @@ class SignInViewModel @Inject constructor(
 		val password = PasswordValidationItem(data = value, validationState = DefaultValidationState.Unverified)
 		when (val current = state.value) {
 			is SignInState.Loading -> return
-
 			SignInState.Initial -> setState(
 				SignInState.Content(
 					username = UsernameValidationItem(),
@@ -85,7 +83,6 @@ class SignInViewModel @Inject constructor(
 	private fun handleSubmit() {
 		when (val current = state.value) {
 			is SignInState.Loading -> return
-
 			SignInState.Initial -> signIn(
 				usernameData = "",
 				passwordData = "",

@@ -9,6 +9,7 @@ internal fun UserCardDto.toEntity(): ChatPerson =
 		userId = userId,
 		username = username,
 		displayName = displayName,
+		role = "",
 	)
 
 internal fun ChatMemberDto.toEntity(): ChatPerson =
@@ -16,4 +17,8 @@ internal fun ChatMemberDto.toEntity(): ChatPerson =
 		userId = userId,
 		username = username,
 		displayName = displayName,
+		role = role,
 	)
+
+internal fun List<ChatMemberDto>.displayName(userId: String?): String =
+	firstOrNull { member -> member.userId == userId }?.displayName.orEmpty()

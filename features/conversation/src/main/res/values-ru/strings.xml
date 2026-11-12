@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="emoji_category_recent">Недавние</string>
+	<string name="emoji_category_emotions">Смайлики и эмоции</string>
+	<string name="emoji_category_people">Люди</string>
+	<string name="emoji_category_animals_nature">Природа и животные</string>
+	<string name="emoji_category_food_drink">Еда и напитки</string>
+	<string name="emoji_category_travel_places">Путешествия</string>
+	<string name="emoji_category_activity">Действия и события</string>
+	<string name="emoji_category_objects">Объекты</string>
+	<string name="emoji_category_symbols">Символы</string>
+	<string name="emoji_category_flags">Флаги</string>
+</resources>
