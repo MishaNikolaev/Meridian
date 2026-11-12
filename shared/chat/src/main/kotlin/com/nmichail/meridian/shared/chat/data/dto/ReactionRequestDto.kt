@@ -5,4 +5,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ReactionRequestDto(
 	val reaction: String,
+	val active: Boolean,
 )

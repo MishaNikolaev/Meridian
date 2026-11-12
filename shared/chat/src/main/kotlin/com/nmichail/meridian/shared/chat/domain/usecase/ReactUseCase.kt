@@ -5,4 +5,4 @@ import javax.inject.Inject
 
 class ReactUseCase @Inject constructor(
 	private val repository: ChatRepository,
-) : suspend (String, String) -> Unit by repository::react
+) : suspend (String, String, Boolean) -> Unit by repository::react

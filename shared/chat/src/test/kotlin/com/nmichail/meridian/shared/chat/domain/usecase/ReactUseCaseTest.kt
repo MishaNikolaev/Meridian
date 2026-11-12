@@ -10,14 +10,17 @@ import org.mockito.kotlin.verify
 
 @ExtendWith(TestCoroutineExtension::class)
 class ReactUseCaseTest {
-
 	private val repository: ChatRepository = mock()
 	private val useCase = ReactUseCase(repository)
 
 	@Test
 	fun `invoke EXPECT repository react`() = runTest {
-		useCase("message", "LIKE")
+		useCase("message", "LIKE", true)
 
-		verify(repository).react("message", "LIKE")
+		verify(repository).react(
+			messageId = "message",
+			reaction = "LIKE",
+			active = true,
+		)
 	}
 }

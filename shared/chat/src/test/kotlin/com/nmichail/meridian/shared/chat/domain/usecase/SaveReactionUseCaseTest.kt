@@ -6,14 +6,17 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 
 class SaveReactionUseCaseTest {
-
 	private val repository: ChatRepository = mock()
 	private val useCase = SaveReactionUseCase(repository)
 
 	@Test
 	fun `invoke EXPECT repository save`() {
-		useCase("message", "LIKE")
+		useCase("message", setOf("LIKE"))
 
-		verify(repository).saveReaction("message", "LIKE")
+		verify(repository).saveReaction(
+			messageId = "message",
+			reactions = setOf("LIKE"),
+			saveUsed = true,
+		)
 	}
 }

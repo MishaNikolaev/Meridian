@@ -1,5 +1,6 @@
 package com.nmichail.meridian.features.conversation.presentation.compose.component
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,11 +22,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.nmichail.meridian.component.ui.initials.initials
+import com.nmichail.meridian.component.ui.R as UiR
+import com.nmichail.meridian.component.photopicker.compose.PhotoFace
 import com.nmichail.meridian.component.ui.sheet.MUiSheet
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
@@ -85,11 +88,7 @@ internal fun ReactionSheet(
 
 @Composable
 private fun ReactionPerson(viewer: ChatReaction) {
-	val name = if (viewer.mine) {
-		stringResource(R.string.conversation_you)
-	} else {
-		viewer.name
-	}
+	val name = viewer.name
 
 	val reaction = reactionGlyph(viewer.reaction)
 
@@ -100,19 +99,7 @@ private fun ReactionPerson(viewer: ChatReaction) {
 		horizontalArrangement = Arrangement.spacedBy(12.dp),
 		verticalAlignment = Alignment.CenterVertically,
 	) {
-		Box(
-			modifier = Modifier
-				.size(40.dp)
-				.clip(CircleShape)
-				.background(personColor(viewer.name.ifBlank { name })),
-			contentAlignment = Alignment.Center,
-		) {
-			Text(
-				text = initials(viewer.name.ifBlank { name }),
-				style = MeridianType.bodySmall,
-				color = palette.textOnAccent,
-			)
-		}
+		ReactionMark(name = name)
 
 		Column(
 			modifier = Modifier.weight(1f),
@@ -149,17 +136,40 @@ private fun ReactionPerson(viewer: ChatReaction) {
 }
 
 @Composable
+private fun ReactionMark(name: String) {
+	if (name.isBlank()) {
+		Box(
+			modifier = Modifier
+				.size(40.dp)
+				.clip(CircleShape)
+				.background(palette.field),
+			contentAlignment = Alignment.Center,
+		) {
+			Image(
+				painter = painterResource(UiR.drawable.ic_tab_profile),
+				contentDescription = null,
+				colorFilter = ColorFilter.tint(palette.textSecondary),
+				modifier = Modifier.size(24.dp),
+			)
+		}
+
+		return
+	}
+
+	PhotoFace(
+		name = name,
+		size = 40.dp,
+		style = MeridianType.bodySmall,
+	)
+}
+
+@Composable
 private fun reactionWhen(iso: String): String {
 	val clock = messageClock(iso)
+
 	if (reactionToday(iso)) {
 		return stringResource(R.string.conversation_reaction_today, clock)
 	}
 
 	return stringResource(R.string.conversation_reaction_when, messageDay(iso).orEmpty(), clock)
-}
-
-@Composable
-private fun personColor(name: String): Color {
-	val colors = listOf(palette.statusSuccess, Color(color = 0xFF7C3AED), palette.accentPrimary)
-	return colors[name.hashCode().mod(colors.size)]
 }

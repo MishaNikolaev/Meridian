@@ -1,5 +1,6 @@
 package com.nmichail.meridian.features.conversation.presentation.compose
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,14 +22,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.nmichail.meridian.component.ui.R as UiR
 import com.nmichail.meridian.component.ui.initials.initials
+import com.nmichail.meridian.component.ui.initials.markColor
 import com.nmichail.meridian.component.ui.sheet.MUiSheet
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
+import com.nmichail.meridian.component.ui.theme.select
 import com.nmichail.meridian.features.conversation.R
 import com.nmichail.meridian.features.conversation.presentation.compose.component.messageClock
 import com.nmichail.meridian.features.conversation.presentation.compose.component.messageDay
@@ -66,12 +71,18 @@ internal fun ReactionSheet(
 						.background(palette.borderStrong),
 				)
 			}
+
 			Text(
 				text = stringResource(R.string.conversation_reactions, viewers.size),
 				style = MeridianType.titleCard,
 				color = palette.textPrimary,
-				modifier = Modifier.padding(start = 16.dp, top = 10.dp, bottom = 10.dp),
+				modifier = Modifier.padding(
+					start = 16.dp,
+					top = 10.dp,
+					bottom = 10.dp
+				),
 			)
+
 			Column(
 				modifier = Modifier
 					.fillMaxWidth()
@@ -92,7 +103,9 @@ private fun ReactionPerson(viewer: ChatReaction) {
 	} else {
 		viewer.name
 	}
+
 	val reaction = reactionGlyph(viewer.reaction)
+
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -100,19 +113,8 @@ private fun ReactionPerson(viewer: ChatReaction) {
 		horizontalArrangement = Arrangement.spacedBy(12.dp),
 		verticalAlignment = Alignment.CenterVertically,
 	) {
-		Box(
-			modifier = Modifier
-				.size(40.dp)
-				.clip(CircleShape)
-				.background(personColor(viewer.name.ifBlank { name })),
-			contentAlignment = Alignment.Center,
-		) {
-			Text(
-				text = initials(viewer.name.ifBlank { name }),
-				style = MeridianType.bodySmall,
-				color = palette.textOnAccent,
-			)
-		}
+		ReactionMark(name = viewer.name)
+
 		Column(
 			modifier = Modifier.weight(1f),
 			verticalArrangement = Arrangement.spacedBy(1.dp),
@@ -124,7 +126,9 @@ private fun ReactionPerson(viewer: ChatReaction) {
 				maxLines = 1,
 				overflow = TextOverflow.Ellipsis,
 			)
+
 			val sentAt = viewer.sentAt
+
 			if (!sentAt.isNullOrBlank()) {
 				Text(
 					text = reactionWhen(sentAt),
@@ -135,6 +139,7 @@ private fun ReactionPerson(viewer: ChatReaction) {
 				)
 			}
 		}
+
 		if (reaction.isNotBlank()) {
 			Text(
 				text = reaction,
@@ -145,16 +150,44 @@ private fun ReactionPerson(viewer: ChatReaction) {
 }
 
 @Composable
-private fun reactionWhen(iso: String): String {
-	val clock = messageClock(iso)
-	if (reactionToday(iso)) {
-		return stringResource(R.string.conversation_reaction_today, clock)
+private fun ReactionMark(name: String) {
+	Box(
+		modifier = Modifier
+			.size(40.dp)
+			.clip(CircleShape)
+			.background(
+				select(
+					active = name.isBlank(),
+					on = palette.field,
+					off = markColor(name),
+				),
+			),
+		contentAlignment = Alignment.Center,
+	) {
+		if (name.isBlank()) {
+			Image(
+				painter = painterResource(UiR.drawable.ic_tab_profile),
+				contentDescription = null,
+				colorFilter = ColorFilter.tint(palette.textSecondary),
+				modifier = Modifier.size(24.dp),
+			)
+		} else {
+			Text(
+				text = initials(name),
+				style = MeridianType.bodySmall,
+				color = palette.textOnAccent,
+			)
+		}
 	}
-	return stringResource(R.string.conversation_reaction_when, messageDay(iso).orEmpty(), clock)
 }
 
 @Composable
-private fun personColor(name: String): Color {
-	val colors = listOf(palette.statusSuccess, Color(color = 0xFF7C3AED), palette.accentPrimary)
-	return colors[name.hashCode().mod(colors.size)]
+private fun reactionWhen(iso: String): String {
+	val clock = messageClock(iso)
+
+	if (reactionToday(iso)) {
+		return stringResource(R.string.conversation_reaction_today, clock)
+	}
+
+	return stringResource(R.string.conversation_reaction_when, messageDay(iso).orEmpty(), clock)
 }
