@@ -7,4 +7,5 @@ data class ChatMemberDto(
 	val userId: String,
 	val username: String,
 	val displayName: String,
+	val role: String,
 )

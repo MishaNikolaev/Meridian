@@ -6,6 +6,7 @@ import com.nmichail.meridian.core.network.error.GatewayCode
 import com.nmichail.meridian.core.network.error.GatewayException
 import com.nmichail.meridian.core.network.session.SessionRepository
 import com.nmichail.meridian.shared.chat.data.api.ChatApi
+import com.nmichail.meridian.shared.chat.data.datasource.ChatCacheDataSource
 import com.nmichail.meridian.shared.chat.data.datasource.DeletionDataSource
 import com.nmichail.meridian.shared.chat.data.datasource.MemberDataSource
 import com.nmichail.meridian.shared.chat.data.datasource.ReactionDataSource
@@ -25,6 +26,7 @@ import com.nmichail.meridian.shared.chat.domain.entity.ChatPerson
 import com.nmichail.meridian.shared.chat.domain.entity.ChatThread
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType
 import com.nmichail.meridian.shared.chat.domain.entity.CreatedChat
+import com.nmichail.meridian.shared.chat.domain.entity.ReactionMemory
 import com.nmichail.meridian.shared.chat.domain.repository.ChatRepository
 import javax.inject.Inject
 
@@ -34,13 +36,18 @@ class ChatRepositoryImpl @Inject constructor(
 	private val memberDataSource: MemberDataSource,
 	private val reactionDataSource: ReactionDataSource,
 	private val deletionDataSource: DeletionDataSource,
+	private val cache: ChatCacheDataSource,
 ) : ChatRepository {
-
-	override suspend fun loadChats(): List<Chat> =
-		api.getChats().toChats(
+	override suspend fun loadChats(): List<Chat> {
+		val chats = api.getChats().toChats(
 			api = api,
 			self = sessionRepository.getUserId(),
 		)
+
+		cache.save(chats)
+
+		return chats
+	}
 
 	override suspend fun create(type: ChatType, title: String, usernames: List<String>): CreatedChat {
 		val memberIds = usernames.mapNotNull { name ->
@@ -64,6 +71,7 @@ class ChatRepositoryImpl @Inject constructor(
 
 	private suspend fun member(username: String): UserCardDto {
 		val login = username.trim()
+
 		if (login.isEmpty()) {
 			throw GatewayException(code = GatewayCode.USER_NOT_FOUND)
 		}
@@ -81,23 +89,34 @@ class ChatRepositoryImpl @Inject constructor(
 			deletions = deletionDataSource,
 		)
 
-	override fun readReactions(): Map<String, String> =
-		reactionDataSource.getReactions()
+	override fun readReactions(): ReactionMemory = ReactionMemory(
+		chosen = reactionDataSource.getReactions(),
+		used = reactionDataSource.used(),
+	)
 
-	override fun saveReaction(messageId: String, reaction: String) {
-		reactionDataSource.saveReaction(messageId, reaction)
+	override fun saveReaction(messageId: String, reactions: Set<String>, saveUsed: Boolean) {
+		val previous = reactionDataSource.getReactions()[messageId].orEmpty()
+
+		reactionDataSource.saveReactions(messageId, reactions)
+
+		if (saveUsed) {
+			(reactions - previous).forEach(reactionDataSource::saveUsed)
+		}
 	}
 
-	override suspend fun react(messageId: String, reaction: String) {
-		reactionDataSource.saveReaction(messageId, reaction)
+	override suspend fun react(messageId: String, reaction: String, active: Boolean) {
 		api.setReaction(
 			messageId,
-			ReactionRequestDto(reaction = reaction),
+			ReactionRequestDto(
+				reaction = reaction,
+				active = active,
+			),
 		).execute()
 	}
 
 	override suspend fun delete(messageId: String) {
 		api.deleteMessages(messageId).execute()
+
 		deletionDataSource.saveDeleted(messageId)
 	}
 

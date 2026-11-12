@@ -18,7 +18,6 @@ fun getChatScreen(): FullScreen = FullScreen(
 )
 
 class ChatFragment : FullScreenFragment() {
-
 	private val viewModel: ChatViewModel by viewModels {
 		ChatComponentHolder.get().viewModelFactory()
 	}

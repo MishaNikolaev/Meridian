@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import com.nmichail.meridian.core.network.error.GatewayException
 import com.nmichail.meridian.core.network.session.SessionRepository
 import com.nmichail.meridian.shared.chat.data.api.ChatApi
+import com.nmichail.meridian.shared.chat.data.datasource.ChatCacheDataSource
 import com.nmichail.meridian.shared.chat.data.datasource.DeletionDataSourceImpl
 import com.nmichail.meridian.shared.chat.data.datasource.MemberDataSourceImpl
 import com.nmichail.meridian.shared.chat.data.datasource.ReactionDataSourceImpl
@@ -41,9 +42,9 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
 class ChatRepositoryImplTest {
-
 	private val api: ChatApi = mock()
 	private val sessionRepository: SessionRepository = mock()
+	private val cache: ChatCacheDataSource = mock()
 	private val context: Context = mock()
 	private val preferences: SharedPreferences = mock()
 	private val editor: SharedPreferences.Editor = mock()
@@ -60,6 +61,7 @@ class ChatRepositoryImplTest {
 			MemberDataSourceImpl(api),
 			ReactionDataSourceImpl(context),
 			DeletionDataSourceImpl(context),
+			cache,
 		)
 	}
 
@@ -73,9 +75,11 @@ class ChatRepositoryImplTest {
 					type = ChatTypeDto.GROUP,
 					title = "Обсуждение",
 					personId = null,
+					personName = null,
 					unreadCount = 2,
 					lastMessage = null,
 					corporate = true,
+					description = null,
 				),
 			),
 		)
@@ -164,6 +168,18 @@ class ChatRepositoryImplTest {
 		val actual = repository.loadMessages("1")
 
 		assertEquals("Сообщение удалено", actual.lines.first().text)
+	}
+
+	@Test
+	fun `load deleted message EXPECT deleted`() = runTest {
+		whenever(sessionRepository.getUserId()) doReturn "self"
+		whenever(api.getChat("1")) doReturn details(title = "Анна")
+		whenever(api.getMessages("1")) doReturn MessagePageDto(
+			items = listOf(message(deleted = true)),
+		)
+
+		val actual = repository.loadMessages("1")
+
 		assertEquals(true, actual.lines.first().deleted)
 	}
 
@@ -182,11 +198,13 @@ class ChatRepositoryImplTest {
 					text = "Сообщение удалено",
 					sentAt = "2026-01-01T00:00:00Z",
 					author = null,
+					authorId = "self",
 					replyAuthor = null,
 					replyText = null,
 					threadRoot = null,
 					deleted = true,
 					edited = false,
+					service = false,
 				),
 			),
 			members = 1,
@@ -194,6 +212,7 @@ class ChatRepositoryImplTest {
 			reactions = emptyMap(),
 			reactionViewers = emptyMap(),
 			people = emptyList(),
+			selfName = "Сергей",
 		)
 
 		val actual = repository.loadMessages("1")
@@ -210,7 +229,7 @@ class ChatRepositoryImplTest {
 
 		val actual = repository.loadMessages("1")
 
-		assertEquals(mapOf("message" to "LIKE"), actual.reactions)
+		assertEquals(mapOf("message" to setOf("LIKE")), actual.reactions)
 	}
 
 	@Test
@@ -238,27 +257,41 @@ class ChatRepositoryImplTest {
 
 		val actual = repository.loadMessages("1")
 
-		assertEquals(mapOf("message" to "LIKE"), actual.reactions)
+		assertEquals(mapOf("message" to setOf("LIKE")), actual.reactions)
 	}
 
 	@Test
-	fun `react EXPECT saved reaction`() = runTest {
+	fun `save reaction EXPECT stored`() = runTest {
 		whenever(preferences.getString("message_reactions", null)) doReturn null
-		whenever(api.setReaction("message", ReactionRequestDto(reaction = "LIKE"))) doReturn mock()
 
-		repository.react("message", "LIKE")
+		repository.saveReaction(
+			messageId = "message",
+			reactions = setOf("LIKE"),
+			saveUsed = false,
+		)
 
-		verify(editor).putString("message_reactions", """{"message":"LIKE"}""")
+		verify(editor).putString("message_reactions", """{"message":["LIKE"]}""")
 	}
 
 	@Test
 	fun `react EXPECT reaction request`() = runTest {
-		whenever(preferences.getString("message_reactions", null)) doReturn null
-		whenever(api.setReaction("message", ReactionRequestDto(reaction = "LIKE"))) doReturn mock()
+		whenever(
+			api.setReaction(
+				"message",
+				ReactionRequestDto(reaction = "LIKE", active = true),
+			),
+		) doReturn mock()
 
-		repository.react("message", "LIKE")
+		repository.react(
+			messageId = "message",
+			reaction = "LIKE",
+			active = true,
+		)
 
-		verify(api).setReaction("message", ReactionRequestDto(reaction = "LIKE"))
+		verify(api).setReaction(
+			"message",
+			ReactionRequestDto(reaction = "LIKE", active = true),
+		)
 	}
 
 	@Test
@@ -272,11 +305,23 @@ class ChatRepositoryImplTest {
 		val actual = repository.loadMessages("1")
 
 		assertEquals("Сообщение удалено", actual.lines.first().text)
+	}
+
+	@Test
+	fun `load cached deletion EXPECT deleted`() = runTest {
+		whenever(sessionRepository.getUserId()) doReturn "self"
+		whenever(api.getChat("1")) doReturn details(title = "Анна")
+		whenever(api.getMessages("1")) doReturn MessagePageDto(items = listOf(message(deleted = false)))
+		whenever(preferences.getStringSet("deleted_messages", null)) doThrow ClassCastException()
+		whenever(preferences.getString("deleted_messages", null)) doReturn "message"
+
+		val actual = repository.loadMessages("1")
+
 		assertEquals(true, actual.lines.first().deleted)
 	}
 
 	@Test
-	fun `delete EXPECT remembered after request`() = runTest {
+	fun `delete EXPECT request`() = runTest {
 		val statement: HttpStatement = mock()
 		whenever(api.deleteMessages("message")) doReturn statement
 		whenever(preferences.getStringSet("deleted_messages", null)) doReturn null
@@ -285,6 +330,17 @@ class ChatRepositoryImplTest {
 		repository.delete("message")
 
 		verify(api).deleteMessages("message")
+	}
+
+	@Test
+	fun `delete EXPECT remembered`() = runTest {
+		val statement: HttpStatement = mock()
+		whenever(api.deleteMessages("message")) doReturn statement
+		whenever(preferences.getStringSet("deleted_messages", null)) doReturn null
+		whenever(preferences.getString("deleted_messages", null)) doReturn null
+
+		repository.delete("message")
+
 		verify(editor).putStringSet("deleted_messages", setOf("message"))
 	}
 
@@ -304,12 +360,14 @@ class ChatRepositoryImplTest {
 			type = ChatTypeDto.DIRECT,
 			title = title,
 			personId = null,
+			personName = null,
 			unreadCount = 0,
 			lastMessage = null,
 			corporate = true,
+			description = null,
 		),
 		members = listOf(
-			ChatMemberDto(userId = "self", username = "chief", displayName = "Сергей"),
+			ChatMemberDto(userId = "self", username = "chief", displayName = "Сергей", role = ""),
 		),
 	)
 
@@ -321,5 +379,7 @@ class ChatRepositoryImplTest {
 		deleted = deleted,
 		deviceMessages = emptyList(),
 		reactions = emptyList(),
+		threadRoot = null,
+		notice = null,
 	)
 }

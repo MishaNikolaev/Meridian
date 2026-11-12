@@ -2,7 +2,6 @@ package com.nmichail.meridian.features.chat.presentation.compose.component
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,7 +16,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -27,9 +25,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.nmichail.meridian.component.photopicker.compose.PhotoFace
 import com.nmichail.meridian.component.ui.compose.Screen
 import com.nmichail.meridian.component.ui.theme.MeridianType
-import com.nmichail.meridian.component.ui.initials.initials
 import com.nmichail.meridian.component.ui.R as UiR
 import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.features.chat.R
@@ -45,6 +44,7 @@ fun ChatList(
 ) {
 	if (chats.isEmpty()) {
 		ChatEmpty(modifier = modifier)
+
 		return
 	}
 
@@ -104,24 +104,21 @@ private fun ChatRow(
 
 @Composable
 private fun ChatMark(chat: Chat) {
-	val shape = when (chat.type) {
-		ChatType.DIRECT -> CircleShape
-		ChatType.GROUP, ChatType.CHANNEL -> RoundedCornerShape(14.dp)
+	val personId = chat.personId.orEmpty()
+
+	if (chat.type == ChatType.DIRECT && personId.isNotEmpty()) {
+		PhotoFace(name = chat.title, userId = personId, size = 48.dp)
+
+		return
 	}
-	Box(
-		modifier = Modifier
-			.size(size = 48.dp)
-			.clip(shape)
-			.background(palette.accentPrimarySoft)
-			.border(width = 1.dp, color = palette.borderDefault, shape = shape),
-		contentAlignment = Alignment.Center,
-	) {
-		Text(
-			text = initials(chat.title),
-			style = MeridianType.bodyName,
-			color = palette.accentPrimary,
-		)
-	}
+
+	PhotoFace(
+		name = chat.title,
+		chatId = chat.id,
+		size = 48.dp,
+		corner = 14.dp,
+		style = MeridianType.bodyName,
+	)
 }
 
 @Composable
@@ -132,24 +129,47 @@ private fun ChatPreview(chat: Chat) {
 	) {
 		Text(
 			text = chat.preview,
-			style = MeridianType.captionDefault,
+			style = MeridianType.captionDefault.copy(
+				fontSize = 15.sp,
+				lineHeight = 20.sp,
+			),
 			color = palette.textSecondary,
 			maxLines = 1,
 			overflow = TextOverflow.Ellipsis,
 			modifier = Modifier.weight(1f),
 		)
 
-		if (chat.mentioned) {
-			Text(
-				text = "@",
-				style = MeridianType.bodyName,
-				color = palette.accentPrimary,
-			)
-		}
+		if (chat.mentioned || chat.unread > 0) {
+			Row(
+				horizontalArrangement = Arrangement.spacedBy(4.dp),
+				verticalAlignment = Alignment.CenterVertically,
+			) {
+				if (chat.mentioned) {
+					MentionBadge()
+				}
 
-		if (chat.unread > 0) {
-			UnreadBadge(count = chat.unread)
+				if (chat.unread > 0) {
+					UnreadBadge(count = chat.unread)
+				}
+			}
 		}
+	}
+}
+
+@Composable
+private fun MentionBadge() {
+	Box(
+		modifier = Modifier
+			.size(18.dp)
+			.clip(CircleShape)
+			.background(palette.accentPrimary),
+		contentAlignment = Alignment.Center,
+	) {
+		Text(
+			text = "@",
+			style = MeridianType.labelBadge,
+			color = palette.textOnAccent,
+		)
 	}
 }
 
@@ -178,6 +198,7 @@ private fun ChatName(
 	modifier: Modifier = Modifier,
 ) {
 	val corporatePerson = chat.corporate && chat.type == ChatType.DIRECT
+
 	Row(
 		modifier = modifier,
 		verticalAlignment = Alignment.CenterVertically,

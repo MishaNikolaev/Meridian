@@ -4,30 +4,31 @@ import com.nmichail.meridian.shared.chat.data.api.ChatApi
 import com.nmichail.meridian.shared.chat.data.datasource.DeletionDataSource
 import com.nmichail.meridian.shared.chat.data.datasource.ReactionDataSource
 import com.nmichail.meridian.shared.chat.domain.entity.ChatThread
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 
 internal suspend fun ChatApi.toThread(
 	chatId: String,
 	self: String?,
 	reactions: ReactionDataSource,
 	deletions: DeletionDataSource,
-): ChatThread {
-	
-	val details = getChat(chatId)
-	val page = getMessages(chatId)
+): ChatThread = coroutineScope {
+	val details = async { getChat(chatId) }
+
+	val page = async { getMessages(chatId) }
+
 	val saved = reactions.getReactions()
 
-	page.items.filter { item -> item.deleted }.forEach { item ->
-		deletions.saveDeleted(item.messageId)
-	}
+	val loaded = page.await()
 
-	page.ownReactions(self)
-		.filterKeys { messageId -> messageId !in saved }
-		.forEach { (messageId, token) ->
-			reactions.saveReaction(messageId, token)
-		}
+	deletions.saveDeleted(loaded.items.filter { item -> item.deleted }.map { item -> item.messageId })
 
-	return page.thread(
-		details = details,
+	reactions.saveReactions(
+		loaded.ownReactions(self).filterKeys { messageId -> messageId !in saved },
+	)
+
+	loaded.thread(
+		details = details.await(),
 		self = self,
 		dropped = deletions.getDeleted(),
 		saved = reactions.getReactions(),

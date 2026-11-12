@@ -10,16 +10,17 @@ import com.nmichail.meridian.shared.chat.domain.entity.Chat
 import com.nmichail.meridian.shared.chat.domain.entity.ChatDiscussion
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType
 import com.nmichail.meridian.shared.chat.domain.usecase.LoadChatsUseCase
+import com.nmichail.meridian.shared.chat.domain.usecase.ReadCachedChatsUseCase
 import javax.inject.Inject
 import kotlinx.coroutines.Job
 
 class ChatViewModel @Inject constructor(
 	private val loadChatsUseCase: LoadChatsUseCase,
-	private val realtime: ChatRealtime,
+	private val readCachedChatsUseCase: ReadCachedChatsUseCase,
+	private val chatRealtime: ChatRealtime,
 	private val errorDelegate: ErrorDelegate,
 	private val router: ChatRouter,
 ) : BaseViewModel<ChatState, ChatIntent, ChatEvent>() {
-
 	private var updatesJob: Job? = null
 
 	override fun initState(): ChatState = ChatState.Initial
@@ -45,6 +46,7 @@ class ChatViewModel @Inject constructor(
 			is ChatIntent.Retry           -> handleRetry()
 			is ChatIntent.ChangeServer    -> handleNavigateToWorkspace()
 			is ChatIntent.NavigateBack    -> handleNavigateBack()
+			is ChatIntent.SyncTitles      -> handleSyncTitles()
 		}
 	}
 
@@ -52,7 +54,9 @@ class ChatViewModel @Inject constructor(
 		if (state.value != ChatState.Initial) {
 			return
 		}
+
 		handleRefresh()
+
 		handleListen()
 	}
 
@@ -66,6 +70,7 @@ class ChatViewModel @Inject constructor(
 
 	private fun handleChangeSection(section: ChatSection) {
 		val current = state.value as? ChatState.Content ?: return
+
 		if (current.section == section) {
 			return
 		}
@@ -112,13 +117,13 @@ class ChatViewModel @Inject constructor(
 
 	private fun handleNavigateToGroup() {
 		val current = state.value as? ChatState.Content ?: return
+
 		setState(current.copy(createOpen = false))
 
 		router.navigateToGroup()
 	}
 
 	private fun handleOpenBot(id: String, title: String) {
-		// TODO Сделаю, когда ботов буду делать
 		handleNavigateToConversation(
 			chatId = "bot:$id",
 			title = title,
@@ -145,12 +150,28 @@ class ChatViewModel @Inject constructor(
 		router.navigateBack()
 	}
 
+	private fun handleSyncTitles() {
+		if (state.value !is ChatState.Content) {
+			return
+		}
+
+		launchTry {
+			val cached = readCachedChatsUseCase() ?: return@launchTry
+
+			handlePublish(
+				chats = cached,
+				discussions = cached.discussions(),
+			)
+		} catch ::handleRefreshFailure
+	}
+
 	private fun handleNavigateToWorkspace() {
 		router.navigateToWorkspace()
 	}
 
 	private fun handleRetry() {
 		handleRefresh()
+
 		handleListen()
 	}
 
@@ -158,10 +179,11 @@ class ChatViewModel @Inject constructor(
 		if (updatesJob?.isActive == true) {
 			return
 		}
-		realtime.ensureStarted()
+
+		chatRealtime.ensureStarted()
 
 		updatesJob = launchTry {
-			realtime.chatIds.collect { _ ->
+			chatRealtime.chatIds.collect { _ ->
 				handleReload()
 			}
 		} catch ::handleRefreshFailure
@@ -172,18 +194,47 @@ class ChatViewModel @Inject constructor(
 			launchTry {
 				handleReload()
 			} catch ::handleRefreshFailure
+
 			return
 		}
-		if (state.value is ChatState.Initial) {
-			setState(ChatState.Loading)
-		}
+
 		launchTry {
+			if (state.value is ChatState.Initial) {
+				openCachedOrLoading()
+			}
+
 			handleReload()
-		} catch ::handleLoadFailure
+		} catch ::handleOpenFailure
+	}
+
+	private suspend fun openCachedOrLoading() {
+		val cached = readCachedChatsUseCase()
+
+		if (cached == null) {
+			setState(ChatState.Loading)
+
+			return
+		}
+
+		handlePublish(
+			chats = cached,
+			discussions = cached.discussions(),
+		)
+	}
+
+	private fun handleOpenFailure(error: Exception) {
+		if (state.value is ChatState.Content) {
+			handleRefreshFailure(error)
+
+			return
+		}
+
+		handleLoadFailure(error)
 	}
 
 	private suspend fun handleReload() {
 		val chats = loadChatsUseCase()
+
 		handlePublish(
 			chats = chats,
 			discussions = chats.discussions(),
@@ -192,8 +243,11 @@ class ChatViewModel @Inject constructor(
 
 	private fun handlePublish(chats: List<Chat>, discussions: List<ChatDiscussion>) {
 		val corporateChats = chats.filter { chat -> chat.onCorporateTab() }
+
 		val externalTabChats = chats.filter { chat -> !chat.onCorporateTab() }
+
 		val corporateDiscussions = discussions.filter { discussion -> discussion.onCorporateTab() }
+
 		val externalTabDiscussions = discussions.filter { discussion -> !discussion.onCorporateTab() }
 
 		when (val current = state.value) {
@@ -226,6 +280,7 @@ class ChatViewModel @Inject constructor(
 			retryIntent = ChatIntent.Retry,
 			backIntent = null,
 		)
+
 		if (result is BlockingErrorProcessResult.NotHandled<*>) {
 			setState(ChatState.Error)
 		}
@@ -233,7 +288,9 @@ class ChatViewModel @Inject constructor(
 
 	private fun handleRefreshFailure(error: Exception) {
 		val result = errorDelegate.processNonBlockingError(error)
+
 		val recommended = (result as? NonBlockingErrorProcessResult.NotHandled)?.recommended ?: return
+
 		setEvent(recommended.toEvent())
 	}
 
