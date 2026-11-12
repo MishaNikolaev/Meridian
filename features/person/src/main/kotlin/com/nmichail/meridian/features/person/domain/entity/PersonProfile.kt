@@ -11,4 +11,5 @@ data class PersonProfile(
 	val managerId: String,
 	val email: String,
 	val phone: String,
+	val photo: String,
 )

@@ -5,4 +5,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ProfileDto(
 	val displayName: String,
+	val statusText: String?,
+	val position: String?,
+	val department: String?,
+	val photoId: String?,
 )

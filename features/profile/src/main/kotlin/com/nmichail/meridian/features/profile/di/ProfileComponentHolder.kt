@@ -5,8 +5,7 @@ import com.nmichail.meridian.core.network.di.CoreApi
 import com.nmichail.meridian.features.profile.presentation.ProfileRouter
 
 object ProfileComponentHolder : ComponentHolder<ProfileFeatureApi> {
-
-	private var component: ProfileFeatureApi? = null
+	private var component: ProfileComponent? = null
 
 	fun init(core: CoreApi, router: ProfileRouter) {
 		if (component == null) {
