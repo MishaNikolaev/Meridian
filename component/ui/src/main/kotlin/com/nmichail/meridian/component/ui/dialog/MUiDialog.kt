@@ -59,10 +59,10 @@ fun MUiDialogCard(
 	modifier: Modifier = Modifier,
 ) {
 	val shape = RoundedCornerShape(28.dp)
-	val confirmColor = if (model.type == MUiDialogType.Destructive) {
-		palette.statusError
-	} else {
-		palette.accentPrimary
+
+	val confirmColor = when (model.type) {
+		MUiDialogType.Destructive -> palette.statusError
+		else -> palette.accentPrimary
 	}
 
 	Column(
@@ -81,14 +81,17 @@ fun MUiDialogCard(
 		verticalArrangement = Arrangement.spacedBy(16.dp),
 	) {
 		MUiDialogIcon(model)
+
 		Text(
 			text = model.title,
 			style = MeridianType.titleSection,
 			color = palette.textPrimary,
 		)
+
 		if (model.type != MUiDialogType.List) {
 			MUiDialogMessage(model.message)
 		}
+
 		if (model.type == MUiDialogType.List) {
 			Column(modifier = Modifier.fillMaxWidth()) {
 				model.options.forEachIndexed { index, option ->
@@ -100,9 +103,11 @@ fun MUiDialogCard(
 				}
 			}
 		}
+
 		if (model.type == MUiDialogType.Input) {
 			MUiDialogField(label = model.fieldLabel, value = model.fieldValue)
 		}
+
 		MUiDialogActions(
 			cancel = model.cancel,
 			confirm = model.confirm,
@@ -146,10 +151,10 @@ private fun MUiDialogIcon(model: MUiDialogModel) {
 		MUiDialogType.Icon        -> R.drawable.ic_dialog_info
 		else                      -> return
 	}
-	val tint = if (model.type == MUiDialogType.Destructive) {
-		palette.statusError
-	} else {
-		palette.accentPrimary
+
+	val tint = when (model.type) {
+		MUiDialogType.Destructive -> palette.statusError
+		else -> palette.accentPrimary
 	}
 
 	Image(

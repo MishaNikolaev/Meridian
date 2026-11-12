@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.nmichail.meridian.component.ui.control.model.MUiRadioModel
 import com.nmichail.meridian.component.ui.control.model.MUiSwitchModel
 import com.nmichail.meridian.component.ui.theme.palette
+import com.nmichail.meridian.component.ui.theme.select
 
 @Composable
 fun MUiSwitch(
@@ -23,7 +24,11 @@ fun MUiSwitch(
 	onClick: () -> Unit,
 	modifier: Modifier = Modifier,
 ) {
-	val track = if (model.checked) palette.accentPrimary else palette.borderStrong
+	val track = select(
+		active = model.checked,
+		on = palette.accentPrimary,
+		off = palette.borderStrong,
+	)
 
 	Box(
 		modifier = modifier
@@ -32,7 +37,11 @@ fun MUiSwitch(
 			.background(track)
 			.clickable(onClick = onClick)
 			.padding(3.dp),
-		contentAlignment = if (model.checked) Alignment.CenterEnd else Alignment.CenterStart,
+		contentAlignment = select(
+			active = model.checked,
+			on = Alignment.CenterEnd,
+			off = Alignment.CenterStart,
+		),
 	) {
 		Box(
 			modifier = Modifier
@@ -55,7 +64,11 @@ fun MUiRadio(
 			.clip(CircleShape)
 			.border(
 				width = 2.dp,
-				color = if (model.selected) palette.accentPrimary else palette.borderStrong,
+				color = select(
+					active = model.selected,
+					on = palette.accentPrimary,
+					off = palette.borderStrong,
+				),
 				shape = CircleShape,
 			)
 			.clickable(onClick = onClick),

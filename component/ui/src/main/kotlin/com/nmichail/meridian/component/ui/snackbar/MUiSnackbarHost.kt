@@ -3,23 +3,12 @@ package com.nmichail.meridian.component.ui.snackbar
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarVisuals
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-
-data class MUiSnackbarVisuals(
-	override val message: String,
-	val tone: MUiSnackbarTone,
-	override val actionLabel: String? = null,
-	override val withDismissAction: Boolean = false,
-	override val duration: SnackbarDuration = if (actionLabel == null) {
-		SnackbarDuration.Short
-	} else {
-		SnackbarDuration.Long
-	},
-) : SnackbarVisuals
 
 @Composable
 fun MUiSnackbarHost(
@@ -46,6 +35,41 @@ fun MUiSnackbarHost(
 	)
 }
 
+fun CoroutineScope.showSuccessSnackBar(
+	snackBarHostState: SnackbarHostState,
+	message: String,
+) {
+	snackBarHostState.currentSnackbarData?.dismiss()
+
+	launch {
+		snackBarHostState.showSnackbar(
+			MUiSnackbarVisuals(
+				message = message,
+				tone = MUiSnackbarTone.Success,
+				duration = SnackbarDuration.Short,
+			),
+		)
+	}
+}
+
+@Composable
+fun SuccessSnackBarEffect(
+	show: Boolean,
+	message: String,
+	snackBarHostState: SnackbarHostState,
+	onShown: () -> Unit,
+) {
+	val scope = rememberCoroutineScope()
+
+	LaunchedEffect(show) {
+		if (show) {
+			scope.showSuccessSnackBar(snackBarHostState = snackBarHostState, message = message)
+
+			onShown()
+		}
+	}
+}
+
 fun CoroutineScope.showErrorSnackBar(
 	snackBarHostState: SnackbarHostState,
 	message: String,
@@ -56,12 +80,15 @@ fun CoroutineScope.showErrorSnackBar(
 	} else {
 		"$title\n$message"
 	}
+
 	snackBarHostState.currentSnackbarData?.dismiss()
+
 	launch {
 		snackBarHostState.showSnackbar(
 			MUiSnackbarVisuals(
 				message = text,
 				tone = MUiSnackbarTone.Error,
+				duration = SnackbarDuration.Short,
 			),
 		)
 	}

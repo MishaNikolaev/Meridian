@@ -38,6 +38,7 @@ import com.nmichail.meridian.component.ui.bar.model.MUiBottomDestination
 import com.nmichail.meridian.component.ui.bar.model.MUiBottomTab
 import com.nmichail.meridian.component.ui.text.MUiLabelBadgeText
 import com.nmichail.meridian.component.ui.theme.palette
+import com.nmichail.meridian.component.ui.theme.select
 
 @Composable
 fun MUiBottomBar(
@@ -88,6 +89,7 @@ private fun BottomTab(
 	modifier: Modifier = Modifier,
 ) {
 	val interactionSource = remember { MutableInteractionSource() }
+
 	val pressed by interactionSource.collectIsPressedAsState()
 
 	Column(
@@ -108,7 +110,11 @@ private fun BottomTab(
 
 		MUiLabelBadgeText(
 			text = stringResource(tab.label),
-			color = if (selected) palette.textPrimary else palette.textSecondary,
+			color = select(
+				active = selected,
+				on = palette.textPrimary,
+				off = palette.textSecondary,
+			),
 			textAlign = TextAlign.Center,
 		)
 	}
@@ -141,11 +147,14 @@ private fun ContentDrawScope.drawPressedIcon() {
 	drawIntoCanvas { canvas ->
 		canvas.saveLayer(Rect(0f, 0f, size.width, size.height), Paint())
 	}
+
 	drawContent()
+
 	drawRect(
 		color = Color.Black.copy(alpha = 0.28f),
 		blendMode = BlendMode.SrcAtop,
 	)
+
 	drawIntoCanvas { canvas -> canvas.restore() }
 }
 

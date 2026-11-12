@@ -29,7 +29,7 @@ private fun MUiChipPreview(
 	@PreviewParameter(MUiChipPreviewParameterProvider::class)
 	data: MUiChipPreviewData,
 ) {
-	MeridianTheme(darkTheme = data.dark) {
+	MeridianTheme(themeState = data.dark) {
 		MUiChip(model = data.model, onClick = {})
 	}
 }

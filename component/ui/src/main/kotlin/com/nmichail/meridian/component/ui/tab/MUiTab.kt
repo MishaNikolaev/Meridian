@@ -27,6 +27,7 @@ import com.nmichail.meridian.component.ui.tab.model.MUiTabModel
 import com.nmichail.meridian.component.ui.tab.model.MUiTitleSwitchModel
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
+import com.nmichail.meridian.component.ui.theme.select
 
 @Composable
 fun MUiTab(
@@ -35,7 +36,12 @@ fun MUiTab(
 	modifier: Modifier = Modifier,
 	indicator: Boolean = true,
 ) {
-	val labelColor = if (model.selected) palette.textPrimary else palette.textTertiary
+	val labelColor = select(
+		active = model.selected,
+		on = palette.textPrimary,
+		off = palette.textTertiary,
+	)
+
 	CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
 		Layout(
 			modifier = modifier.padding(
@@ -81,6 +87,7 @@ fun MUiTab(
 
 			layout(width = label.width, height = label.height + indicator.height) {
 				label.place(x = 0, y = 0)
+
 				indicator.place(x = 0, y = label.height)
 			}
 		}
@@ -121,8 +128,17 @@ private fun MUiTitleOption(
 	selected: Boolean,
 	onClick: () -> Unit,
 ) {
-	val titleColor = if (selected) palette.textPrimary else palette.textTertiary
-	val countColor = if (selected) palette.accentPrimary else palette.textTertiary
+	val titleColor = select(
+		active = selected,
+		on = palette.textPrimary,
+		off = palette.textTertiary,
+	)
+
+	val countColor = select(
+		active = selected,
+		on = palette.accentPrimary,
+		off = palette.textTertiary,
+	)
 
 	CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
 		Row(

@@ -41,6 +41,7 @@ import com.nmichail.meridian.component.ui.text.MUiCaptionDefaultText
 import com.nmichail.meridian.component.ui.theme.MeridianPalette
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
+import com.nmichail.meridian.component.ui.theme.select
 
 @Composable
 fun MUiTextField(
@@ -48,6 +49,8 @@ fun MUiTextField(
 	onValueChange: (String) -> Unit,
 	onDone: (() -> Unit)? = null,
 	modifier: Modifier = Modifier,
+	container: Color = palette.field,
+	stroke: Color? = null,
 ) {
 	val shape = RoundedCornerShape(14.dp)
 	var focused by remember { mutableStateOf(false) }
@@ -59,13 +62,17 @@ fun MUiTextField(
 		highlighted = model.highlighted,
 		outlined = model.outlined,
 		palette = palette,
+		stroke = stroke,
 	)
+
+	val fill = fieldFill(outlined = model.outlined, container = container)
 
 	Column(
 		modifier = modifier.fillMaxWidth(),
 		verticalArrangement = Arrangement.spacedBy(6.dp),
 	) {
 		if (model.label.isNotEmpty()) MUiCaptionDefaultText(text = model.label, color = palette.textSecondary)
+
 		Row(
 			modifier = Modifier
 				.fillMaxWidth()
@@ -76,7 +83,7 @@ fun MUiTextField(
 						Modifier
 					},
 				)
-				.background(palette.field, shape)
+				.background(fill, shape)
 				.padding(horizontal = 16.dp, vertical = 15.dp),
 			verticalAlignment = Alignment.CenterVertically,
 			horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -99,6 +106,7 @@ fun MUiTextField(
 				)
 			}
 		}
+
 		if (model.error.isNotEmpty()) {
 			Text(
 				text = model.error,
@@ -120,6 +128,7 @@ fun MUiSearchField(
 	if (!open) {
 		return
 	}
+
 	MUiTextField(
 		model = MUiTextFieldModel(
 			icon = MUiFieldIcon.Search,
@@ -176,9 +185,17 @@ private fun MUiTextFieldPlaceholder(
 				color = color,
 			)
 		}
+
 		field()
 	}
 }
+
+@Composable
+private fun fieldFill(outlined: Boolean, container: Color): Color = select(
+	active = outlined,
+	on = palette.outlinedFill,
+	off = container,
+)
 
 private fun fieldBorder(
 	error: String,
@@ -186,10 +203,12 @@ private fun fieldBorder(
 	highlighted: Boolean,
 	outlined: Boolean,
 	palette: MeridianPalette,
+	stroke: Color?,
 ): Color? = when {
 	error.isNotEmpty() -> palette.statusError
+	stroke != null -> stroke
 	focused || highlighted -> palette.accentButton
-	outlined -> palette.borderStrong
+	outlined -> palette.outlinedBorder
 	else -> null
 }
 
@@ -228,6 +247,7 @@ private fun MUiTextFieldIcon(icon: MUiFieldIcon) {
 		MUiFieldIcon.Search -> R.drawable.ic_search
 		MUiFieldIcon.Building -> R.drawable.ic_building
 	}
+
 	Image(
 		painter = painterResource(drawable),
 		contentDescription = null,

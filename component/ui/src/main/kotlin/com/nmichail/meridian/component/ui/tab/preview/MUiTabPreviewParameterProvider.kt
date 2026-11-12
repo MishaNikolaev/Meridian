@@ -55,7 +55,7 @@ private fun MUiTabPreview(
 	@PreviewParameter(MUiTabPreviewParameterProvider::class)
 	data: MUiTabPreviewData,
 ) {
-	MeridianTheme(darkTheme = data.dark) {
+	MeridianTheme(themeState = data.dark) {
 		Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
 			Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
 				MUiTab(model = data.tab, onClick = {})
