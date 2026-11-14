@@ -25,7 +25,7 @@ import com.nmichail.meridian.shared.chat.domain.usecase.DeleteMessageUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.LoadMessagesUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.MarkReadUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.ReactUseCase
-import com.nmichail.meridian.shared.chat.domain.usecase.ReadCachedChatsUseCase
+import com.nmichail.meridian.shared.chat.domain.usecase.ReadChatsUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.ReadCachedMessagesUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.ReadReactionsUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.SaveReactionUseCase
@@ -48,7 +48,7 @@ import org.mockito.kotlin.whenever
 class ConversationViewModelTest {
 	private val loadMessagesUseCase: LoadMessagesUseCase = mock()
 	private val readCachedMessagesUseCase: ReadCachedMessagesUseCase = mock()
-	private val readCachedChatsUseCase: ReadCachedChatsUseCase = mock()
+	private val readChatsUseCase: ReadChatsUseCase = mock()
 	private val sendMessageUseCase: SendMessageUseCase = mock()
 	private val markReadUseCase: MarkReadUseCase = mock()
 	private val readReactionsUseCase: ReadReactionsUseCase = mock {
@@ -67,7 +67,7 @@ class ConversationViewModelTest {
 	private val viewModel = ConversationViewModel(
 		loadMessagesUseCase,
 		readCachedMessagesUseCase,
-		readCachedChatsUseCase,
+		readChatsUseCase,
 		sendMessageUseCase,
 		markReadUseCase,
 		readReactionsUseCase,
@@ -144,7 +144,7 @@ class ConversationViewModelTest {
 	@Test
 	fun `sync titles EXPECT renamed group`() = runTest {
 		whenever(loadMessagesUseCase.invoke("1")) doReturn emptyThread
-		whenever(readCachedChatsUseCase.invoke()) doReturn listOf(
+		whenever(readChatsUseCase.invoke()) doReturn listOf(
 			Chat(
 				id = "1",
 				type = ChatType.GROUP,

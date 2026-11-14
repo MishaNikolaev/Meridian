@@ -26,7 +26,7 @@ import com.nmichail.meridian.shared.chat.domain.entity.ChatPerson
 import com.nmichail.meridian.shared.chat.domain.entity.ChatReaction
 import com.nmichail.meridian.shared.chat.domain.usecase.DeleteMessageUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.LoadMessagesUseCase
-import com.nmichail.meridian.shared.chat.domain.usecase.ReadCachedChatsUseCase
+import com.nmichail.meridian.shared.chat.domain.usecase.ReadChatsUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.ReadCachedMessagesUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.MarkReadUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.ReactUseCase
@@ -40,7 +40,7 @@ import kotlinx.coroutines.CancellationException
 class ConversationViewModel @Inject constructor(
 	private val loadMessagesUseCase: LoadMessagesUseCase,
 	private val readCachedMessagesUseCase: ReadCachedMessagesUseCase,
-	private val readCachedChatsUseCase: ReadCachedChatsUseCase,
+	private val readChatsUseCase: ReadChatsUseCase,
 	private val sendMessageUseCase: SendMessageUseCase,
 	private val markReadUseCase: MarkReadUseCase,
 	private val readReactionsUseCase: ReadReactionsUseCase,
@@ -375,7 +375,7 @@ class ConversationViewModel @Inject constructor(
 		val current = state.value as? ConversationState.Content ?: return
 
 		launchTry {
-			setState(current.renamed(readCachedChatsUseCase().savedTitle(current.chatId)) ?: return@launchTry)
+			setState(current.renamed(readChatsUseCase().savedTitle(current.chatId)) ?: return@launchTry)
 		} catch ::handleRefreshFailure
 	}
 
