@@ -12,7 +12,7 @@ import dagger.Component
 	dependencies = [CoreApi::class],
 	modules = [WorkspaceModule::class, ViewModelModule::class],
 )
-interface WorkspaceComponent : WorkspaceFeatureApi {
+internal interface WorkspaceComponent : WorkspaceFeatureApi {
 
 	@Component.Factory
 	interface Factory {

@@ -13,7 +13,7 @@ import dagger.Component
 	dependencies = [CoreApi::class, ChatSessionApi::class],
 	modules = [GroupFeatureModule::class, ViewModelModule::class],
 )
-interface GroupComponent : GroupFeatureApi {
+internal interface GroupComponent : GroupFeatureApi {
 
 	@Component.Factory
 	interface Factory {

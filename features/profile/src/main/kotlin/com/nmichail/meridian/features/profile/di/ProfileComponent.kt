@@ -12,7 +12,7 @@ import dagger.Component
 	dependencies = [CoreApi::class],
 	modules = [ProfileModule::class, ViewModelModule::class],
 )
-interface ProfileComponent : ProfileFeatureApi {
+internal interface ProfileComponent : ProfileFeatureApi {
 	@Component.Factory
 	interface Factory {
 		fun create(core: CoreApi, @BindsInstance router: ProfileRouter): ProfileComponent

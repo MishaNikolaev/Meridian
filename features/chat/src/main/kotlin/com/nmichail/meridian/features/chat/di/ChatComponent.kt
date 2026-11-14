@@ -14,7 +14,7 @@ import dagger.Component
 	dependencies = [CoreApi::class, ChatRealtimeComponent::class, ChatSessionApi::class],
 	modules = [ChatFeatureModule::class, ViewModelModule::class],
 )
-interface ChatComponent : ChatFeatureApi {
+internal interface ChatComponent : ChatFeatureApi {
 
 	@Component.Factory
 	interface Factory {

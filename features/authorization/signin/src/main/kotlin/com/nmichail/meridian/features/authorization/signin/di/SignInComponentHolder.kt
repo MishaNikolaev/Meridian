@@ -1,21 +1,19 @@
 package com.nmichail.meridian.features.authorization.signin.di
 
 import com.nmichail.meridian.core.di.ComponentHolder
+import com.nmichail.meridian.core.di.ComponentHolderDelegate
 
-object SignInComponentHolder : ComponentHolder<SignInFeatureApi> {
+object SignInComponentHolder : ComponentHolder<SignInFeatureApi, SignInFeatureDependencies> {
 
-	private var component: SignInFeatureApi? = null
-
-	fun init(dependencies: SignInFeatureDependencies) {
-		if (component == null) {
-			component = DaggerSignInComponent.factory().create(dependencies.core(), dependencies.router())
-		}
+	private val componentHolderDelegate = ComponentHolderDelegate<
+		SignInFeatureApi,
+		SignInFeatureDependencies,
+		SignInComponent,
+		> { dependencies ->
+		DaggerSignInComponent.factory().create(dependencies.core(), dependencies.router())
 	}
 
-	override fun get(): SignInFeatureApi =
-		checkNotNull(component) { "SignInComponent was not initialized" }
+	override var dependencyProvider: (() -> SignInFeatureDependencies)? by componentHolderDelegate::dependencyProvider
 
-	override fun reset() {
-		component = null
-	}
+	override fun get(): SignInFeatureApi = componentHolderDelegate.get()
 }

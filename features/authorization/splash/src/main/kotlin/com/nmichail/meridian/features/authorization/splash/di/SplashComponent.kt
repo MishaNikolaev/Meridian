@@ -12,7 +12,7 @@ import dagger.Component
 	dependencies = [CoreApi::class],
 	modules = [SplashModule::class, ViewModelModule::class],
 )
-interface SplashComponent : SplashFeatureApi {
+internal interface SplashComponent : SplashFeatureApi {
 
 	@Component.Factory
 	interface Factory {
