@@ -12,7 +12,7 @@ detekt {
 	toolVersion = libs.findVersion("detekt").get().toString()
 
 	source.setFrom("src")
-	config.setFrom("$rootDir/config/detekt.yml")
+	config.setFrom("$rootDir/buildsystem/detekt/detekt.yml")
 
 	parallel = true
 	ignoreFailures = false
