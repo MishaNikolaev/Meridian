@@ -17,7 +17,7 @@ import com.nmichail.meridian.shared.chat.data.realtime.ChatRealtime
 import com.nmichail.meridian.shared.chat.domain.entity.Chat
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType
 import com.nmichail.meridian.shared.chat.domain.usecase.LoadChatsUseCase
-import com.nmichail.meridian.shared.chat.domain.usecase.ReadCachedChatsUseCase
+import com.nmichail.meridian.shared.chat.domain.usecase.ReadChatsUseCase
 import java.io.IOException
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.test.runTest
@@ -34,7 +34,7 @@ import org.mockito.kotlin.whenever
 class ChatViewModelTest {
 
 	private val loadChatsUseCase: LoadChatsUseCase = mock()
-	private val readCachedChatsUseCase: ReadCachedChatsUseCase = mock()
+	private val readChatsUseCase: ReadChatsUseCase = mock()
 	private val chatRealtime: ChatRealtime = mock { on { chatIds } doReturn MutableSharedFlow() }
 	private val errorDelegate = ErrorDelegate(
 		errorLogger = ErrorLogger(),
@@ -48,7 +48,7 @@ class ChatViewModelTest {
 	private val eventObserver: Observer<ChatEvent> = mock()
 	private val viewModel = ChatViewModel(
 		loadChatsUseCase,
-		readCachedChatsUseCase,
+		readChatsUseCase,
 		chatRealtime,
 		errorDelegate,
 		router,
@@ -101,7 +101,7 @@ class ChatViewModelTest {
 		)
 		whenever(loadChatsUseCase.invoke()) doReturn listOf(group)
 		viewModel.applyIntent(ChatIntent.LoadInitialData)
-		whenever(readCachedChatsUseCase.invoke()) doReturn listOf(group.copy(title = "Платформа"))
+		whenever(readChatsUseCase.invoke()) doReturn listOf(group.copy(title = "Платформа"))
 
 		viewModel.applyIntent(ChatIntent.SyncTitles)
 		val content = viewModel.state.value as ChatState.Content
@@ -126,7 +126,7 @@ class ChatViewModelTest {
 		)
 		whenever(loadChatsUseCase.invoke()) doReturn listOf(group)
 		viewModel.applyIntent(ChatIntent.LoadInitialData)
-		whenever(readCachedChatsUseCase.invoke()) doReturn listOf(group.copy(title = "Платформа"))
+		whenever(readChatsUseCase.invoke()) doReturn listOf(group.copy(title = "Платформа"))
 
 		viewModel.applyIntent(ChatIntent.SyncTitles)
 		val content = viewModel.state.value as ChatState.Content
@@ -175,7 +175,7 @@ class ChatViewModelTest {
 
 	@Test
 	fun `cached chats EXPECT kept when reload fails`() = runTest {
-		whenever(readCachedChatsUseCase.invoke()) doReturn chats
+		whenever(readChatsUseCase.invoke()) doReturn chats
 		whenever(loadChatsUseCase.invoke()).doThrowSafe(ioException)
 
 		viewModel.applyIntent(ChatIntent.LoadInitialData)

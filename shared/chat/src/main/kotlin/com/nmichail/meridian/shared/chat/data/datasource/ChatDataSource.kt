@@ -11,16 +11,16 @@ import javax.inject.Inject
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
-interface ChatCacheDataSource {
+interface ChatDataSource {
 	suspend fun read(): List<Chat>?
 
 	suspend fun save(chats: List<Chat>)
 }
 
-class ChatCacheDataSourceImpl @Inject constructor(
+class ChatDataSourceImpl @Inject constructor(
 	@ApplicationContext context: Context,
 	private val sessionRepository: SessionRepository,
-) : ChatCacheDataSource {
+) : ChatDataSource {
 	private companion object {
 		const val CHAT_STORE = "meridian_chats"
 	}
