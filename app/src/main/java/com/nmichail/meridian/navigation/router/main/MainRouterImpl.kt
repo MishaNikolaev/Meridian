@@ -1,6 +1,7 @@
 package com.nmichail.meridian.navigation.router.main
 
 import com.nmichail.meridian.core.navigation.router.GlobalRouter
+import com.nmichail.meridian.di.ChatSessionHolder
 import com.nmichail.meridian.features.authorization.splash.presentation.getSplashScreen
 import com.nmichail.meridian.features.authorization.workspace.presentation.getWorkspaceScreen
 import com.nmichail.meridian.ui.host.getMainHostScreen
@@ -11,6 +12,9 @@ class MainRouterImpl @Inject constructor(
 ) : MainRouter {
 
 	override fun navigateToHome() {
+		if (ChatSessionHolder.current() == null) {
+			return
+		}
 		router.newRootScreen(getMainHostScreen())
 	}
 

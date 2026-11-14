@@ -12,7 +12,7 @@ import dagger.Component
 	dependencies = [CoreApi::class],
 	modules = [SignInModule::class, ViewModelModule::class],
 )
-interface SignInComponent : SignInFeatureApi {
+internal interface SignInComponent : SignInFeatureApi {
 
 	@Component.Factory
 	interface Factory {

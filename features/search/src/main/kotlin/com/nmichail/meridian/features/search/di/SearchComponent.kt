@@ -12,7 +12,7 @@ import dagger.Component
 	dependencies = [CoreApi::class],
 	modules = [SearchFeatureModule::class, ViewModelModule::class],
 )
-interface SearchComponent : SearchFeatureApi {
+internal interface SearchComponent : SearchFeatureApi {
 
 	@Component.Factory
 	interface Factory {

@@ -1,21 +1,19 @@
 package com.nmichail.meridian.features.search.di
 
 import com.nmichail.meridian.core.di.ComponentHolder
+import com.nmichail.meridian.core.di.ComponentHolderDelegate
 
-object SearchComponentHolder : ComponentHolder<SearchFeatureApi> {
+object SearchComponentHolder : ComponentHolder<SearchFeatureApi, SearchFeatureDependencies> {
 
-	private var component: SearchFeatureApi? = null
-
-	fun init(dependencies: SearchFeatureDependencies) {
-		if (component == null) {
-			component = DaggerSearchComponent.factory().create(dependencies.core(), dependencies.router())
-		}
+	private val componentHolderDelegate = ComponentHolderDelegate<
+		SearchFeatureApi,
+		SearchFeatureDependencies,
+		SearchComponent,
+		> { dependencies ->
+		DaggerSearchComponent.factory().create(dependencies.core(), dependencies.router())
 	}
 
-	override fun get(): SearchFeatureApi =
-		checkNotNull(component) { "SearchComponent was not initialized" }
+	override var dependencyProvider: (() -> SearchFeatureDependencies)? by componentHolderDelegate::dependencyProvider
 
-	override fun reset() {
-		component = null
-	}
+	override fun get(): SearchFeatureApi = componentHolderDelegate.get()
 }

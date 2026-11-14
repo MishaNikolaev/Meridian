@@ -1,5 +1,7 @@
 package com.nmichail.meridian.features.chat.di
 
+import com.nmichail.meridian.core.di.BaseDependencyHolder
+import com.nmichail.meridian.core.di.DependencyHolder0
 import com.nmichail.meridian.core.di.FeatureDependencies
 import com.nmichail.meridian.core.network.di.CoreApi
 import com.nmichail.meridian.features.chat.presentation.ChatRouter
@@ -17,18 +19,23 @@ interface ChatFeatureDependencies : FeatureDependencies {
 	fun router(): ChatRouter
 }
 
-class ChatFeatureDependenciesImpl(
-	private val core: CoreApi,
-	private val chatRealtime: ChatRealtimeComponent,
-	private val session: ChatSessionApi,
-	private val router: ChatRouter,
-) : ChatFeatureDependencies {
+fun chatFeatureDependencies(
+	core: CoreApi,
+	chatRealtime: ChatRealtimeComponent,
+	session: ChatSessionApi,
+	router: ChatRouter,
+): ChatFeatureDependencies = object : DependencyHolder0<ChatFeatureDependencies>() {
+	override val block: (BaseDependencyHolder<ChatFeatureDependencies>) -> ChatFeatureDependencies = { holder ->
+		object : ChatFeatureDependencies {
+			override fun core(): CoreApi = core
 
-	override fun core(): CoreApi = core
+			override fun chatRealtime(): ChatRealtimeComponent = chatRealtime
 
-	override fun chatRealtime(): ChatRealtimeComponent = chatRealtime
+			override fun session(): ChatSessionApi = session
 
-	override fun session(): ChatSessionApi = session
+			override fun router(): ChatRouter = router
 
-	override fun router(): ChatRouter = router
-}
+			override val dependencyHolder: BaseDependencyHolder<out FeatureDependencies> = holder
+		}
+	}
+}.dependencies

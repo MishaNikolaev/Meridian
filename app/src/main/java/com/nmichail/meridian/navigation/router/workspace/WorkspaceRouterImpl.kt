@@ -3,6 +3,7 @@ package com.nmichail.meridian.navigation.router.workspace
 import com.nmichail.meridian.core.navigation.router.GlobalRouter
 import com.nmichail.meridian.features.authorization.signin.presentation.getSignInScreen
 import com.nmichail.meridian.features.authorization.workspace.presentation.WorkspaceRouter
+import com.nmichail.meridian.di.ChatSessionHolder
 import com.nmichail.meridian.ui.host.getMainHostScreen
 import javax.inject.Inject
 
@@ -11,6 +12,9 @@ class WorkspaceRouterImpl @Inject constructor(
 ) : WorkspaceRouter {
 
 	override fun navigateToHome() {
+		if (ChatSessionHolder.current() == null) {
+			return
+		}
 		router.newRootScreen(getMainHostScreen())
 	}
 

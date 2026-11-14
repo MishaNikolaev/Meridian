@@ -1,14 +1,16 @@
 package com.nmichail.meridian.features.chat.di
 
 import com.nmichail.meridian.core.di.ComponentHolder
+import com.nmichail.meridian.core.di.ComponentHolderDelegate
 
-object ChatComponentHolder : ComponentHolder<ChatFeatureApi> {
+object ChatComponentHolder : ComponentHolder<ChatFeatureApi, ChatFeatureDependencies> {
 
-	private var component: ChatFeatureApi? = null
-
-	fun init(dependencies: ChatFeatureDependencies) {
-		check(component == null) { "ChatComponent is already initialized" }
-		component = DaggerChatComponent.factory().create(
+	private val componentHolderDelegate = ComponentHolderDelegate<
+		ChatFeatureApi,
+		ChatFeatureDependencies,
+		ChatComponent,
+		> { dependencies ->
+		DaggerChatComponent.factory().create(
 			dependencies.core(),
 			dependencies.chatRealtime(),
 			dependencies.session(),
@@ -16,12 +18,11 @@ object ChatComponentHolder : ComponentHolder<ChatFeatureApi> {
 		)
 	}
 
-	fun isInitialized(): Boolean = component != null
+	override var dependencyProvider: (() -> ChatFeatureDependencies)? by componentHolderDelegate::dependencyProvider
 
-	override fun get(): ChatFeatureApi =
-		checkNotNull(component) { "ChatComponent was not initialized" }
+	override fun get(): ChatFeatureApi = componentHolderDelegate.get()
 
-	override fun reset() {
-		component = null
+	fun clear() {
+		componentHolderDelegate.clear()
 	}
 }

@@ -12,7 +12,7 @@ import dagger.Component
 	dependencies = [CoreApi::class],
 	modules = [PersonModule::class, ViewModelModule::class],
 )
-interface PersonComponent : PersonFeatureApi {
+internal interface PersonComponent : PersonFeatureApi {
 
 	@Component.Factory
 	interface Factory {

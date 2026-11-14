@@ -1,3 +1,6 @@
 package com.nmichail.meridian.core.di
 
-interface FeatureDependencies
+interface FeatureDependencies {
+
+	val dependencyHolder: BaseDependencyHolder<out FeatureDependencies>
+}

@@ -12,7 +12,7 @@ import dagger.Component
 	dependencies = [CoreApi::class],
 	modules = [RegistrationModule::class, ViewModelModule::class],
 )
-interface RegistrationComponent : RegistrationFeatureApi {
+internal interface RegistrationComponent : RegistrationFeatureApi {
 
 	@Component.Factory
 	interface Factory {

@@ -2,6 +2,7 @@ package com.nmichail.meridian.navigation.router.signin
 
 import com.nmichail.meridian.core.navigation.router.GlobalRouter
 import com.nmichail.meridian.features.authorization.signin.presentation.SignInRouter
+import com.nmichail.meridian.di.ChatSessionHolder
 import com.nmichail.meridian.features.authorization.workspace.presentation.getWorkspaceScreen
 import com.nmichail.meridian.features.registration.presentation.getRegistrationScreen
 import com.nmichail.meridian.ui.host.getMainHostScreen
@@ -12,6 +13,9 @@ class SignInRouterImpl @Inject constructor(
 ) : SignInRouter {
 
 	override fun navigateToHome() {
+		if (ChatSessionHolder.current() == null) {
+			return
+		}
 		router.newRootScreen(getMainHostScreen())
 	}
 

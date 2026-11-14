@@ -2,6 +2,7 @@ package com.nmichail.meridian.navigation.router.splash
 
 import com.nmichail.meridian.core.navigation.router.GlobalRouter
 import com.nmichail.meridian.features.authorization.splash.presentation.SplashRouter
+import com.nmichail.meridian.di.ChatSessionHolder
 import com.nmichail.meridian.features.authorization.workspace.presentation.getWorkspaceScreen
 import com.nmichail.meridian.ui.host.getMainHostScreen
 import javax.inject.Inject
@@ -11,6 +12,9 @@ class SplashRouterImpl @Inject constructor(
 ) : SplashRouter {
 
 	override fun navigateToHome() {
+		if (ChatSessionHolder.current() == null) {
+			return
+		}
 		router.newRootScreen(getMainHostScreen())
 	}
 
