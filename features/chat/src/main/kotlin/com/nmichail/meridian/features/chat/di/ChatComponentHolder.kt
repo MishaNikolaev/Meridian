@@ -1,23 +1,22 @@
 package com.nmichail.meridian.features.chat.di
 
 import com.nmichail.meridian.core.di.ComponentHolder
-import com.nmichail.meridian.core.network.di.CoreApi
-import com.nmichail.meridian.features.chat.presentation.ChatRouter
-import com.nmichail.meridian.shared.chat.di.ChatRealtimeHolder
 
 object ChatComponentHolder : ComponentHolder<ChatFeatureApi> {
 
 	private var component: ChatFeatureApi? = null
 
-	fun init(core: CoreApi, router: ChatRouter) {
-		if (component == null) {
-			component = DaggerChatComponent.factory().create(
-				core,
-				ChatRealtimeHolder.get(core),
-				router,
-			)
-		}
+	fun init(dependencies: ChatFeatureDependencies) {
+		check(component == null) { "ChatComponent is already initialized" }
+		component = DaggerChatComponent.factory().create(
+			dependencies.core(),
+			dependencies.chatRealtime(),
+			dependencies.session(),
+			dependencies.router(),
+		)
 	}
+
+	fun isInitialized(): Boolean = component != null
 
 	override fun get(): ChatFeatureApi =
 		checkNotNull(component) { "ChatComponent was not initialized" }

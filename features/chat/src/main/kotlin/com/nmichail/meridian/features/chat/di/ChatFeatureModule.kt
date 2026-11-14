@@ -7,12 +7,11 @@ import com.nmichail.meridian.features.chat.data.datasource.ChatLocalDataSourceIm
 import com.nmichail.meridian.features.chat.data.repository.ChatRepositoryImpl
 import com.nmichail.meridian.features.chat.domain.repository.ChatRepository
 import com.nmichail.meridian.features.chat.presentation.ChatViewModel
-import com.nmichail.meridian.shared.chat.di.ChatModule
 import dagger.Binds
 import dagger.Module
 import dagger.multibindings.IntoMap
 
-@Module(includes = [ChatModule::class])
+@Module
 abstract class ChatFeatureModule {
 
 	@Binds
