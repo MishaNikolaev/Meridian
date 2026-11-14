@@ -5,12 +5,11 @@ import com.nmichail.meridian.core.presentation.di.ViewModelKey
 import com.nmichail.meridian.features.groups.presentation.GroupInfoViewModel
 import com.nmichail.meridian.features.groups.presentation.GroupViewModel
 import com.nmichail.meridian.component.photopicker.di.PhotoModule
-import com.nmichail.meridian.shared.chat.di.ChatModule
 import dagger.Binds
 import dagger.Module
 import dagger.multibindings.IntoMap
 
-@Module(includes = [ChatModule::class, PhotoModule::class])
+@Module(includes = [PhotoModule::class])
 abstract class GroupFeatureModule {
 	@Binds
 	@IntoMap

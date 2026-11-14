@@ -33,6 +33,14 @@ class MeridianApplication : Application() {
 		PhotoLocalDataSource.load(this)
 		bindPhotoLoader(imageLoader)
 		featureComponents.install(component)
+		openSignedInSession()
 		check(networkConfig.baseUrl.isNotBlank())
+	}
+
+	private fun openSignedInSession() {
+		val session = component.sessionRepository()
+		if (session.isSignedIn() || !session.getAccessToken().isNullOrBlank()) {
+			featureComponents.openSession()
+		}
 	}
 }
