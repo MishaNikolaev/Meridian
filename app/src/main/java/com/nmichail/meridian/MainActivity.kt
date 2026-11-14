@@ -11,6 +11,7 @@ import com.nmichail.meridian.core.navigation.di.FullScreen
 import com.nmichail.meridian.core.navigation.navigator.ScreenNavigator
 import com.nmichail.meridian.core.network.session.SessionEvents
 import com.nmichail.meridian.di.ActivityComponent
+import com.nmichail.meridian.di.ChatSessionHolder
 import com.nmichail.meridian.navigation.router.main.MainRouter
 import javax.inject.Inject
 import kotlinx.coroutines.launch
@@ -36,10 +37,11 @@ class MainActivity : AppCompatActivity() {
 		activityComponent = appComponent.activityComponent().create()
 		activityComponent.inject(this)
 		setThemeListener()
-		super.onCreate(savedInstanceState)
+		val sessionOpen = ChatSessionHolder.current() != null
+		super.onCreate(if (sessionOpen) savedInstanceState else null)
 		enableEdgeToEdge()
 		setContentView(R.layout.activity_main)
-		if (savedInstanceState == null) {
+		if (!sessionOpen || savedInstanceState == null) {
 			router.navigateToSplash()
 		}
 		lifecycleScope.launch {

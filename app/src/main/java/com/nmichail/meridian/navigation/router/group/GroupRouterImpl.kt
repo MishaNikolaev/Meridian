@@ -1,6 +1,7 @@
 package com.nmichail.meridian.navigation.router.group
 
 import com.nmichail.meridian.core.navigation.router.GlobalRouter
+import com.nmichail.meridian.di.ChatSessionHolder
 import com.nmichail.meridian.features.conversation.presentation.getConversationScreen
 import com.nmichail.meridian.features.groups.presentation.GroupRouter
 import com.nmichail.meridian.features.groups.presentation.getGroupEditScreen
@@ -16,6 +17,9 @@ class GroupRouterImpl @Inject constructor(
 		corporate: Boolean,
 		personId: String,
 	) {
+		if (ChatSessionHolder.current() == null) {
+			return
+		}
 		router.navigateTo(
 			getConversationScreen(
 				chatId = chatId,
@@ -36,6 +40,9 @@ class GroupRouterImpl @Inject constructor(
 	}
 
 	override fun navigateToEdit(chatId: String, title: String, description: String) {
+		if (ChatSessionHolder.current() == null) {
+			return
+		}
 		router.navigateTo(
 			getGroupEditScreen(
 				chatId = chatId,

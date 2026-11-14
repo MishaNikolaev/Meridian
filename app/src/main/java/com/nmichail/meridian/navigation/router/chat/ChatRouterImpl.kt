@@ -2,6 +2,7 @@ package com.nmichail.meridian.navigation.router.chat
 
 import com.nmichail.meridian.core.navigation.router.GlobalRouter
 import com.nmichail.meridian.features.chat.presentation.ChatRouter
+import com.nmichail.meridian.di.ChatSessionHolder
 import com.nmichail.meridian.features.authorization.workspace.presentation.getWorkspaceScreen
 import com.nmichail.meridian.features.groups.presentation.getGroupScreen
 import com.nmichail.meridian.features.search.presentation.getSearchScreen
@@ -18,6 +19,9 @@ class ChatRouterImpl @Inject constructor(
 		corporate: Boolean,
 		personId: String,
 	) {
+		if (ChatSessionHolder.current() == null) {
+			return
+		}
 		router.navigateTo(
 			getConversationScreen(
 				chatId = chatId,
@@ -35,6 +39,9 @@ class ChatRouterImpl @Inject constructor(
 		messageId: String,
 		personId: String,
 	) {
+		if (ChatSessionHolder.current() == null) {
+			return
+		}
 		router.navigateTo(
 			getConversationScreen(
 				chatId = chatId,
@@ -51,6 +58,9 @@ class ChatRouterImpl @Inject constructor(
 	}
 
 	override fun navigateToGroup() {
+		if (ChatSessionHolder.current() == null) {
+			return
+		}
 		router.navigateTo(getGroupScreen())
 	}
 
