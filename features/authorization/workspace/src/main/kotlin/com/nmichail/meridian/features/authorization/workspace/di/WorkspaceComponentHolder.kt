@@ -1,21 +1,21 @@
 package com.nmichail.meridian.features.authorization.workspace.di
 
 import com.nmichail.meridian.core.di.ComponentHolder
+import com.nmichail.meridian.core.di.ComponentHolderDelegate
 
-object WorkspaceComponentHolder : ComponentHolder<WorkspaceFeatureApi> {
+object WorkspaceComponentHolder :
+	ComponentHolder<WorkspaceFeatureApi, WorkspaceFeatureDependencies> {
 
-	private var component: WorkspaceFeatureApi? = null
-
-	fun init(dependencies: WorkspaceFeatureDependencies) {
-		if (component == null) {
-			component = DaggerWorkspaceComponent.factory().create(dependencies.core(), dependencies.router())
-		}
+	private val componentHolderDelegate = ComponentHolderDelegate<
+		WorkspaceFeatureApi,
+		WorkspaceFeatureDependencies,
+		WorkspaceComponent,
+		> { dependencies ->
+		DaggerWorkspaceComponent.factory().create(dependencies.core(), dependencies.router())
 	}
 
-	override fun get(): WorkspaceFeatureApi =
-		checkNotNull(component) { "WorkspaceComponent was not initialized" }
+	override var dependencyProvider: (() -> WorkspaceFeatureDependencies)?
+		by componentHolderDelegate::dependencyProvider
 
-	override fun reset() {
-		component = null
-	}
+	override fun get(): WorkspaceFeatureApi = componentHolderDelegate.get()
 }

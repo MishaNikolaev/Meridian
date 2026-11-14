@@ -1,14 +1,17 @@
 package com.nmichail.meridian.features.conversation.di
 
 import com.nmichail.meridian.core.di.ComponentHolder
+import com.nmichail.meridian.core.di.ComponentHolderDelegate
 
-object ConversationComponentHolder : ComponentHolder<ConversationFeatureApi> {
+object ConversationComponentHolder :
+	ComponentHolder<ConversationFeatureApi, ConversationFeatureDependencies> {
 
-	private var component: ConversationFeatureApi? = null
-
-	fun init(dependencies: ConversationFeatureDependencies) {
-		check(component == null) { "ConversationComponent is already initialized" }
-		component = DaggerConversationComponent.factory().create(
+	private val componentHolderDelegate = ComponentHolderDelegate<
+		ConversationFeatureApi,
+		ConversationFeatureDependencies,
+		ConversationComponent,
+		> { dependencies ->
+		DaggerConversationComponent.factory().create(
 			dependencies.core(),
 			dependencies.chatRealtime(),
 			dependencies.session(),
@@ -16,12 +19,12 @@ object ConversationComponentHolder : ComponentHolder<ConversationFeatureApi> {
 		)
 	}
 
-	fun isInitialized(): Boolean = component != null
+	override var dependencyProvider: (() -> ConversationFeatureDependencies)?
+		by componentHolderDelegate::dependencyProvider
 
-	override fun get(): ConversationFeatureApi =
-		checkNotNull(component) { "ConversationComponent was not initialized" }
+	override fun get(): ConversationFeatureApi = componentHolderDelegate.get()
 
-	override fun reset() {
-		component = null
+	fun clear() {
+		componentHolderDelegate.clear()
 	}
 }

@@ -1,20 +1,19 @@
 package com.nmichail.meridian.features.profile.di
 
 import com.nmichail.meridian.core.di.ComponentHolder
+import com.nmichail.meridian.core.di.ComponentHolderDelegate
 
-object ProfileComponentHolder : ComponentHolder<ProfileFeatureApi> {
-	private var component: ProfileComponent? = null
+object ProfileComponentHolder : ComponentHolder<ProfileFeatureApi, ProfileFeatureDependencies> {
 
-	fun init(dependencies: ProfileFeatureDependencies) {
-		if (component == null) {
-			component = DaggerProfileComponent.factory().create(dependencies.core(), dependencies.router())
-		}
+	private val componentHolderDelegate = ComponentHolderDelegate<
+		ProfileFeatureApi,
+		ProfileFeatureDependencies,
+		ProfileComponent,
+		> { dependencies ->
+		DaggerProfileComponent.factory().create(dependencies.core(), dependencies.router())
 	}
 
-	override fun get(): ProfileFeatureApi =
-		checkNotNull(component) { "ProfileComponent was not initialized" }
+	override var dependencyProvider: (() -> ProfileFeatureDependencies)? by componentHolderDelegate::dependencyProvider
 
-	override fun reset() {
-		component = null
-	}
+	override fun get(): ProfileFeatureApi = componentHolderDelegate.get()
 }

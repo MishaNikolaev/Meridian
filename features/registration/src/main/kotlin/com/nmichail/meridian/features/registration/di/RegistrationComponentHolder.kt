@@ -1,21 +1,21 @@
 package com.nmichail.meridian.features.registration.di
 
 import com.nmichail.meridian.core.di.ComponentHolder
+import com.nmichail.meridian.core.di.ComponentHolderDelegate
 
-object RegistrationComponentHolder : ComponentHolder<RegistrationFeatureApi> {
+object RegistrationComponentHolder :
+	ComponentHolder<RegistrationFeatureApi, RegistrationFeatureDependencies> {
 
-	private var component: RegistrationFeatureApi? = null
-
-	fun init(dependencies: RegistrationFeatureDependencies) {
-		if (component == null) {
-			component = DaggerRegistrationComponent.factory().create(dependencies.core(), dependencies.router())
-		}
+	private val componentHolderDelegate = ComponentHolderDelegate<
+		RegistrationFeatureApi,
+		RegistrationFeatureDependencies,
+		RegistrationComponent,
+		> { dependencies ->
+		DaggerRegistrationComponent.factory().create(dependencies.core(), dependencies.router())
 	}
 
-	override fun get(): RegistrationFeatureApi =
-		checkNotNull(component) { "RegistrationComponent was not initialized" }
+	override var dependencyProvider: (() -> RegistrationFeatureDependencies)?
+		by componentHolderDelegate::dependencyProvider
 
-	override fun reset() {
-		component = null
-	}
+	override fun get(): RegistrationFeatureApi = componentHolderDelegate.get()
 }

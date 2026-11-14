@@ -1,8 +1,8 @@
 package com.nmichail.meridian.core.di
 
-interface ComponentHolder<C : FeatureApi> {
+interface ComponentHolder<C : FeatureApi, D : FeatureDependencies> {
+
+	var dependencyProvider: (() -> D)?
 
 	fun get(): C
-
-	fun reset()
 }

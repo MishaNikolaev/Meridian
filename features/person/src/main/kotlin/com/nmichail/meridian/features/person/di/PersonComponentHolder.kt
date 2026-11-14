@@ -1,21 +1,19 @@
 package com.nmichail.meridian.features.person.di
 
 import com.nmichail.meridian.core.di.ComponentHolder
+import com.nmichail.meridian.core.di.ComponentHolderDelegate
 
-object PersonComponentHolder : ComponentHolder<PersonFeatureApi> {
+object PersonComponentHolder : ComponentHolder<PersonFeatureApi, PersonFeatureDependencies> {
 
-	private var component: PersonFeatureApi? = null
-
-	fun init(dependencies: PersonFeatureDependencies) {
-		if (component == null) {
-			component = DaggerPersonComponent.factory().create(dependencies.core(), dependencies.router())
-		}
+	private val componentHolderDelegate = ComponentHolderDelegate<
+		PersonFeatureApi,
+		PersonFeatureDependencies,
+		PersonComponent,
+		> { dependencies ->
+		DaggerPersonComponent.factory().create(dependencies.core(), dependencies.router())
 	}
 
-	override fun get(): PersonFeatureApi =
-		checkNotNull(component) { "PersonComponent was not initialized" }
+	override var dependencyProvider: (() -> PersonFeatureDependencies)? by componentHolderDelegate::dependencyProvider
 
-	override fun reset() {
-		component = null
-	}
+	override fun get(): PersonFeatureApi = componentHolderDelegate.get()
 }
