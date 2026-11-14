@@ -10,13 +10,13 @@ import com.nmichail.meridian.shared.chat.domain.entity.Chat
 import com.nmichail.meridian.shared.chat.domain.entity.ChatDiscussion
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType
 import com.nmichail.meridian.shared.chat.domain.usecase.LoadChatsUseCase
-import com.nmichail.meridian.shared.chat.domain.usecase.ReadCachedChatsUseCase
+import com.nmichail.meridian.shared.chat.domain.usecase.ReadChatsUseCase
 import javax.inject.Inject
 import kotlinx.coroutines.Job
 
 class ChatViewModel @Inject constructor(
 	private val loadChatsUseCase: LoadChatsUseCase,
-	private val readCachedChatsUseCase: ReadCachedChatsUseCase,
+	private val readChatsUseCase: ReadChatsUseCase,
 	private val chatRealtime: ChatRealtime,
 	private val errorDelegate: ErrorDelegate,
 	private val router: ChatRouter,
@@ -156,7 +156,7 @@ class ChatViewModel @Inject constructor(
 		}
 
 		launchTry {
-			val cached = readCachedChatsUseCase() ?: return@launchTry
+			val cached = readChatsUseCase() ?: return@launchTry
 
 			handlePublish(
 				chats = cached,
@@ -208,7 +208,7 @@ class ChatViewModel @Inject constructor(
 	}
 
 	private suspend fun openCachedOrLoading() {
-		val cached = readCachedChatsUseCase()
+		val cached = readChatsUseCase()
 
 		if (cached == null) {
 			setState(ChatState.Loading)

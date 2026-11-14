@@ -51,6 +51,12 @@ class ChatRealtime internal constructor(
 		}
 	}
 
+	fun disconnect() {
+		restartingJob?.cancel()
+
+		restartingJob = null
+	}
+
 	private suspend fun open() {
 		val token = accessToken()
 		if (token == null) {

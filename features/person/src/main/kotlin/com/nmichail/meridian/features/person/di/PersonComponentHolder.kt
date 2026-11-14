@@ -1,16 +1,14 @@
 package com.nmichail.meridian.features.person.di
 
 import com.nmichail.meridian.core.di.ComponentHolder
-import com.nmichail.meridian.core.network.di.CoreApi
-import com.nmichail.meridian.features.person.presentation.PersonRouter
 
 object PersonComponentHolder : ComponentHolder<PersonFeatureApi> {
 
 	private var component: PersonFeatureApi? = null
 
-	fun init(core: CoreApi, router: PersonRouter) {
+	fun init(dependencies: PersonFeatureDependencies) {
 		if (component == null) {
-			component = DaggerPersonComponent.factory().create(core, router)
+			component = DaggerPersonComponent.factory().create(dependencies.core(), dependencies.router())
 		}
 	}
 

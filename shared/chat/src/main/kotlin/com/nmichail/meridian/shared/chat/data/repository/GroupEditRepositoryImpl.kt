@@ -3,7 +3,7 @@ package com.nmichail.meridian.shared.chat.data.repository
 import com.nmichail.meridian.core.network.session.SessionRepository
 import com.nmichail.meridian.shared.chat.data.api.ChatApi
 import com.nmichail.meridian.shared.chat.data.api.ChatEditApi
-import com.nmichail.meridian.shared.chat.data.datasource.ChatCacheDataSource
+import com.nmichail.meridian.shared.chat.data.datasource.ChatDataSource
 import com.nmichail.meridian.shared.chat.data.dto.AddMemberDto
 import com.nmichail.meridian.shared.chat.data.dto.PatchChatDto
 import com.nmichail.meridian.shared.chat.data.dto.TransferChatDto
@@ -17,7 +17,7 @@ import javax.inject.Inject
 class GroupEditRepositoryImpl @Inject constructor(
 	private val api: ChatApi,
 	private val editApi: ChatEditApi,
-	private val cache: ChatCacheDataSource,
+	private val chatDataSource: ChatDataSource,
 	private val sessionRepository: SessionRepository,
 ) : GroupEditRepository {
 	override suspend fun readChat(chatId: String): ChatProfile {
@@ -45,10 +45,10 @@ class GroupEditRepositoryImpl @Inject constructor(
 			selfId = "",
 		)
 
-		val stored = cache.read()
+		val stored = chatDataSource.read()
 
 		if (stored != null) {
-			cache.save(
+			chatDataSource.save(
 				stored.map { chat ->
 					if (chat.id == chatId) {
 						chat.copy(title = profile.title)
@@ -90,8 +90,8 @@ class GroupEditRepositoryImpl @Inject constructor(
 	override suspend fun leaveChat(chatId: String) {
 		editApi.leave(chatId = chatId)
 
-		val stored = cache.read() ?: return
+		val stored = chatDataSource.read() ?: return
 
-		cache.save(stored.filter { chat -> chat.id != chatId })
+		chatDataSource.save(stored.filter { chat -> chat.id != chatId })
 	}
 }

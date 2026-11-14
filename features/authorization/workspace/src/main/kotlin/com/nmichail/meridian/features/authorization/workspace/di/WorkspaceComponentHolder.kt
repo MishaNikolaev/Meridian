@@ -1,16 +1,14 @@
 package com.nmichail.meridian.features.authorization.workspace.di
 
 import com.nmichail.meridian.core.di.ComponentHolder
-import com.nmichail.meridian.core.network.di.CoreApi
-import com.nmichail.meridian.features.authorization.workspace.presentation.WorkspaceRouter
 
 object WorkspaceComponentHolder : ComponentHolder<WorkspaceFeatureApi> {
 
 	private var component: WorkspaceFeatureApi? = null
 
-	fun init(core: CoreApi, router: WorkspaceRouter) {
+	fun init(dependencies: WorkspaceFeatureDependencies) {
 		if (component == null) {
-			component = DaggerWorkspaceComponent.factory().create(core, router)
+			component = DaggerWorkspaceComponent.factory().create(dependencies.core(), dependencies.router())
 		}
 	}
 

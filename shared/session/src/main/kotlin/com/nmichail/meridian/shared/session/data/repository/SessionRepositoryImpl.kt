@@ -1,12 +1,14 @@
 package com.nmichail.meridian.shared.session.data.repository
 
 import com.nmichail.meridian.core.network.session.AuthSession
+import com.nmichail.meridian.core.network.session.SessionListener
 import com.nmichail.meridian.core.network.session.SessionRepository
 import com.nmichail.meridian.shared.session.data.datasource.SessionLocalDataSource
 import javax.inject.Inject
 
 class SessionRepositoryImpl @Inject constructor(
 	private val dataSource: SessionLocalDataSource,
+	private val sessionListener: SessionListener,
 ) : SessionRepository {
 
 	override fun isSignedIn(): Boolean = dataSource.isSignedIn()
@@ -29,9 +31,13 @@ class SessionRepositoryImpl @Inject constructor(
 
 	override fun save(session: AuthSession) {
 		dataSource.save(session)
+
+		sessionListener.opened()
 	}
 
 	override fun clear() {
 		dataSource.clear()
+
+		sessionListener.cleared()
 	}
 }

@@ -72,6 +72,7 @@ dependencies {
 	implementation(projects.core.di)
 	implementation(projects.core.validation)
 	implementation(projects.shared.session)
+	implementation(projects.shared.chat)
 	implementation(projects.features.mainhost)
 	implementation(projects.features.chat)
 	implementation(projects.features.groups)

@@ -1,6 +1,7 @@
 package com.nmichail.meridian.shared.session.data.repository
 
 import com.nmichail.meridian.core.network.session.AuthSession
+import com.nmichail.meridian.core.network.session.SessionListener
 import com.nmichail.meridian.shared.session.data.datasource.SessionLocalDataSource
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -12,7 +13,8 @@ import org.mockito.kotlin.whenever
 class SessionRepositoryImplTest {
 
 	private val dataSource: SessionLocalDataSource = mock()
-	private val repository = SessionRepositoryImpl(dataSource)
+	private val sessionListener: SessionListener = mock()
+	private val repository = SessionRepositoryImpl(dataSource, sessionListener)
 	private val session = AuthSession(
 		userId = "user",
 		deviceId = "device",
@@ -85,5 +87,19 @@ class SessionRepositoryImplTest {
 		repository.clear()
 
 		verify(dataSource).clear()
+	}
+
+	@Test
+	fun `save EXPECT session opened`() {
+		repository.save(session)
+
+		verify(sessionListener).opened()
+	}
+
+	@Test
+	fun `clear EXPECT session cleared`() {
+		repository.clear()
+
+		verify(sessionListener).cleared()
 	}
 }

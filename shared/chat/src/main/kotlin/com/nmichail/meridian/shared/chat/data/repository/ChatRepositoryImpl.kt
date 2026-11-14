@@ -6,7 +6,7 @@ import com.nmichail.meridian.core.network.error.GatewayCode
 import com.nmichail.meridian.core.network.error.GatewayException
 import com.nmichail.meridian.core.network.session.SessionRepository
 import com.nmichail.meridian.shared.chat.data.api.ChatApi
-import com.nmichail.meridian.shared.chat.data.datasource.ChatCacheDataSource
+import com.nmichail.meridian.shared.chat.data.datasource.ChatDataSource
 import com.nmichail.meridian.shared.chat.data.datasource.DeletionDataSource
 import com.nmichail.meridian.shared.chat.data.datasource.MemberDataSource
 import com.nmichail.meridian.shared.chat.data.datasource.ReactionDataSource
@@ -36,7 +36,7 @@ class ChatRepositoryImpl @Inject constructor(
 	private val memberDataSource: MemberDataSource,
 	private val reactionDataSource: ReactionDataSource,
 	private val deletionDataSource: DeletionDataSource,
-	private val cache: ChatCacheDataSource,
+	private val chatDataSource: ChatDataSource,
 ) : ChatRepository {
 	override suspend fun loadChats(): List<Chat> {
 		val chats = api.getChats().toChats(
@@ -44,7 +44,7 @@ class ChatRepositoryImpl @Inject constructor(
 			self = sessionRepository.getUserId(),
 		)
 
-		cache.save(chats)
+		chatDataSource.save(chats)
 
 		return chats
 	}

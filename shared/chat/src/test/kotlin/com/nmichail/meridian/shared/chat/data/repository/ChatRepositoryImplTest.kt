@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import com.nmichail.meridian.core.network.error.GatewayException
 import com.nmichail.meridian.core.network.session.SessionRepository
 import com.nmichail.meridian.shared.chat.data.api.ChatApi
-import com.nmichail.meridian.shared.chat.data.datasource.ChatCacheDataSource
+import com.nmichail.meridian.shared.chat.data.datasource.ChatDataSource
 import com.nmichail.meridian.shared.chat.data.datasource.DeletionDataSourceImpl
 import com.nmichail.meridian.shared.chat.data.datasource.MemberDataSourceImpl
 import com.nmichail.meridian.shared.chat.data.datasource.ReactionDataSourceImpl
@@ -44,7 +44,7 @@ import org.mockito.kotlin.whenever
 class ChatRepositoryImplTest {
 	private val api: ChatApi = mock()
 	private val sessionRepository: SessionRepository = mock()
-	private val cache: ChatCacheDataSource = mock()
+	private val chatDataSource: ChatDataSource = mock()
 	private val context: Context = mock()
 	private val preferences: SharedPreferences = mock()
 	private val editor: SharedPreferences.Editor = mock()
@@ -61,7 +61,7 @@ class ChatRepositoryImplTest {
 			MemberDataSourceImpl(api),
 			ReactionDataSourceImpl(context),
 			DeletionDataSourceImpl(context),
-			cache,
+			chatDataSource,
 		)
 	}
 

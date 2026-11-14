@@ -1,6 +1,6 @@
 package com.nmichail.meridian.shared.chat.domain.usecase
 
-import com.nmichail.meridian.shared.chat.data.memory.MessageMemory
+import com.nmichail.meridian.shared.chat.data.datasource.MessageDataSourceImpl
 import com.nmichail.meridian.shared.chat.domain.entity.ChatThread
 import com.nmichail.meridian.testutils.TestCoroutineExtension
 import com.nmichail.meridian.shared.chat.domain.repository.ChatRepository
@@ -15,9 +15,9 @@ import org.mockito.kotlin.whenever
 @ExtendWith(TestCoroutineExtension::class)
 class LoadMessagesUseCaseTest {
 	private val repository: ChatRepository = mock()
-	private val memory = MessageMemory()
-	private val useCase = LoadMessagesUseCase(repository, memory)
-	private val cached = ReadCachedMessagesUseCase(memory)
+	private val messageDataSource = MessageDataSourceImpl()
+	private val useCase = LoadMessagesUseCase(repository, messageDataSource)
+	private val cached = ReadCachedMessagesUseCase(messageDataSource)
 	private val thread = ChatThread(
 		lines = emptyList(),
 		members = 2,

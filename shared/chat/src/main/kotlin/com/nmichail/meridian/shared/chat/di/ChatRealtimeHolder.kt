@@ -16,4 +16,8 @@ object ChatRealtimeHolder {
 		component = created
 		return created
 	}
+
+	fun disconnect() {
+		component?.chatRealtime()?.disconnect()
+	}
 }
