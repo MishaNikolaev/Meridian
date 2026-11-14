@@ -7,14 +7,21 @@ import com.nmichail.meridian.core.navigation.di.NavigationModule
 import com.nmichail.meridian.core.network.di.CoreApi
 import com.nmichail.meridian.core.network.di.NetworkModule
 import com.nmichail.meridian.core.di.ApplicationContext
+import com.nmichail.meridian.core.network.session.SessionListener
 import com.nmichail.meridian.shared.session.di.SessionDataModule
+import dagger.Binds
 import dagger.BindsInstance
 import dagger.Component
 import dagger.Module
 import javax.inject.Singleton
 
 @Module(subcomponents = [ActivityComponent::class])
-interface AppModule
+interface AppModule {
+
+	@Binds
+	@Singleton
+	fun bindSessionListener(impl: AppSessionListener): SessionListener
+}
 
 @Singleton
 @Component(
