@@ -4,6 +4,7 @@ include(
 
 	":component:ui",
 	":component:photopicker",
+	":component:photo",
 
 	":core:di",
 	":core:presentation",
@@ -20,6 +21,7 @@ include(
 	":features:contacts",
 	":features:calls",
 	":features:profile",
+	":features:profile:about",
 	":features:person",
 	":features:registration",
 	":features:authorization:workspace",
@@ -28,4 +30,5 @@ include(
 
 	":shared:session",
 	":shared:chat",
+	":shared:organization",
 )
