@@ -15,9 +15,9 @@ class SendMessageUseCaseTest {
 	private val useCase = SendMessageUseCase(repository)
 
 	@Test
-	fun `invoke EXPECT repository send`() = runTest {
-		useCase("1", "привет", "", "", "")
+	fun `invoke EXPECT sent message`() = runTest {
+		useCase("1", "привет", "", "", "", "", "", "", emptyList())
 
-		verify(repository).send("1", "привет", "", "", "")
+		verify(repository).sendMessage("1", "привет", "", "", "", "", "", "", emptyList())
 	}
 }
