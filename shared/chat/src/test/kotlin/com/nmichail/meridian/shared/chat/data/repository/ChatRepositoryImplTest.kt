@@ -78,6 +78,7 @@ class ChatRepositoryImplTest {
 					personName = null,
 					unreadCount = 2,
 					lastMessage = null,
+					lastDiscussion = null,
 					corporate = true,
 					description = null,
 				),
@@ -89,6 +90,9 @@ class ChatRepositoryImplTest {
 				type = ChatType.GROUP,
 				title = "Обсуждение",
 				preview = "",
+				fileId = "",
+				fileName = "",
+				fileType = "",
 				sentAt = null,
 				unread = 2,
 				corporate = true,
@@ -96,6 +100,8 @@ class ChatRepositoryImplTest {
 				personId = null,
 				discussionRoot = null,
 				discussionText = null,
+				discussionComment = null,
+				discussionSentAt = null,
 			),
 		)
 
@@ -129,6 +135,25 @@ class ChatRepositoryImplTest {
 			),
 			actual,
 		)
+	}
+
+	@Test
+	fun `create direct chat by id EXPECT no lookup`() = runTest {
+		val peer = "2f288e3d-c526-4f8d-b4bf-28c4779fd60a"
+		whenever(sessionRepository.getUserId()) doReturn "self"
+		whenever(
+			api.createChat(
+				CreateChatDto(
+					type = ChatTypeDto.DIRECT,
+					title = null,
+					memberIds = listOf(peer),
+				),
+			),
+		) doReturn details(title = "Анна")
+
+		repository.create(ChatType.DIRECT, "", listOf(peer))
+
+		verify(api, never()).getUsers(peer)
 	}
 
 	@Test
@@ -205,6 +230,9 @@ class ChatRepositoryImplTest {
 					deleted = true,
 					edited = false,
 					service = false,
+					fileId = "",
+					fileName = "",
+					fileType = "",
 				),
 			),
 			members = 1,
@@ -363,6 +391,7 @@ class ChatRepositoryImplTest {
 			personName = null,
 			unreadCount = 0,
 			lastMessage = null,
+			lastDiscussion = null,
 			corporate = true,
 			description = null,
 		),

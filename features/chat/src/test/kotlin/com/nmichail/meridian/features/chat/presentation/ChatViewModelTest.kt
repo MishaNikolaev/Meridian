@@ -59,6 +59,9 @@ class ChatViewModelTest {
 			type = ChatType.DIRECT,
 			title = "Анна",
 			preview = "",
+			fileId = "",
+			fileName = "",
+			fileType = "",
 			sentAt = null,
 			unread = 0,
 			corporate = true,
@@ -66,6 +69,8 @@ class ChatViewModelTest {
 			personId = "member",
 			discussionRoot = null,
 			discussionText = null,
+			discussionComment = null,
+			discussionSentAt = null,
 		),
 	)
 	private val externalChat = Chat(
@@ -73,6 +78,9 @@ class ChatViewModelTest {
 		type = ChatType.DIRECT,
 		title = "Кирилл",
 		preview = "",
+		fileId = "",
+		fileName = "",
+		fileType = "",
 		sentAt = null,
 		unread = 0,
 		corporate = false,
@@ -80,6 +88,8 @@ class ChatViewModelTest {
 		personId = "guest",
 		discussionRoot = null,
 		discussionText = null,
+		discussionComment = null,
+		discussionSentAt = null,
 	)
 	private val ioException = IOException()
 	private val illegalStateException = IllegalStateException()
@@ -91,6 +101,9 @@ class ChatViewModelTest {
 			type = ChatType.GROUP,
 			title = "Смена",
 			preview = "тема",
+			fileId = "",
+			fileName = "",
+			fileType = "",
 			sentAt = "2026-11-01T00:00:00Z",
 			unread = 0,
 			corporate = true,
@@ -98,6 +111,8 @@ class ChatViewModelTest {
 			personId = null,
 			discussionRoot = "m",
 			discussionText = "тема",
+			discussionComment = null,
+			discussionSentAt = null,
 		)
 		whenever(loadChatsUseCase.invoke()) doReturn listOf(group)
 		viewModel.applyIntent(ChatIntent.LoadInitialData)
@@ -116,6 +131,9 @@ class ChatViewModelTest {
 			type = ChatType.GROUP,
 			title = "Смена",
 			preview = "тема",
+			fileId = "",
+			fileName = "",
+			fileType = "",
 			sentAt = "2026-11-01T00:00:00Z",
 			unread = 0,
 			corporate = true,
@@ -123,6 +141,8 @@ class ChatViewModelTest {
 			personId = null,
 			discussionRoot = "m",
 			discussionText = "тема",
+			discussionComment = null,
+			discussionSentAt = null,
 		)
 		whenever(loadChatsUseCase.invoke()) doReturn listOf(group)
 		viewModel.applyIntent(ChatIntent.LoadInitialData)

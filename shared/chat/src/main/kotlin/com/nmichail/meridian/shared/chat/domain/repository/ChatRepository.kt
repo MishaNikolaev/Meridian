@@ -16,7 +16,17 @@ interface ChatRepository {
 
 	suspend fun loadMessages(chatId: String): ChatThread
 
-	suspend fun send(chatId: String, text: String, replyAuthor: String, replyText: String, threadRoot: String)
+	suspend fun sendMessage(
+		chatId: String,
+		text: String,
+		replyAuthor: String,
+		replyText: String,
+		threadRoot: String,
+		fileId: String,
+		fileName: String,
+		fileType: String,
+		photoId: List<String>,
+	)
 
 	suspend fun markRead(messageId: String)
 

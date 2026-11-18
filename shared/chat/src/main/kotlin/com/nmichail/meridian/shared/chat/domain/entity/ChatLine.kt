@@ -13,4 +13,7 @@ data class ChatLine(
 	val deleted: Boolean,
 	val edited: Boolean,
 	val service: Boolean,
+	val fileId: String,
+	val fileName: String,
+	val fileType: String,
 )
