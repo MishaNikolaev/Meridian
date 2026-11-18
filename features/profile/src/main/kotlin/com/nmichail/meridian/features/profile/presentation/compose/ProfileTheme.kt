@@ -18,7 +18,10 @@ import com.nmichail.meridian.features.profile.R
 private val choices = listOf(ThemeChoice.System, ThemeChoice.Light, ThemeChoice.Dark)
 
 @Composable
-internal fun AppearanceBlock(version: String) {
+internal fun AppearanceBlock(
+	version: String,
+	onAbout: () -> Unit,
+) {
 	var open by remember { mutableStateOf(false) }
 
 	val context = LocalContext.current
@@ -29,6 +32,7 @@ internal fun AppearanceBlock(version: String) {
 		version = version,
 		theme = stringResource(choice.label()),
 		onAppearance = { open = true },
+		onAbout = onAbout,
 	)
 
 	if (open) {

@@ -7,4 +7,5 @@ data class PostMessageDto(
 	val clientMessageId: String,
 	val deviceMessages: List<DeviceMessageDto>,
 	val threadRoot: String?,
+	val photoId: List<String>,
 )

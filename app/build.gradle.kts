@@ -81,6 +81,7 @@ dependencies {
 	implementation(projects.features.contacts)
 	implementation(projects.features.calls)
 	implementation(projects.features.profile)
+	implementation(projects.features.profile.about)
 	implementation(projects.features.person)
 	implementation(projects.features.registration)
 	implementation(projects.features.authorization.workspace)

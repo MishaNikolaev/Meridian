@@ -1,5 +1,6 @@
 package com.nmichail.meridian.features.conversation.di
 
+import com.nmichail.meridian.component.photopicker.di.PhotoModule
 import com.nmichail.meridian.core.di.PerFeature
 import com.nmichail.meridian.core.network.di.CoreApi
 import com.nmichail.meridian.core.presentation.di.ViewModelModule
@@ -12,7 +13,7 @@ import dagger.Component
 @PerFeature
 @Component(
 	dependencies = [CoreApi::class, ChatRealtimeComponent::class, ChatSessionApi::class],
-	modules = [ConversationModule::class, ViewModelModule::class],
+	modules = [ConversationModule::class, ViewModelModule::class, PhotoModule::class],
 )
 internal interface ConversationComponent : ConversationFeatureApi {
 

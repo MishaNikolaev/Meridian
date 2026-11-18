@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.core.content.edit
 import com.nmichail.meridian.core.di.ApplicationContext
 import com.nmichail.meridian.core.network.session.SessionRepository
-import com.nmichail.meridian.shared.chat.data.mapper.toCached
+import com.nmichail.meridian.shared.chat.data.mapper.toRecord
 import com.nmichail.meridian.shared.chat.data.mapper.toChat
 import com.nmichail.meridian.shared.chat.domain.entity.Chat
 import javax.inject.Inject
@@ -33,7 +33,7 @@ class ChatDataSourceImpl @Inject constructor(
 		val raw = preferences.getString(key(userId()), null) ?: return null
 
 		val page = try {
-			json.decodeFromString<CachedChatPage>(raw)
+			json.decodeFromString<ChatRecords>(raw)
 		} catch (_: SerializationException) {
 			return null
 		}
@@ -42,7 +42,7 @@ class ChatDataSourceImpl @Inject constructor(
 	}
 
 	override suspend fun save(chats: List<Chat>) {
-		val raw = json.encodeToString(CachedChatPage(items = chats.map { chat -> chat.toCached() }))
+		val raw = json.encodeToString(ChatRecords(items = chats.map { chat -> chat.toRecord() }))
 
 		preferences.edit { putString(key(userId()), raw) }
 	}

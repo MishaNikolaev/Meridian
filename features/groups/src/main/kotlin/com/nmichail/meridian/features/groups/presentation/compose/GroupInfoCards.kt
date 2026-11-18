@@ -26,22 +26,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.nmichail.meridian.component.ui.R as UiR
-import com.nmichail.meridian.component.ui.field.MUiTextField
-import com.nmichail.meridian.component.ui.field.model.MUiFieldIcon
-import com.nmichail.meridian.component.ui.field.model.MUiTextFieldModel
-import com.nmichail.meridian.component.photopicker.compose.PhotoFace
-import com.nmichail.meridian.component.ui.validation.usernameErrorMessage
-import com.nmichail.meridian.core.validation.username.UsernameValidationItem
+import com.nmichail.meridian.component.photo.PhotoFace
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.features.groups.R
 import com.nmichail.meridian.features.groups.presentation.GroupInfoIntent
 import com.nmichail.meridian.features.groups.presentation.GroupMate
 
-private const val MEMBER_PREVIEW = 3
-
 @Composable
-internal fun DetailCard() {
+internal fun DetailCard(onIntent: (GroupInfoIntent) -> Unit) {
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -52,6 +45,7 @@ internal fun DetailCard() {
 			icon = R.drawable.ic_group_camera,
 			title = stringResource(R.string.group_media),
 			value = "",
+			onClick = { onIntent(GroupInfoIntent.OpenMedia) },
 		)
 
 		DetailRow(
@@ -79,10 +73,12 @@ private fun DetailRow(
 	icon: Int,
 	title: String,
 	value: String,
+	onClick: (() -> Unit)? = null,
 ) {
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
+			.then(if (onClick == null) Modifier else Modifier.clickable(onClick = onClick))
 			.padding(start = 16.dp, end = 14.dp, top = 14.dp, bottom = 14.dp),
 		horizontalArrangement = Arrangement.spacedBy(14.dp),
 		verticalAlignment = Alignment.CenterVertically,
@@ -149,20 +145,19 @@ internal fun LeaveRow(
 }
 
 @Composable
+@Suppress("MagicNumber")
 internal fun MemberCard(
 	mates: List<GroupMate>,
 	menu: String?,
 	expanded: Boolean,
-	adding: Boolean,
-	login: UsernameValidationItem,
 	canEdit: Boolean,
 	corporate: Boolean,
 	onIntent: (GroupInfoIntent) -> Unit,
 ) {
-	val visible = if (expanded || mates.size <= MEMBER_PREVIEW) {
+	val visible = if (expanded || mates.size <= 3) {
 		mates
 	} else {
-		mates.take(n = MEMBER_PREVIEW)
+		mates.take(n = 3)
 	}
 
 	val known = mates.any { mate -> mate.owner }
@@ -176,11 +171,7 @@ internal fun MemberCard(
 			.background(palette.surface),
 	) {
 		Text(
-			text = if (mates.size == 1) {
-				stringResource(R.string.group_members_title)
-			} else {
-				stringResource(R.string.group_members, mates.size)
-			},
+			text = stringResource(R.string.group_members_title),
 			style = MeridianType.bodySmall.copy(fontWeight = FontWeight.SemiBold),
 			color = palette.textPrimary,
 			modifier = Modifier.padding(start = 16.dp, top = 14.dp, bottom = 6.dp),
@@ -197,56 +188,24 @@ internal fun MemberCard(
 			)
 		}
 
-		if (!expanded && mates.size > MEMBER_PREVIEW) {
+		if (!expanded && mates.size > 3) {
 			ShowAll(onIntent = onIntent)
 		}
 
 		if (canEdit) {
-			if (adding) {
-				LoginField(login = login, onIntent = onIntent)
-			}
-
-			AddMember(adding = adding, onIntent = onIntent)
+			AddMember(onIntent = onIntent)
 		}
 	}
 }
 
 @Composable
-private fun LoginField(
-	login: UsernameValidationItem,
-	onIntent: (GroupInfoIntent) -> Unit,
-) {
-	MUiTextField(
-		model = MUiTextFieldModel(
-			icon = MUiFieldIcon.None,
-			value = login.data,
-			label = stringResource(R.string.group_member_login),
-			error = stringResource(id = usernameErrorMessage(state = login.validationState)),
-		),
-		onValueChange = { onIntent(GroupInfoIntent.ChangeLogin(login = it)) },
-		onDone = { onIntent(GroupInfoIntent.ConfirmAdd) },
-		container = palette.field,
-		modifier = Modifier
-			.fillMaxWidth()
-			.padding(horizontal = 16.dp, vertical = 8.dp),
-	)
-}
-
-@Composable
 private fun AddMember(
-	adding: Boolean,
 	onIntent: (GroupInfoIntent) -> Unit,
 ) {
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
-			.clickable {
-				if (adding) {
-					onIntent(GroupInfoIntent.ConfirmAdd)
-				} else {
-					onIntent(GroupInfoIntent.StartAdd)
-				}
-			}
+			.clickable { onIntent(GroupInfoIntent.StartAdd) }
 			.padding(start = 16.dp, end = 14.dp, top = 14.dp, bottom = 14.dp),
 		horizontalArrangement = Arrangement.spacedBy(14.dp),
 		verticalAlignment = Alignment.CenterVertically,

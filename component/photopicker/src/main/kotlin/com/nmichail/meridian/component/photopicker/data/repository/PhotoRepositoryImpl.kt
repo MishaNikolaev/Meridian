@@ -1,28 +1,37 @@
 package com.nmichail.meridian.component.photopicker.data.repository
 
+import com.nmichail.meridian.component.photopicker.PhotoLocalDataSource
 import com.nmichail.meridian.component.photopicker.data.api.PhotoApi
+import com.nmichail.meridian.component.photopicker.data.photoUpload
 import com.nmichail.meridian.component.photopicker.data.dto.AvatarBody
 import com.nmichail.meridian.component.photopicker.domain.entity.PersonPhoto
 import com.nmichail.meridian.component.photopicker.domain.repository.PhotoRepository
-import io.ktor.client.request.forms.MultiPartFormDataContent
-import io.ktor.client.request.forms.formData
-import io.ktor.http.Headers
-import io.ktor.http.HttpHeaders
+import com.nmichail.meridian.component.photopicker.photoUrl
+import io.ktor.client.HttpClient
+import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsBytes
 import kotlinx.coroutines.CancellationException
 
 internal class PhotoRepositoryImpl(
 	private val api: PhotoApi,
+	private val client: HttpClient,
 ) : PhotoRepository {
 	override suspend fun installPhoto(bytes: ByteArray, contentType: String): String {
-		val photoId = upload(bytes, contentType)
+		val photoId = uploadPhoto(bytes, contentType)
 
 		val saved = api.saveAvatar(AvatarBody(photoId = photoId))
 
 		return saved.photoId ?: photoId
 	}
 
-	override suspend fun upload(bytes: ByteArray, contentType: String): String =
-		api.upload(file(bytes, contentType)).blobId
+	override suspend fun uploadPhoto(bytes: ByteArray, contentType: String): String =
+		api.upload(photoUpload(bytes, contentType)).blobId
+
+	override suspend fun downloadPhoto(blobId: String): ByteArray = client.get(photoUrl(blobId)).bodyAsBytes()
+
+	override fun keepPersonPhoto(userId: String, photoId: String) {
+		PhotoLocalDataSource.keepPersonPhoto(userId = userId, photoId = photoId)
+	}
 
 	override suspend fun loadPhoto(userId: String): PersonPhoto? {
 		try {
@@ -38,18 +47,4 @@ internal class PhotoRepositoryImpl(
 			return null
 		}
 	}
-
-	private fun file(bytes: ByteArray, contentType: String): MultiPartFormDataContent = MultiPartFormDataContent(
-		formData {
-			append(
-				key = "file",
-				value = bytes,
-				headers = Headers.build {
-					append(HttpHeaders.ContentType, contentType)
-
-					append(HttpHeaders.ContentDisposition, "filename=\"photo\"")
-				},
-			)
-		},
-	)
 }

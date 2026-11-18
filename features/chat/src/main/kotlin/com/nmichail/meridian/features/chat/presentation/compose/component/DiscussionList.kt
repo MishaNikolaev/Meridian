@@ -23,7 +23,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.nmichail.meridian.component.ui.compose.Screen
 import com.nmichail.meridian.component.ui.theme.MeridianType
-import com.nmichail.meridian.component.photopicker.compose.PhotoFace
+import com.nmichail.meridian.component.photo.PhotoFace
 import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.features.chat.R
 import com.nmichail.meridian.features.chat.presentation.ChatIntent
@@ -138,23 +138,7 @@ private fun DiscussionRow(
 				)
 			}
 
-			Text(
-				text = discussion.text,
-				style = MeridianType.captionDefault,
-				color = palette.textSecondary,
-				maxLines = 1,
-				overflow = TextOverflow.Ellipsis,
-			)
-
-			if (discussion.comment.isNotEmpty()) {
-				Text(
-					text = discussion.comment,
-					style = MeridianType.captionDefault,
-					color = palette.textSecondary,
-					maxLines = 1,
-					overflow = TextOverflow.Ellipsis,
-				)
-			}
+			DiscussionTexts(text = discussion.text, comment = discussion.comment)
 		}
 	}
 }

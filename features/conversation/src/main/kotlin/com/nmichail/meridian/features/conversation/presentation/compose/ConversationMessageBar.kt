@@ -223,8 +223,7 @@ private fun MessageField(
 	}
 }
 
-private const val EMOJI_COLUMNS = 12
-
+@Suppress("MagicNumber")
 @Composable
 private fun EmojiPanel(onEmoji: (String) -> Unit) {
 	val border = palette.borderDefault
@@ -248,7 +247,7 @@ private fun EmojiPanel(onEmoji: (String) -> Unit) {
 				.height(280.dp),
 			factory = { context ->
 				EmojiPickerView(context).apply {
-					emojiGridColumns = EMOJI_COLUMNS
+					emojiGridColumns = 12
 				}
 			},
 			update = { picker ->

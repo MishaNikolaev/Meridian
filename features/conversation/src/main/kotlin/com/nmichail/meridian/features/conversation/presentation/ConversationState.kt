@@ -1,6 +1,7 @@
 package com.nmichail.meridian.features.conversation.presentation
 
 import com.nmichail.meridian.features.conversation.domain.entity.Mention
+import com.nmichail.meridian.features.conversation.presentation.ConversationIntent.DraftFile
 import com.nmichail.meridian.features.conversation.presentation.compose.component.DayLine
 import com.nmichail.meridian.shared.chat.domain.entity.ChatLine
 import com.nmichail.meridian.shared.chat.domain.entity.ChatPerson
@@ -38,6 +39,10 @@ sealed interface ConversationState {
 		val replyText: String,
 		val rootId: String?,
 		val personId: String,
+		val files: List<DraftFile>,
+		val fileName: String,
+		val previews: List<ByteArray>,
+		val photo: String,
 	) : ConversationState
 
 	data class Error(

@@ -14,6 +14,7 @@
 	<string name="chat_search">Поиск</string>
 	<string name="chat_empty">Чатов пока нет</string>
 	<string name="chat_empty_text">Начните переписку с коллегой или создайте чат по задаче</string>
+	<string name="chat_poll">Опрос</string>
 	<string name="chat_section_all">Все</string>
 	<string name="chat_section_catalog">Каталог</string>
 	<string name="chat_section_bots">Боты</string>

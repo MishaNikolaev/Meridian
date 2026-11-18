@@ -15,10 +15,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,7 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.nmichail.meridian.component.photopicker.compose.PhotoFace
+import com.nmichail.meridian.component.photo.PhotoFace
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.R as UiR
 import com.nmichail.meridian.component.ui.theme.palette
@@ -38,13 +41,20 @@ import com.nmichail.meridian.features.conversation.R
 import com.nmichail.meridian.features.conversation.presentation.ConversationIntent
 import com.nmichail.meridian.features.conversation.presentation.ConversationState
 import com.nmichail.meridian.features.conversation.presentation.compose.component.MessageReactions
+import com.nmichail.meridian.features.conversation.presentation.compose.component.LocalTallies
 import com.nmichail.meridian.features.conversation.presentation.compose.component.MessageRow
+import com.nmichail.meridian.features.conversation.presentation.compose.component.PollCard
+import com.nmichail.meridian.features.conversation.presentation.compose.component.quotedScroll
+import com.nmichail.meridian.features.conversation.presentation.compose.component.toPoll
+import com.nmichail.meridian.features.conversation.presentation.compose.component.vote
+import com.nmichail.meridian.features.conversation.presentation.compose.component.tallies
 import com.nmichail.meridian.features.conversation.presentation.compose.component.SelectionBar
 import com.nmichail.meridian.features.conversation.presentation.compose.component.messageClock
 import com.nmichail.meridian.features.conversation.presentation.compose.component.messageDay
 import com.nmichail.meridian.features.conversation.presentation.compose.component.pressMessage
 import com.nmichail.meridian.shared.chat.domain.entity.ChatLine
 import com.nmichail.meridian.shared.chat.domain.entity.ChatReaction
+import kotlinx.coroutines.launch
 
 @Composable
 internal fun ColumnScope.DiscussionColumn(
@@ -131,6 +141,7 @@ private fun DiscussionBar(
 			Image(
 				painter = painterResource(UiR.drawable.ic_back),
 				contentDescription = null,
+				colorFilter = ColorFilter.tint(palette.textPrimary),
 				modifier = Modifier.size(16.dp),
 			)
 		}
@@ -176,7 +187,16 @@ private fun CommentList(
 	onIntent: (ConversationIntent) -> Unit,
 	modifier: Modifier,
 ) {
+	val tallies = (comments + listOfNotNull(root)).tallies()
+	val listState = rememberLazyListState()
+	val scope = rememberCoroutineScope()
+	val you = stringResource(R.string.conversation_you)
+	val greeting = stringResource(R.string.conversation_greeting)
+	val shown = comments.filter { line -> line.vote() == null }
+
+	CompositionLocalProvider(LocalTallies provides tallies) {
 	LazyColumn(
+		state = listState,
 		modifier = modifier.fillMaxWidth(),
 		contentPadding = PaddingValues(vertical = 10.dp),
 		verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -198,7 +218,7 @@ private fun CommentList(
 			}
 		}
 
-		items(comments, key = { line -> line.id }) { line ->
+		items(shown, key = { line -> line.id }) { line ->
 			MessageRow(
 				line = line,
 				continued = false,
@@ -212,9 +232,19 @@ private fun CommentList(
 				} else {
 					{ onReactions(line.id) }
 				},
+				onQuote = quotedScroll(
+					lines = comments + listOfNotNull(root),
+					shown = shown,
+					offset = if (root != null) 2 else 0,
+					you = you,
+					greeting = greeting,
+				) { index ->
+					scope.launch { listState.animateScrollToItem(index) }
+				},
 				onIntent = onIntent,
 			)
 		}
+	}
 	}
 }
 
@@ -249,14 +279,11 @@ private fun DiscussionPost(
 	) {
 		PostAuthor(
 			name = name,
+			userId = line.authorId,
 			sentAt = line.sentAt,
 		)
 
-		Text(
-			text = if (line.id == "hello") stringResource(R.string.conversation_greeting) else line.text,
-			style = MeridianType.chatMessage,
-			color = palette.textPrimary,
-		)
+		PostBody(line = line, onIntent = onIntent)
 
 		if (viewers.isNotEmpty()) {
 			MessageReactions(
@@ -272,7 +299,33 @@ private fun DiscussionPost(
 }
 
 @Composable
-private fun PostAuthor(name: String, sentAt: String?) {
+private fun PostBody(line: ChatLine, onIntent: (ConversationIntent) -> Unit) {
+	val spoken = if (line.id == "hello") stringResource(R.string.conversation_greeting) else line.text
+	val poll = if (line.deleted) null else spoken.toPoll()
+	val tally = LocalTallies.current[line.id]
+
+	if (poll == null) {
+		Text(text = spoken, style = MeridianType.chatMessage, color = palette.textPrimary)
+		return
+	}
+
+	PollCard(
+		question = poll.question,
+		description = poll.description,
+		options = poll.options,
+		counts = tally?.counts.orEmpty(),
+		picked = tally?.mine ?: -1,
+		correct = poll.correct,
+		solution = poll.solution,
+		voters = tally?.voters.orEmpty(),
+		onPick = { index ->
+			onIntent(ConversationIntent.Vote(pollId = line.id, option = index, question = poll.question))
+		},
+	)
+}
+
+@Composable
+private fun PostAuthor(name: String, userId: String, sentAt: String?) {
 	Row(
 		horizontalArrangement = Arrangement.spacedBy(10.dp),
 		verticalAlignment = Alignment.CenterVertically,
@@ -295,6 +348,7 @@ private fun PostAuthor(name: String, sentAt: String?) {
 		} else {
 			PhotoFace(
 				name = name,
+				userId = userId,
 				size = 36.dp,
 				style = MeridianType.captionDefault.copy(fontWeight = FontWeight.SemiBold),
 			)

@@ -9,6 +9,9 @@ class OpenedMessageTest {
 		text = "Да, залил",
 		replyAuthor = "Соколова Анна Сергеевна",
 		replyText = "Кирилл, макеты экрана оплаты уже обновил?",
+		fileId = "",
+		fileName = "",
+		fileType = "",
 	)
 
 	@Test
@@ -26,5 +29,19 @@ class OpenedMessageTest {
 	@Test
 	fun `reply EXPECT quoted author`() {
 		assertEquals("Соколова Анна Сергеевна", decodeOpenedMessage(reply).replyAuthor)
+	}
+
+	@Test
+	fun `file EXPECT name`() {
+		val encoded = encodeOpenedMessage(
+			text = "",
+			replyAuthor = "",
+			replyText = "",
+			fileId = "blob",
+			fileName = "счёт.pdf",
+			fileType = "application/pdf",
+		)
+
+		assertEquals("счёт.pdf", decodeOpenedMessage(encoded).fileName)
 	}
 }

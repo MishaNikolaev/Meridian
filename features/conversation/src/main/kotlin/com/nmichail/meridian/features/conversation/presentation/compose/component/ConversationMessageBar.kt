@@ -1,5 +1,9 @@
 package com.nmichail.meridian.features.conversation.presentation.compose.component
 
+import android.util.TypedValue
+import android.widget.TextView
+import androidx.core.content.res.ResourcesCompat
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -30,7 +34,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -39,34 +45,59 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.emoji2.emojipicker.EmojiPickerView
+import android.view.ViewGroup
+import androidx.emoji2.emojipicker.R as EmojiR
+import com.nmichail.meridian.component.ui.R as UiR
 import com.nmichail.meridian.component.ui.emoji.emojiCluster
 import com.nmichail.meridian.component.ui.emoji.withSystemEmoji
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.features.conversation.R
 import com.nmichail.meridian.features.conversation.presentation.ConversationIntent
+import com.nmichail.meridian.features.conversation.presentation.ConversationIntent.DraftFile
+import java.util.Locale
 
 @Composable
 internal fun MessageBar(
 	draft: String,
 	onIntent: (ConversationIntent) -> Unit,
+	fileName: String = "",
+	previews: List<ByteArray> = emptyList(),
 	placeholder: Int = R.string.conversation_message,
 	replyKey: String = "",
 	modifier: Modifier = Modifier,
 ) {
 	val focus = remember { FocusRequester() }
+	val focusManager = LocalFocusManager.current
+	val keyboard = LocalSoftwareKeyboardController.current
 	var open by remember { mutableStateOf(false) }
+	var picking by remember { mutableStateOf(false) }
 
 	FocusReply(replyKey = replyKey, focus = focus)
 
-	Column(modifier = modifier.fillMaxWidth()) {
+	LaunchedEffect(picking) {
+		if (picking) {
+			focusManager.clearFocus(force = true)
+			keyboard?.hide()
+		}
+	}
+
+	Column(modifier = modifier.fillMaxWidth().then(if (picking) Modifier.height(0.dp) else Modifier)) {
+		if (previews.isNotEmpty()) {
+			PhotoPreviews(previews = previews, onClear = { onIntent(ConversationIntent.ClearFile) })
+		} else if (fileName.isNotEmpty()) {
+			FileChip(name = fileName, onClear = { onIntent(ConversationIntent.ClearFile) })
+		}
+
 		BarRow(
 			draft = draft,
 			placeholder = placeholder,
 			focus = focus,
+			picking = picking,
 			onIntent = onIntent,
 			onToggleEmoji = { open = !open },
 			onFieldFocus = { open = false },
+			onPicking = { picking = it },
 		)
 
 		if (open) {
@@ -84,9 +115,11 @@ private fun BarRow(
 	draft: String,
 	placeholder: Int,
 	focus: FocusRequester,
+	picking: Boolean,
 	onIntent: (ConversationIntent) -> Unit,
 	onToggleEmoji: () -> Unit,
 	onFieldFocus: () -> Unit,
+	onPicking: (Boolean) -> Unit,
 ) {
 	val border = palette.borderDefault
 
@@ -106,16 +139,13 @@ private fun BarRow(
 		verticalAlignment = Alignment.CenterVertically,
 		horizontalArrangement = Arrangement.spacedBy(10.dp),
 	) {
-		Image(
-			painter = painterResource(R.drawable.ic_attach),
-			contentDescription = null,
-			modifier = Modifier.size(24.dp),
-		)
+		AttachButton(onIntent = onIntent, onPicking = onPicking)
 
 		MessageField(
 			draft = draft,
 			placeholder = placeholder,
 			focus = focus,
+			picking = picking,
 			onIntent = onIntent,
 			onToggleEmoji = onToggleEmoji,
 			onFieldFocus = onFieldFocus,
@@ -144,6 +174,7 @@ private fun MessageField(
 	draft: String,
 	placeholder: Int,
 	focus: FocusRequester,
+	picking: Boolean,
 	onIntent: (ConversationIntent) -> Unit,
 	onToggleEmoji: () -> Unit,
 	onFieldFocus: () -> Unit,
@@ -180,6 +211,7 @@ private fun MessageField(
 			modifier = Modifier
 				.weight(1f)
 				.focusRequester(focus)
+				.focusProperties { canFocus = !picking }
 				.onFocusChanged { state ->
 					if (state.isFocused) {
 						onFieldFocus()
@@ -232,8 +264,92 @@ private fun EmojiButton(onToggleEmoji: () -> Unit) {
 	)
 }
 
-private const val EMOJI_COLUMNS = 12
+@Composable
+private fun AttachButton(onIntent: (ConversationIntent) -> Unit, onPicking: (Boolean) -> Unit) {
+	var sheet by remember { mutableStateOf(false) }
+	val focusManager = LocalFocusManager.current
+	val keyboard = LocalSoftwareKeyboardController.current
 
+	if (sheet) {
+		AttachSheet(
+			onDismiss = {
+				sheet = false
+				onPicking(false)
+			},
+			onFile = { picked ->
+				sheet = false
+				onPicking(false)
+				onIntent(ConversationIntent.AttachFile(name = picked.name, type = picked.type, bytes = picked.bytes, document = picked.document))
+			},
+			onPhotos = { picked, caption ->
+				sheet = false
+				onPicking(false)
+				onIntent(ConversationIntent.ChangeDraft(draft = caption))
+				onIntent(
+					ConversationIntent.AttachPhotos(
+						files = picked.map { file -> DraftFile(name = file.name, type = file.type, bytes = file.bytes) },
+					),
+				)
+				onIntent(ConversationIntent.Send)
+			},
+			onPoll = { question, description, options, correct, solution ->
+				sheet = false
+				onPicking(false)
+				onIntent(
+					ConversationIntent.SendPoll(
+						question = question,
+						description = description,
+						options = options,
+						correct = correct,
+						solution = solution,
+					),
+				)
+			},
+		)
+	}
+
+	Image(
+		painter = painterResource(R.drawable.ic_attach),
+		contentDescription = stringResource(R.string.conversation_attach),
+		modifier = Modifier
+			.size(24.dp)
+			.clickable {
+				focusManager.clearFocus(force = true)
+				keyboard?.hide()
+				onPicking(true)
+				sheet = true
+			},
+	)
+}
+
+@Composable
+private fun FileChip(name: String, onClear: () -> Unit) {
+	Row(
+		modifier = Modifier
+			.fillMaxWidth()
+			.background(palette.bar)
+			.padding(start = 14.dp, end = 14.dp, top = 8.dp),
+		verticalAlignment = Alignment.CenterVertically,
+	) {
+		Text(
+			text = name,
+			style = MeridianType.chatMeta,
+			color = palette.textPrimary,
+			modifier = Modifier.weight(1f),
+		)
+
+		Spacer(modifier = Modifier.size(8.dp))
+
+		Text(
+			text = stringResource(R.string.conversation_file_remove),
+			style = MeridianType.chatMeta,
+			color = palette.accentPrimary,
+			modifier = Modifier.clickable(onClick = onClear),
+		)
+	}
+}
+
+@Suppress("MagicNumber")
 @Composable
 private fun EmojiPanel(onEmoji: (String) -> Unit) {
 	val border = palette.borderDefault
@@ -257,7 +373,8 @@ private fun EmojiPanel(onEmoji: (String) -> Unit) {
 				.height(280.dp),
 			factory = { context ->
 				EmojiPickerView(context).apply {
-					emojiGridColumns = EMOJI_COLUMNS
+					emojiGridColumns = 12
+					plainCategoryTitles()
 				}
 			},
 			update = { picker ->
@@ -267,4 +384,32 @@ private fun EmojiPanel(onEmoji: (String) -> Unit) {
 			},
 		)
 	}
+}
+
+private fun EmojiPickerView.plainCategoryTitles() {
+	viewTreeObserver.addOnGlobalLayoutListener {
+		val body = findViewById<ViewGroup>(EmojiR.id.emoji_picker_body) ?: return@addOnGlobalLayoutListener
+
+		repeat(body.childCount) { index ->
+			body.getChildAt(index)
+				.findViewById<TextView>(EmojiR.id.category_name)
+				?.plainTitle()
+		}
+	}
+}
+
+@Suppress("MagicNumber")
+private fun TextView.plainTitle() {
+	letterSpacing = 0f
+	typeface = ResourcesCompat.getFont(context, UiR.font.inter_medium)
+	setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+
+	val title = text?.toString().orEmpty()
+	if (title.isEmpty() || title.any(Char::isLowerCase)) {
+		return
+	}
+
+	text = title
+		.lowercase(Locale.forLanguageTag("ru"))
+		.replaceFirstChar { char -> char.titlecase(Locale.forLanguageTag("ru")) }
 }

@@ -16,6 +16,7 @@ dependencies {
 
 	implementation(projects.component.ui)
 	implementation(projects.component.photopicker)
+	implementation(projects.component.photo)
 	api(projects.core.di)
 	implementation(projects.core.presentation)
 	implementation(projects.core.navigation)

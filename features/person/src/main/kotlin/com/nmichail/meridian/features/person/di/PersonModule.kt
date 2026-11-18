@@ -9,6 +9,7 @@ import com.nmichail.meridian.features.person.data.datasource.PersonLocalDataSour
 import com.nmichail.meridian.features.person.data.datasource.PersonLocalDataSourceImpl
 import com.nmichail.meridian.features.person.data.repository.PersonRepositoryImpl
 import com.nmichail.meridian.features.person.domain.repository.PersonRepository
+import com.nmichail.meridian.component.photopicker.di.PhotoModule
 import com.nmichail.meridian.features.person.presentation.PersonViewModel
 import dagger.Binds
 import dagger.Module
@@ -16,7 +17,7 @@ import dagger.Provides
 import dagger.multibindings.IntoMap
 import de.jensklingenberg.ktorfit.Ktorfit
 
-@Module
+@Module(includes = [PhotoModule::class])
 abstract class PersonModule {
 	companion object {
 		@Provides

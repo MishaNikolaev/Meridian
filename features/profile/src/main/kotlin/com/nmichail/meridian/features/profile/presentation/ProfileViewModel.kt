@@ -21,6 +21,7 @@ class ProfileViewModel @Inject constructor(
 	private val errorDelegate: ErrorDelegate,
 	private val router: ProfileRouter,
 ) : BaseViewModel<ProfileState, ProfileIntent, Nothing>() {
+
 	private var loggingOut = false
 
 	private var savingStatus = false
@@ -32,6 +33,7 @@ class ProfileViewModel @Inject constructor(
 	override fun applyIntent(intent: ProfileIntent) {
 		when (intent) {
 			is ProfileIntent.LoadInitialData -> handleLoadInitialData()
+			is ProfileIntent.OpenAbout       -> handleOpenAbout()
 			is ProfileIntent.Logout          -> handleLogout()
 			is ProfileIntent.InstallPhoto    -> handleInstall(intent)
 			is ProfileIntent.StartStatus     -> handleStartStatus()
@@ -60,7 +62,7 @@ class ProfileViewModel @Inject constructor(
 
 		userId = account.userId
 
-		PhotoLocalDataSource.notePhoto(userId = account.userId, photoId = account.photo)
+		PhotoLocalDataSource.keepPersonPhoto(userId = account.userId, photoId = account.photo)
 
 		setState(
 			ProfileState.Content(
@@ -92,7 +94,7 @@ class ProfileViewModel @Inject constructor(
 
 			val shown = state.value as? ProfileState.Content ?: return@launchTry
 
-			PhotoLocalDataSource.notePhoto(userId = userId, photoId = photo)
+			PhotoLocalDataSource.keepPersonPhoto(userId = userId, photoId = photo)
 
 			setState(shown.copy(photo = photo, installing = false, notice = true))
 		} catch ::handleInstallFailure
@@ -164,6 +166,10 @@ class ProfileViewModel @Inject constructor(
 		savingStatus = false
 
 		errorDelegate.processNonBlockingError(error)
+	}
+
+	private fun handleOpenAbout() {
+		router.navigateToAbout()
 	}
 
 	private fun handleLogout() {

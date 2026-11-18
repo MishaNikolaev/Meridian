@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="about_name">Meridian</string>
+	<string name="about_description">Корпоративный мессенджер для команд, которым нужна своя переписка: чаты, группы, обсуждения и файлы остаются внутри компании.</string>
+	<string name="about_version">Версия %s</string>
+</resources>

@@ -1,20 +1,25 @@
 package com.nmichail.meridian.features.person.presentation
 
-import com.nmichail.meridian.component.photopicker.PhotoLocalDataSource
+import com.nmichail.meridian.component.photopicker.domain.usecase.KeepPersonPhotoUseCase
 import com.nmichail.meridian.core.network.error.presentation.BlockingErrorProcessResult
 import com.nmichail.meridian.core.network.error.presentation.ErrorDelegate
 import com.nmichail.meridian.core.network.error.userMessage
 import com.nmichail.meridian.core.presentation.BaseViewModel
 import com.nmichail.meridian.features.person.domain.usecase.LoadPersonUseCase
 import com.nmichail.meridian.features.person.domain.usecase.ReadPersonUseCase
+import com.nmichail.meridian.shared.chat.domain.entity.ChatType
+import com.nmichail.meridian.shared.chat.domain.usecase.CreateChatUseCase
 import javax.inject.Inject
 
 class PersonViewModel @Inject constructor(
 	private val loadPersonUseCase: LoadPersonUseCase,
 	private val readPersonUseCase: ReadPersonUseCase,
+	private val keepPersonPhotoUseCase: KeepPersonPhotoUseCase,
+	private val createChatUseCase: CreateChatUseCase,
 	private val errorDelegate: ErrorDelegate,
 	private val router: PersonRouter,
 ) : BaseViewModel<PersonState, PersonIntent, Nothing>() {
+	private var openedId = ""
 
 	override fun initState(): PersonState = PersonState.Initial
 
@@ -22,7 +27,7 @@ class PersonViewModel @Inject constructor(
 		when (intent) {
 			is PersonIntent.Load        -> handleLoad(intent)
 			is PersonIntent.Back        -> router.navigateBack()
-			is PersonIntent.Write       -> router.navigateBack()
+			is PersonIntent.Write       -> handleWrite()
 			is PersonIntent.OpenManager -> handleOpenManager()
 		}
 	}
@@ -40,32 +45,57 @@ class PersonViewModel @Inject constructor(
 		)
 	}
 
-	private fun handleLoad(intent: PersonIntent.Load) {
-		if (state.value is PersonState.Content || state.value is PersonState.Loading) {
+	private fun handleWrite() {
+		val current = state.value as? PersonState.Content ?: return
+
+		if (openedId.isEmpty()) {
 			return
 		}
 
 		launchTry {
-			val cached = readPersonUseCase(intent.userId)
+			val chat = createChatUseCase(ChatType.DIRECT, "", listOf(openedId))
 
-			if (cached == null) {
+			router.navigateToConversation(
+				chatId = chat.id,
+				title = chat.title.ifBlank { current.name },
+				corporate = chat.corporate,
+				personId = openedId,
+			)
+		} catch ::handleOpenFailure
+	}
+
+	private fun handleLoad(intent: PersonIntent.Load) {
+		if (state.value is PersonState.Loading) {
+			return
+		}
+
+		if (intent.userId == openedId && state.value is PersonState.Content) {
+			return
+		}
+
+		openedId = intent.userId
+
+		launchTry {
+			val person = readPersonUseCase(intent.userId)
+
+			if (person == null) {
 				setState(PersonState.Loading)
 			} else {
-				PhotoLocalDataSource.notePhoto(userId = intent.userId, photoId = cached.photo)
+				keepPersonPhotoUseCase(intent.userId, person.photo)
 
 				setState(
 					PersonState.Content(
-						name = cached.name,
-						position = cached.position,
-						department = cached.department,
-						office = cached.office,
-						server = cached.server,
-						status = cached.status,
-						manager = cached.manager,
-						managerId = cached.managerId,
-						email = cached.email,
-						phone = cached.phone,
-						photo = cached.photo,
+						name = person.name,
+						position = person.position,
+						department = person.department,
+						office = person.office,
+						server = person.server,
+						status = person.status,
+						manager = person.manager,
+						managerId = person.managerId,
+						email = person.email,
+						phone = person.phone,
+						photo = person.photo,
 						corporate = intent.corporate,
 					),
 				)
@@ -73,7 +103,7 @@ class PersonViewModel @Inject constructor(
 
 			val card = loadPersonUseCase(intent.userId)
 
-			PhotoLocalDataSource.notePhoto(userId = intent.userId, photoId = card.photo)
+			keepPersonPhotoUseCase(intent.userId, card.photo)
 
 			setState(
 				PersonState.Content(

@@ -1,6 +1,8 @@
 package com.nmichail.meridian.features.groups.presentation
 
+import com.nmichail.meridian.component.photopicker.domain.usecase.DownloadPhotoUseCase
 import com.nmichail.meridian.component.photopicker.domain.usecase.LoadPhotoUseCase
+import com.nmichail.meridian.shared.organization.domain.usecase.ReadOrganizationMembersUseCase
 import com.nmichail.meridian.core.network.error.ForbiddenException
 import com.nmichail.meridian.core.validation.username.UsernameValidationItem
 import com.nmichail.meridian.core.validation.username.ValidateUsernameUseCase
@@ -9,6 +11,7 @@ import com.nmichail.meridian.shared.chat.domain.entity.ChatProfile
 import com.nmichail.meridian.shared.chat.domain.usecase.AddChatMemberUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.FindPersonUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.LeaveChatUseCase
+import com.nmichail.meridian.shared.chat.domain.usecase.LoadMessagesUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.PromoteChatUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.ReadChatProfileUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.RemoveChatMemberUseCase
@@ -36,6 +39,9 @@ class GroupInfoViewModelTest {
 	private val leaveChatUseCase: LeaveChatUseCase = mock()
 	private val validateUsernameUseCase: ValidateUsernameUseCase = mock()
 	private val loadPhotoUseCase: LoadPhotoUseCase = mock()
+	private val readOrganizationMembersUseCase: ReadOrganizationMembersUseCase = mock()
+	private val loadMessagesUseCase: LoadMessagesUseCase = mock()
+	private val downloadPhotoUseCase: DownloadPhotoUseCase = mock()
 	private val router: GroupRouter = mock()
 	private val viewModel = GroupInfoViewModel(
 		readChatProfileUseCase,
@@ -47,6 +53,9 @@ class GroupInfoViewModelTest {
 		leaveChatUseCase,
 		validateUsernameUseCase,
 		loadPhotoUseCase,
+		readOrganizationMembersUseCase,
+		loadMessagesUseCase,
+		downloadPhotoUseCase,
 		router,
 	)
 
@@ -89,6 +98,12 @@ class GroupInfoViewModelTest {
 				failed = false,
 				denied = 0,
 				canEdit = true,
+				candidates = emptyList(),
+				query = "",
+				media = false,
+				files = emptyList(),
+				tab = GroupTab.Media,
+				photo = "",
 			),
 			viewModel.state.value,
 		)

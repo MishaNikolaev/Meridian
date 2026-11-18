@@ -28,6 +28,7 @@ import com.nmichail.meridian.shared.chat.domain.entity.ChatType
 import com.nmichail.meridian.shared.chat.domain.entity.CreatedChat
 import com.nmichail.meridian.shared.chat.domain.entity.ReactionMemory
 import com.nmichail.meridian.shared.chat.domain.repository.ChatRepository
+import java.util.UUID
 import javax.inject.Inject
 
 class ChatRepositoryImpl @Inject constructor(
@@ -51,10 +52,12 @@ class ChatRepositoryImpl @Inject constructor(
 
 	override suspend fun create(type: ChatType, title: String, usernames: List<String>): CreatedChat {
 		val memberIds = usernames.mapNotNull { name ->
-			if (name.isBlank()) {
-				null
-			} else {
-				member(name).userId
+			val login = name.trim()
+
+			when {
+				login.isEmpty() -> null
+				login.knownId() -> login
+				else -> member(login).userId
 			}
 		}
 
@@ -68,6 +71,12 @@ class ChatRepositoryImpl @Inject constructor(
 	}
 
 	override suspend fun findPerson(username: String): ChatPerson = member(username).toEntity()
+
+	private fun String.knownId(): Boolean {
+		val parsed = runCatching { UUID.fromString(this) }.getOrNull() ?: return false
+
+		return parsed.toString().equals(this, ignoreCase = true)
+	}
 
 	private suspend fun member(username: String): UserCardDto {
 		val login = username.trim()
@@ -127,12 +136,16 @@ class ChatRepositoryImpl @Inject constructor(
 		).execute()
 	}
 
-	override suspend fun send(
+	override suspend fun sendMessage(
 		chatId: String,
 		text: String,
 		replyAuthor: String,
 		replyText: String,
 		threadRoot: String,
+		fileId: String,
+		fileName: String,
+		fileType: String,
+		photoId: List<String>,
 	) {
 		api.sendMessages(
 			chatId,
@@ -144,6 +157,10 @@ class ChatRepositoryImpl @Inject constructor(
 				replyAuthor = replyAuthor,
 				replyText = replyText,
 				threadRoot = threadRoot,
+				fileId = fileId,
+				fileName = fileName,
+				fileType = fileType,
+				photoId = photoId,
 				self = sessionRepository.getUserId(),
 				deviceId = sessionRepository.getDeviceId(),
 			),

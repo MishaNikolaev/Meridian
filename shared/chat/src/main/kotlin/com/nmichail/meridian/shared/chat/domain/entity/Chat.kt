@@ -5,6 +5,9 @@ data class Chat(
 	val type: ChatType,
 	val title: String,
 	val preview: String,
+	val fileId: String,
+	val fileName: String,
+	val fileType: String,
 	val sentAt: String?,
 	val unread: Int,
 	val corporate: Boolean,
@@ -12,4 +15,6 @@ data class Chat(
 	val personId: String?,
 	val discussionRoot: String?,
 	val discussionText: String?,
+	val discussionComment: String?,
+	val discussionSentAt: String?,
 )

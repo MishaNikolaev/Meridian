@@ -15,7 +15,7 @@ object PhotoLocalDataSource {
 	internal var chats by mutableStateOf(emptyMap<String, String>())
 	private var preferences: SharedPreferences? = null
 
-	fun notePhoto(userId: String, photoId: String) {
+	fun keepPersonPhoto(userId: String, photoId: String) {
 		if (userId.isEmpty() || photoId.isEmpty() || ids[userId] == photoId) {
 			return
 		}
@@ -36,6 +36,8 @@ object PhotoLocalDataSource {
 		ids = read(stored.getString(PERSON_PHOTOS, "").orEmpty())
 		chats = read(stored.getString(CHAT_PHOTOS, "").orEmpty())
 	}
+
+	fun storedPersonPhoto(userId: String): String = ids[userId].orEmpty()
 
 	fun storedChatPhoto(chatId: String): String = chats[chatId].orEmpty()
 

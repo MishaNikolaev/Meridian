@@ -346,6 +346,7 @@ private fun ActionRow(
 		Image(
 			painter = painterResource(action.icon),
 			contentDescription = null,
+			colorFilter = ColorFilter.tint(palette.textPrimary),
 			modifier = Modifier.size(20.dp),
 		)
 

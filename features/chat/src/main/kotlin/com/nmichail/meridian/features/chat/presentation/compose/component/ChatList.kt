@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -21,12 +22,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.nmichail.meridian.component.photopicker.compose.PhotoFace
+import com.nmichail.meridian.component.photo.PhotoFace
 import com.nmichail.meridian.component.ui.compose.Screen
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.R as UiR
@@ -127,17 +129,32 @@ private fun ChatPreview(chat: Chat) {
 		verticalAlignment = Alignment.CenterVertically,
 		horizontalArrangement = Arrangement.spacedBy(8.dp),
 	) {
-		Text(
-			text = chat.preview,
-			style = MeridianType.captionDefault.copy(
-				fontSize = 15.sp,
-				lineHeight = 20.sp,
-			),
-			color = palette.textSecondary,
-			maxLines = 1,
-			overflow = TextOverflow.Ellipsis,
-			modifier = Modifier.weight(1f),
-		)
+		val image = chat.fileType.startsWith("image/") && !chat.fileType.contains("+file:")
+		val picture = image && (chat.preview.isEmpty() || chat.preview == chat.fileName)
+
+		if (picture) {
+			Image(
+				painter = painterResource(R.drawable.ic_chat_photo),
+				contentDescription = null,
+				colorFilter = ColorFilter.tint(palette.textSecondary),
+				modifier = Modifier.size(18.dp),
+			)
+			Spacer(modifier = Modifier.weight(1f))
+		} else if (chat.preview.showsPoll()) {
+			PollPreview(text = chat.preview, modifier = Modifier.weight(1f))
+		} else {
+			Text(
+				text = chat.preview,
+				style = MeridianType.captionDefault.copy(
+					fontSize = 15.sp,
+					lineHeight = 20.sp,
+				),
+				color = palette.textSecondary,
+				maxLines = 1,
+				overflow = TextOverflow.Ellipsis,
+				modifier = Modifier.weight(1f),
+			)
+		}
 
 		if (chat.mentioned || chat.unread > 0) {
 			Row(

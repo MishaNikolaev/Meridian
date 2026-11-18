@@ -17,4 +17,22 @@ plugins {
 
 allprojects {
 	apply(plugin = "base")
+
+	tasks.configureEach {
+		val scrub = "Resource" in name || "Dex" in name || "Class" in name || "bundleLib" in name
+
+		if (scrub) {
+			doFirst {
+				val buildDir = layout.buildDirectory.asFile.get()
+
+				if (!buildDir.exists()) {
+					return@doFirst
+				}
+
+				buildDir.walkTopDown()
+					.filter { file -> file.isFile && " 2." in file.name }
+					.forEach { file -> file.delete() }
+			}
+		}
+	}
 }

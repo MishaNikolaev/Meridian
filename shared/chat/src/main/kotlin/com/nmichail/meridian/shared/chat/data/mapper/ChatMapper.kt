@@ -1,6 +1,6 @@
 package com.nmichail.meridian.shared.chat.data.mapper
 
-import com.nmichail.meridian.shared.chat.data.datasource.CachedChat
+import com.nmichail.meridian.shared.chat.data.datasource.ChatRecord
 import com.nmichail.meridian.shared.chat.data.dto.ChatDto
 import com.nmichail.meridian.shared.chat.domain.entity.Chat
 import com.nmichail.meridian.shared.chat.domain.entity.ChatPerson
@@ -12,18 +12,27 @@ internal fun ChatDto.toEntity(mentioned: Boolean): Chat {
 		self = null,
 		author = null,
 	)
+	val discussion = lastDiscussion?.toEntity(
+		self = null,
+		author = null,
+	)
 	return Chat(
 		id = chatId,
 		type = type.toEntity(),
 		title = title.orEmpty(),
 		preview = latest?.text.orEmpty(),
+		fileId = latest?.fileId.orEmpty(),
+		fileName = latest?.fileName.orEmpty(),
+		fileType = latest?.fileType.orEmpty(),
 		sentAt = latest?.sentAt,
 		unread = unreadCount,
 		corporate = corporate,
 		mentioned = mentioned,
 		personId = personId,
-		discussionRoot = latest?.threadRoot,
-		discussionText = latest?.replyText,
+		discussionRoot = discussion?.threadRoot,
+		discussionText = discussion?.replyText,
+		discussionComment = discussion?.text,
+		discussionSentAt = discussion?.sentAt,
 	)
 }
 
@@ -39,11 +48,14 @@ internal fun ChatDto.toProfile(
 	selfId = selfId,
 )
 
-internal fun Chat.toCached(): CachedChat = CachedChat(
+internal fun Chat.toRecord(): ChatRecord = ChatRecord(
 	id = id,
 	type = type.name,
 	title = title,
 	preview = preview,
+	fileId = fileId,
+	fileName = fileName,
+	fileType = fileType,
 	sentAt = sentAt,
 	unread = unread,
 	corporate = corporate,
@@ -51,9 +63,11 @@ internal fun Chat.toCached(): CachedChat = CachedChat(
 	personId = personId,
 	discussionRoot = discussionRoot,
 	discussionText = discussionText,
+	discussionComment = discussionComment,
+	discussionSentAt = discussionSentAt,
 )
 
-internal fun CachedChat.toChat(): Chat? {
+internal fun ChatRecord.toChat(): Chat? {
 	val kind = try {
 		ChatType.valueOf(type)
 	} catch (_: IllegalArgumentException) {
@@ -65,6 +79,9 @@ internal fun CachedChat.toChat(): Chat? {
 		type = kind,
 		title = title,
 		preview = preview,
+		fileId = fileId,
+		fileName = fileName,
+		fileType = fileType,
 		sentAt = sentAt,
 		unread = unread,
 		corporate = corporate,
@@ -72,5 +89,7 @@ internal fun CachedChat.toChat(): Chat? {
 		personId = personId,
 		discussionRoot = discussionRoot,
 		discussionText = discussionText,
+		discussionComment = discussionComment,
+		discussionSentAt = discussionSentAt,
 	)
 }

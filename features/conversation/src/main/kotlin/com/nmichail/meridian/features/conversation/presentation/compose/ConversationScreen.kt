@@ -10,42 +10,56 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.nmichail.meridian.component.photo.PhotoViewer
 import com.nmichail.meridian.component.ui.effect.LiveDataEffect
 import com.nmichail.meridian.component.ui.snackbar.MUiSnackbarHost
 import com.nmichail.meridian.component.ui.snackbar.showErrorSnackBar
 import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.core.network.R as NetworkR
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.features.conversation.presentation.ConversationEvent
 import com.nmichail.meridian.features.conversation.presentation.ConversationIntent
 import com.nmichail.meridian.features.conversation.presentation.ConversationState
 import com.nmichail.meridian.component.ui.emoji.MessageReaction
+import com.nmichail.meridian.features.conversation.presentation.compose.component.ChatGallery
 import com.nmichail.meridian.features.conversation.presentation.compose.component.DayLine
 import com.nmichail.meridian.features.conversation.R
 import com.nmichail.meridian.features.conversation.presentation.compose.component.ConversationBar
 import com.nmichail.meridian.features.conversation.presentation.compose.component.DayPill
+import com.nmichail.meridian.features.conversation.presentation.compose.component.LocalPollVotes
+import com.nmichail.meridian.features.conversation.presentation.compose.component.LocalTallies
+import com.nmichail.meridian.features.conversation.presentation.compose.component.PollVoteSheet
+import com.nmichail.meridian.features.conversation.presentation.compose.component.PollVoter
+import com.nmichail.meridian.features.conversation.presentation.compose.component.vote
+import com.nmichail.meridian.features.conversation.presentation.compose.component.tallies
+import com.nmichail.meridian.features.conversation.presentation.compose.component.toPoll
 import com.nmichail.meridian.features.conversation.presentation.compose.component.EditBar
 import com.nmichail.meridian.features.conversation.presentation.compose.component.MentionList
 import com.nmichail.meridian.features.conversation.presentation.compose.component.MessageBar
 import com.nmichail.meridian.features.conversation.presentation.compose.component.MessageMenuHost
 import com.nmichail.meridian.features.conversation.presentation.compose.component.MessageRow
+import com.nmichail.meridian.features.conversation.presentation.compose.component.quoteIndex
+import com.nmichail.meridian.features.conversation.presentation.compose.component.quotedId
 import com.nmichail.meridian.features.conversation.presentation.compose.component.ReactionSheet
 import com.nmichail.meridian.features.conversation.presentation.compose.component.ReplyBar
 import com.nmichail.meridian.features.conversation.presentation.compose.component.SelectionBar
@@ -149,28 +163,41 @@ private fun ConversationBody(
 		is ConversationState.Error -> Error(message = state.message)
 
 		is ConversationState.Content -> {
-			Column(modifier = Modifier.fillMaxSize()) {
-				ConversationColumn(
-					state = state,
-					onReactions = onReactions,
+			var ballots by remember { mutableStateOf<Pair<List<String>, List<PollVoter>>?>(null) }
+
+			CompositionLocalProvider(
+				LocalPollVotes provides { options, voters -> ballots = options to voters },
+			) {
+				Column(modifier = Modifier.fillMaxSize()) {
+					ConversationColumn(
+						state = state,
+						onReactions = onReactions,
+						onIntent = onIntent,
+					)
+				}
+
+				MessageMenuHost(
+					lines = state.lines,
+					menuLineId = state.menuLineId,
+					pinnedId = state.pinnedId,
+					reactions = MessageReaction.entries,
+					selected = state.reactions[state.menuLineId].orEmpty(),
 					onIntent = onIntent,
 				)
+
+				ReactionSheet(
+					open = reactionsLine != null,
+					viewers = state.reactionViewers[reactionsLine].orEmpty(),
+					onDismiss = onDismissReactions,
+				)
+
+				PollVoteSheet(
+					open = ballots != null,
+					options = ballots?.first.orEmpty(),
+					voters = ballots?.second.orEmpty(),
+					onDismiss = { ballots = null },
+				)
 			}
-
-			MessageMenuHost(
-				lines = state.lines,
-				menuLineId = state.menuLineId,
-				pinnedId = state.pinnedId,
-				reactions = MessageReaction.entries,
-				selected = state.reactions[state.menuLineId].orEmpty(),
-				onIntent = onIntent,
-			)
-
-			ReactionSheet(
-				open = reactionsLine != null,
-				viewers = state.reactionViewers[reactionsLine].orEmpty(),
-				onDismiss = onDismissReactions,
-			)
 		}
 	}
 }
@@ -181,11 +208,26 @@ private fun EventObserver(
 	snackBarHostState: SnackbarHostState,
 ) {
 	val context = LocalContext.current
+	var picture by remember { mutableStateOf<ByteArray?>(null) }
 
 	LiveDataEffect(event) { value ->
+		if (value is ConversationEvent.OpenedFile && value.type.startsWith("image/")) {
+			picture = value.bytes
+
+			return@LiveDataEffect
+		}
+
+		if (value is ConversationEvent.OpenedFile) {
+			context.shareFile(name = value.name, type = value.type, bytes = value.bytes)
+
+			return@LiveDataEffect
+		}
+
 		val title = when (value) {
 			ConversationEvent.NoConnection -> NetworkR.string.error_event_connection_title
 			ConversationEvent.Error -> NetworkR.string.error_event_title
+			ConversationEvent.FileRejected -> NetworkR.string.error_event_title
+			is ConversationEvent.OpenedFile -> NetworkR.string.error_event_title
 		}
 
 		showErrorSnackBar(
@@ -194,12 +236,20 @@ private fun EventObserver(
 			message = context.getString(value.messageId()),
 		)
 	}
+
+	val shown = picture
+
+	if (shown != null) {
+		PhotoViewer(bytes = shown, onClose = { picture = null })
+	}
 }
 
 private fun ConversationEvent.messageId(): Int =
 	when (this) {
 		ConversationEvent.NoConnection -> NetworkR.string.error_no_connection
 		ConversationEvent.Error -> NetworkR.string.error_unknown
+		ConversationEvent.FileRejected -> R.string.conversation_file_rejected
+		is ConversationEvent.OpenedFile -> NetworkR.string.error_unknown
 	}
 
 @Composable
@@ -208,6 +258,17 @@ private fun ColumnScope.ConversationColumn(
 	onReactions: (String) -> Unit,
 	onIntent: (ConversationIntent) -> Unit,
 ) {
+	if (state.photo.isNotEmpty()) {
+		ChatGallery(
+			lines = state.lines,
+			photoId = state.photo,
+			onClose = { onIntent(ConversationIntent.NavigateBack) },
+			onPlay = { id, name, type ->
+				onIntent(ConversationIntent.PlayFile(fileId = id, fileName = name, fileType = type))
+			},
+		)
+	}
+
 	val lines = state.lines
 
 	val selectedIds = state.selectedIds
@@ -288,6 +349,8 @@ internal fun MessageInput(
 
 	MessageBar(
 		draft = uiState.draft,
+		fileName = uiState.fileName,
+		previews = uiState.previews,
 		placeholder = placeholder,
 		replyKey = uiState.replyAuthor + uiState.replyText,
 		onIntent = onIntent,
@@ -306,7 +369,25 @@ private fun MessageList(
 	onIntent: (ConversationIntent) -> Unit,
 	modifier: Modifier,
 ) {
+	val newest = days.values.lastOrNull()?.lastOrNull()?.line
+	val tallies = days.values.flatten().map { row -> row.line }.tallies()
+	val lines = days.values.flatten().map { row -> row.line }
+	val listState = rememberLazyListState()
+	val scope = rememberCoroutineScope()
+	val you = stringResource(R.string.conversation_you)
+	val greeting = stringResource(R.string.conversation_greeting)
+
+	LaunchedEffect(newest?.id) {
+		val nearEnd = listState.firstVisibleItemIndex <= 1
+
+		if (newest?.mine == true || nearEnd) {
+			listState.animateScrollToItem(0)
+		}
+	}
+
+	CompositionLocalProvider(LocalTallies provides tallies) {
 	LazyColumn(
+		state = listState,
 		modifier = modifier.fillMaxWidth(),
 		reverseLayout = true,
 		contentPadding = PaddingValues(vertical = 10.dp),
@@ -314,7 +395,7 @@ private fun MessageList(
 	) {
 		days.entries.reversed().forEach { (label, dayLines) ->
 			items(
-				items = dayLines.asReversed(),
+				items = dayLines.asReversed().filter { row -> row.line.vote() == null },
 				key = { row -> row.line.id },
 			) { row ->
 				MessageRow(
@@ -330,6 +411,14 @@ private fun MessageList(
 					} else {
 						{ onReactions(row.line.id) }
 					},
+					onQuote = { author, text ->
+						val id = lines.quotedId(author = author, text = text, you = you, greeting = greeting)
+						val index = if (id == null) -1 else days.quoteIndex(id)
+
+						if (index >= 0) {
+							scope.launch { listState.animateScrollToItem(index) }
+						}
+					},
 					onIntent = onIntent,
 				)
 			}
@@ -340,6 +429,7 @@ private fun MessageList(
 				}
 			}
 		}
+	}
 	}
 }
 
@@ -353,17 +443,13 @@ internal fun pinnedText(line: ChatLine?): String? {
 		return stringResource(R.string.conversation_greeting)
 	}
 
-	return line.text
+	return line.text.toPoll()?.question ?: line.text
 }
 
 @Composable
 private fun barNote(state: ConversationState.Content): String {
 	if (state.bot) {
 		return stringResource(R.string.conversation_bot)
-	}
-
-	if (state.members > 2) {
-		return pluralStringResource(R.plurals.conversation_members, state.members, state.members)
 	}
 
 	return ""

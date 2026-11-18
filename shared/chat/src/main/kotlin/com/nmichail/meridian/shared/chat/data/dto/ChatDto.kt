@@ -11,6 +11,7 @@ data class ChatDto(
 	val personName: String?,
 	val unreadCount: Int,
 	val lastMessage: MessageDto?,
+	val lastDiscussion: MessageDto?,
 	val corporate: Boolean,
 	val description: String?,
 )

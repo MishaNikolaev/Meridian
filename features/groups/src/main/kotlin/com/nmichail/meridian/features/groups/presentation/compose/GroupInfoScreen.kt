@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,22 +29,24 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.nmichail.meridian.component.ui.effect.LiveDataEffect
 import kotlinx.coroutines.flow.StateFlow
-import com.nmichail.meridian.component.photopicker.compose.PhotoFace
+import com.nmichail.meridian.component.photo.PhotoFace
 import com.nmichail.meridian.component.ui.error.MUiErrorInPlace
 import com.nmichail.meridian.component.ui.snackbar.MUiSnackbarHost
 import com.nmichail.meridian.component.ui.snackbar.showErrorSnackBar
 import com.nmichail.meridian.component.ui.R as UiR
-import com.nmichail.meridian.core.validation.username.UsernameValidationItem
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.features.groups.R
+import com.nmichail.meridian.features.groups.presentation.GroupInfoEvent
 import com.nmichail.meridian.features.groups.presentation.GroupInfoIntent
 import com.nmichail.meridian.features.groups.presentation.GroupInfoState
 import com.nmichail.meridian.features.groups.presentation.GroupMate
@@ -55,9 +58,17 @@ internal fun GroupInfoScreen(
 	members: List<String>,
 	corporate: Boolean,
 	state: StateFlow<GroupInfoState>,
+	event: LiveData<GroupInfoEvent>,
 	onIntent: (GroupInfoIntent) -> Unit,
 ) {
 	val uiState by state.collectAsStateWithLifecycle()
+	val context = LocalContext.current
+
+	LiveDataEffect(event) { value ->
+		if (value is GroupInfoEvent.Opened) {
+			context.openStored(name = value.name, type = value.type, bytes = value.bytes)
+		}
+	}
 
 	LaunchedEffect(Unit) {
 		onIntent(
@@ -69,31 +80,36 @@ internal fun GroupInfoScreen(
 		)
 	}
 
+	GroupInfoPages(
+		uiState = uiState,
+		chatId = chatId,
+		title = title,
+		members = members,
+		corporate = corporate,
+		onIntent = onIntent,
+	)
+}
+
+@Composable
+private fun GroupInfoPages(
+	uiState: GroupInfoState,
+	chatId: String,
+	title: String,
+	members: List<String>,
+	corporate: Boolean,
+	onIntent: (GroupInfoIntent) -> Unit,
+) {
 	when (val current = uiState) {
 		GroupInfoState.Initial -> Unit
 
-		is GroupInfoState.Content -> Box(modifier = Modifier.fillMaxSize()) {
-			GroupInfoBody(
-				chatId = chatId,
-				title = current.title,
-				description = current.description,
-				mates = current.mates,
-				menu = current.menu,
-				more = current.more,
-				expanded = current.expanded,
-				adding = current.adding,
-				login = current.login,
-				canEdit = current.canEdit,
-				corporate = corporate,
-				onIntent = onIntent,
-			)
-
-			GroupAlerts(
-				refused = current.refused,
-				failed = current.failed,
-				denied = current.denied,
-			)
+		GroupInfoState.Loading -> Box(
+			modifier = Modifier.fillMaxSize(),
+			contentAlignment = Alignment.Center,
+		) {
+			CircularProgressIndicator(color = palette.accentPrimary)
 		}
+
+		is GroupInfoState.Content -> GroupInfoLoaded(current = current, chatId = chatId, corporate = corporate, onIntent = onIntent)
 
 		is GroupInfoState.Error -> Box(modifier = Modifier.fillMaxSize()) {
 			MUiErrorInPlace(
@@ -105,6 +121,62 @@ internal fun GroupInfoScreen(
 				},
 				onBack = { onIntent(GroupInfoIntent.Back) },
 				modifier = Modifier.align(Alignment.Center),
+			)
+		}
+	}
+}
+
+@Composable
+private fun GroupInfoLoaded(
+	current: GroupInfoState.Content,
+	chatId: String,
+	corporate: Boolean,
+	onIntent: (GroupInfoIntent) -> Unit,
+) {
+	Box(modifier = Modifier.fillMaxSize()) {
+		if (current.adding) {
+			AddMembers(
+				candidates = current.candidates,
+				mates = current.mates,
+				query = current.query,
+				onIntent = onIntent,
+			)
+		} else if (current.media) {
+			GroupMedia(
+				title = current.title,
+				files = current.files,
+				tab = current.tab,
+				onIntent = onIntent,
+			)
+		} else {
+			GroupInfoBody(
+				chatId = chatId,
+				title = current.title,
+				description = current.description,
+				mates = current.mates,
+				menu = current.menu,
+				more = current.more,
+				expanded = current.expanded,
+				canEdit = current.canEdit,
+				corporate = corporate,
+				onIntent = onIntent,
+			)
+		}
+
+		GroupAlerts(
+			refused = current.refused,
+			failed = current.failed,
+			denied = current.denied,
+		)
+
+		if (current.photo.isNotEmpty()) {
+			GroupGallery(
+				files = current.files,
+				photoId = current.photo,
+				onClose = { onIntent(GroupInfoIntent.Back) },
+				onPlay = { file ->
+					onIntent(GroupInfoIntent.PlayStored(id = file.id, name = file.name, type = file.type))
+				},
 			)
 		}
 	}
@@ -168,8 +240,6 @@ private fun GroupInfoBody(
 	menu: String?,
 	more: Boolean,
 	expanded: Boolean,
-	adding: Boolean,
-	login: UsernameValidationItem,
 	canEdit: Boolean,
 	corporate: Boolean,
 	onIntent: (GroupInfoIntent) -> Unit,
@@ -195,7 +265,6 @@ private fun GroupInfoBody(
 			GroupHead(
 				chatId = chatId,
 				title = title,
-				count = mates.size,
 			)
 
 			if (description.isNotEmpty()) {
@@ -208,14 +277,12 @@ private fun GroupInfoBody(
 				onIntent = onIntent,
 			)
 
-			DetailCard()
+			DetailCard(onIntent = onIntent)
 
 			MemberCard(
 				mates = mates,
 				menu = menu,
 				expanded = expanded,
-				adding = adding,
-				login = login,
 				canEdit = canEdit,
 				corporate = corporate,
 				onIntent = onIntent,
@@ -230,7 +297,6 @@ private fun GroupInfoBody(
 private fun GroupHead(
 	chatId: String,
 	title: String,
-	count: Int,
 ) {
 	Column(
 		modifier = Modifier.fillMaxWidth(),
@@ -250,12 +316,6 @@ private fun GroupHead(
 			style = MeridianType.titleCard,
 			color = palette.textPrimary,
 			textAlign = TextAlign.Center,
-		)
-
-		Text(
-			text = pluralStringResource(R.plurals.group_people, count, count),
-			style = MeridianType.bodySmall,
-			color = palette.textSecondary,
 		)
 	}
 }

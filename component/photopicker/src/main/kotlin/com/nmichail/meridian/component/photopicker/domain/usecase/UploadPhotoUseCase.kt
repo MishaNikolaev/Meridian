@@ -5,4 +5,4 @@ import javax.inject.Inject
 
 class UploadPhotoUseCase @Inject constructor(
 	private val repository: PhotoRepository,
-) : suspend (ByteArray, String) -> String by repository::upload
+) : suspend (ByteArray, String) -> String by repository::uploadPhoto
