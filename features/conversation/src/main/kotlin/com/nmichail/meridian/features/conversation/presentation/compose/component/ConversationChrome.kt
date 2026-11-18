@@ -24,7 +24,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.nmichail.meridian.component.photopicker.compose.PhotoFace
+import com.nmichail.meridian.component.photo.PhotoFace
 import com.nmichail.meridian.component.ui.initials.initials
 import com.nmichail.meridian.component.ui.initials.markColor
 import com.nmichail.meridian.component.ui.theme.MeridianType
@@ -282,6 +282,7 @@ private fun BarIcon(icon: Int, size: Int, onClick: (() -> Unit)?) {
 	Image(
 		painter = painterResource(icon),
 		contentDescription = null,
+		colorFilter = ColorFilter.tint(palette.textPrimary),
 		modifier = if (onClick == null) modifier else modifier.clickable(onClick = onClick),
 	)
 }

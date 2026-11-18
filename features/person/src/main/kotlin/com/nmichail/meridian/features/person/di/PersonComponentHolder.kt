@@ -10,10 +10,14 @@ object PersonComponentHolder : ComponentHolder<PersonFeatureApi, PersonFeatureDe
 		PersonFeatureDependencies,
 		PersonComponent,
 		> { dependencies ->
-		DaggerPersonComponent.factory().create(dependencies.core(), dependencies.router())
+		DaggerPersonComponent.factory().create(dependencies.core(), dependencies.session(), dependencies.router())
 	}
 
 	override var dependencyProvider: (() -> PersonFeatureDependencies)? by componentHolderDelegate::dependencyProvider
 
 	override fun get(): PersonFeatureApi = componentHolderDelegate.get()
+
+	fun clear() {
+		componentHolderDelegate.clear()
+	}
 }

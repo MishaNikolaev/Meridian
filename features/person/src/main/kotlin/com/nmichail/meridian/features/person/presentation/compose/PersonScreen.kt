@@ -32,7 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.nmichail.meridian.component.photopicker.compose.PhotoFace
+import com.nmichail.meridian.component.photo.PhotoFace
 import com.nmichail.meridian.component.ui.R as UiR
 import com.nmichail.meridian.component.ui.error.MUiErrorInPlace
 import com.nmichail.meridian.component.ui.text.MUiLinkedText
@@ -152,6 +152,7 @@ private fun PersonToolbar(onIntent: (PersonIntent) -> Unit) {
 			Image(
 				painter = painterResource(R.drawable.ic_person_back),
 				contentDescription = null,
+				colorFilter = ColorFilter.tint(palette.textPrimary),
 				modifier = Modifier
 					.size(16.dp)
 					.clickable { onIntent(PersonIntent.Back) },
@@ -167,6 +168,7 @@ private fun PersonToolbar(onIntent: (PersonIntent) -> Unit) {
 			Image(
 				painter = painterResource(R.drawable.ic_person_more),
 				contentDescription = null,
+				colorFilter = ColorFilter.tint(palette.textPrimary),
 				modifier = Modifier.size(width = 4.dp, height = 15.dp),
 			)
 		}

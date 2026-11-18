@@ -11,8 +11,12 @@ import com.nmichail.meridian.core.network.session.SessionRepository
 import com.nmichail.meridian.testutils.TestCoroutineExtension
 import com.nmichail.meridian.testutils.doThrowSafe
 import com.nmichail.meridian.features.person.domain.entity.PersonProfile
+import com.nmichail.meridian.component.photopicker.domain.usecase.KeepPersonPhotoUseCase
 import com.nmichail.meridian.features.person.domain.usecase.LoadPersonUseCase
 import com.nmichail.meridian.features.person.domain.usecase.ReadPersonUseCase
+import com.nmichail.meridian.shared.chat.domain.entity.ChatType
+import com.nmichail.meridian.shared.chat.domain.entity.CreatedChat
+import com.nmichail.meridian.shared.chat.domain.usecase.CreateChatUseCase
 import java.io.IOException
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -29,10 +33,14 @@ import org.mockito.kotlin.whenever
 class PersonViewModelTest {
 	private val loadPersonUseCase: LoadPersonUseCase = mock()
 	private val readPersonUseCase: ReadPersonUseCase = mock()
+	private val keepPersonPhotoUseCase: KeepPersonPhotoUseCase = mock()
+	private val createChatUseCase: CreateChatUseCase = mock()
 	private val router: PersonRouter = mock()
 	private val viewModel = PersonViewModel(
 		loadPersonUseCase,
 		readPersonUseCase,
+		keepPersonPhotoUseCase,
+		createChatUseCase,
 		ErrorDelegate(
 			errorLogger = ErrorLogger(),
 			defaultErrorReactionConverter = DefaultErrorReactionConverter(),
@@ -200,10 +208,28 @@ class PersonViewModelTest {
 	}
 
 	@Test
-	fun `write EXPECT router back`() = runTest {
+	fun `write EXPECT direct chat`() = runTest {
+		whenever(loadPersonUseCase.invoke("chief")) doReturn card
+		whenever(createChatUseCase.invoke(ChatType.DIRECT, "", listOf("chief"))) doReturn CreatedChat(
+			id = "chat-1",
+			title = "Волков Сергей Андреевич",
+			corporate = true,
+		)
+		viewModel.applyIntent(
+			PersonIntent.Load(
+				userId = "chief",
+				corporate = true,
+			),
+		)
+
 		viewModel.applyIntent(PersonIntent.Write)
 
-		verify(router).navigateBack()
+		verify(router).navigateToConversation(
+			chatId = "chat-1",
+			title = "Волков Сергей Андреевич",
+			corporate = true,
+			personId = "chief",
+		)
 	}
 
 	@Test

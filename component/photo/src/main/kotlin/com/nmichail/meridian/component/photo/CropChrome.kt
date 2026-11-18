@@ -1,4 +1,4 @@
-package com.nmichail.meridian.component.photopicker.compose
+package com.nmichail.meridian.component.photo
 
 import androidx.compose.ui.graphics.Color
 import com.attafitamim.krop.core.crop.CropShape

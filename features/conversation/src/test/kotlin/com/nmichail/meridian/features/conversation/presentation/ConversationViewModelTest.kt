@@ -1,5 +1,8 @@
 package com.nmichail.meridian.features.conversation.presentation
 
+import com.nmichail.meridian.component.photopicker.domain.usecase.DownloadPhotoUseCase
+import com.nmichail.meridian.component.photopicker.domain.usecase.NoteFacesUseCase
+import com.nmichail.meridian.component.photopicker.domain.usecase.UploadPhotoUseCase
 import com.nmichail.meridian.core.network.device.DeviceIdentityRepository
 import com.nmichail.meridian.core.network.error.presentation.DefaultErrorEventConverter
 import com.nmichail.meridian.core.network.error.presentation.DefaultErrorReactionConverter
@@ -89,6 +92,9 @@ class ConversationViewModelTest {
 			deviceIdentityRepository = mock<DeviceIdentityRepository>(),
 		),
 		router,
+		mock<UploadPhotoUseCase>(),
+		mock<DownloadPhotoUseCase>(),
+		mock<NoteFacesUseCase>(),
 	)
 	private val ownLine = ChatLine(
 		id = "m1",
@@ -103,6 +109,9 @@ class ConversationViewModelTest {
 		deleted = false,
 		edited = false,
 		service = false,
+		fileId = "",
+		fileName = "",
+		fileType = "",
 	)
 	private val emptyThread = ChatThread(
 		lines = emptyList(),
@@ -150,6 +159,9 @@ class ConversationViewModelTest {
 				type = ChatType.GROUP,
 				title = "Платформа",
 				preview = "",
+				fileId = "",
+				fileName = "",
+				fileType = "",
 				sentAt = null,
 				unread = 0,
 				corporate = false,
@@ -157,6 +169,8 @@ class ConversationViewModelTest {
 				personId = null,
 				discussionRoot = null,
 				discussionText = null,
+				discussionComment = null,
+				discussionSentAt = null,
 			),
 		)
 		viewModel.applyIntent(
@@ -318,6 +332,10 @@ class ConversationViewModelTest {
 			"Анна",
 			"макет",
 			"",
+			"",
+			"",
+			"",
+			emptyList<String>(),
 		)
 	}
 
@@ -414,14 +432,14 @@ class ConversationViewModelTest {
 	}
 
 	@Test
-	fun `same message EXPECT marked once`() = runTest {
+	fun `same message EXPECT marked on each load`() = runTest {
 		whenever(loadMessagesUseCase.invoke("1")) doReturn emptyThread.copy(readUpTo = "m1")
 		viewModel.applyIntent(openAnna)
 		viewModel.applyIntent(ConversationIntent.ChangeDraft(draft = "привет"))
 
 		viewModel.applyIntent(ConversationIntent.Send)
 
-		verify(markReadUseCase, times(1)).invoke("m1")
+		verify(markReadUseCase, times(2)).invoke("m1")
 	}
 
 	@Test
