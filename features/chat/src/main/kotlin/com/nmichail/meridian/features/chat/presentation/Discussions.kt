@@ -10,18 +10,19 @@ internal fun List<Chat>.discussions(): List<ChatDiscussion> {
 		val rootId = chat.discussionRoot ?: continue
 
 		val topic = chat.discussionText
+		val commentText = chat.discussionComment ?: chat.preview
 		val text: String
 		val comment: String
 
 		if (topic.isNullOrEmpty()) {
-			text = chat.preview
+			text = commentText
 			comment = ""
-		} else if (topic == chat.preview) {
+		} else if (topic == commentText) {
 			text = topic
 			comment = ""
 		} else {
 			text = topic
-			comment = chat.preview
+			comment = commentText
 		}
 
 		discussions += ChatDiscussion(
@@ -30,7 +31,7 @@ internal fun List<Chat>.discussions(): List<ChatDiscussion> {
 			title = chat.title,
 			text = text,
 			comment = comment,
-			sentAt = chat.sentAt,
+			sentAt = chat.discussionSentAt ?: chat.sentAt,
 			corporate = chat.corporate,
 			type = chat.type,
 			personId = chat.personId,
