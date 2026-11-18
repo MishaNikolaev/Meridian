@@ -23,6 +23,9 @@ class LoadChatsUseCaseTest {
 			type = ChatType.DIRECT,
 			title = "Анна",
 			preview = "",
+			fileId = "",
+			fileName = "",
+			fileType = "",
 			sentAt = null,
 			unread = 0,
 			corporate = true,
@@ -30,6 +33,8 @@ class LoadChatsUseCaseTest {
 			personId = null,
 			discussionRoot = null,
 			discussionText = null,
+			discussionComment = null,
+			discussionSentAt = null,
 		),
 	)
 
