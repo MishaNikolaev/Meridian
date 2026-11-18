@@ -106,8 +106,8 @@ internal val LightPalette = MeridianPalette(
 
 internal val DarkPalette = MeridianPalette(
 	page = Color(color = 0xFF0A0E16),
-	surface = Color(color = 0xFF111826),
-	field = Color(color = 0xFF161D2B),
+	surface = Color(color = 0xFF243044),
+	field = Color(color = 0xFF2C3A50),
 	bar = Color(color = 0xFF0F1522),
 	borderDefault = Color(color = 0xFF222C3F),
 	borderStrong = Color(color = 0xFF3A4458),
@@ -125,8 +125,8 @@ internal val DarkPalette = MeridianPalette(
 	statusWarning = Color(color = 0xFFF5B64A),
 	statusError = Color(color = 0xFFFF8A8A),
 	statusErrorSoft = Color(color = 0xFF3A1C22),
-	chatIncoming = Color(color = 0xFF111826),
-	chatOutgoing = Color(color = 0xFF7EA3D6),
+	chatIncoming = Color(color = 0xFF2E3C52),
+	chatOutgoing = Color(color = 0xFFB7D0F0),
 	chatOutgoingText = Color(color = 0xFF06101F),
 	chatBackground = Color(color = 0xFF0A0E16),
 	callSpeaking = Color(color = 0xFF34D399),
