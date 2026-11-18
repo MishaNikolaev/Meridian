@@ -21,6 +21,44 @@
 	<string name="conversation_more_reactions">Ещё реакции</string>
 	<string name="conversation_message_info">Информация о сообщении</string>
 	<string name="conversation_emoji">Эмодзи</string>
+	<string name="conversation_attach">Прикрепить файл</string>
+	<string name="conversation_attach_gallery">Галерея</string>
+	<string name="conversation_attach_file">Файл</string>
+	<string name="conversation_attach_poll">Опрос</string>
+	<string name="conversation_poll_question">Вопрос</string>
+	<string name="conversation_poll_ask">Задайте вопрос</string>
+	<string name="conversation_poll_description">Добавить описание (необязательно)</string>
+	<string name="conversation_poll_options">Варианты</string>
+	<string name="conversation_poll_option">Вариант</string>
+	<string name="conversation_poll_add">+ Добавить вариант</string>
+	<string name="conversation_poll_more">Можно добавить ещё %d</string>
+	<string name="conversation_poll_settings">Настройки</string>
+	<string name="conversation_poll_votes">Посмотреть голоса (%1$d)</string>
+	<string name="conversation_poll_votes_title">Голоса %d</string>
+	<string name="conversation_poll_voters">Кто проголосовал</string>
+	<string name="conversation_poll_voters_note">Имя видно у каждого варианта</string>
+	<string name="conversation_poll_multiple">Несколько ответов</string>
+	<string name="conversation_poll_multiple_note">Можно выбрать больше одного</string>
+	<string name="conversation_poll_adding">Свои варианты</string>
+	<string name="conversation_poll_adding_note">Участники могут предлагать варианты</string>
+	<string name="conversation_poll_revote">Переголосование</string>
+	<string name="conversation_poll_revote_note">Можно изменить свой голос</string>
+	<string name="conversation_poll_shuffle">Перемешать</string>
+	<string name="conversation_poll_shuffle_note">Порядок вариантов случайный</string>
+	<string name="conversation_poll_quiz">Верный ответ</string>
+	<string name="conversation_poll_quiz_note">Отметить один вариант как правильный</string>
+	<string name="conversation_poll_solution">Пояснение при неверном ответе</string>
+	<string name="conversation_poll_timed">Ограничить время</string>
+	<string name="conversation_poll_timed_note">Опрос закроется в заданное время</string>
+	<string name="conversation_poll_send">Создать</string>
+	<string name="conversation_attach_browse">Выбрать файл</string>
+	<string name="conversation_storage">Внутреннее хранилище</string>
+	<string name="conversation_storage_note">Обзор файлов на устройстве</string>
+	<string name="conversation_storage_gallery">Отправить изображение без сжатия</string>
+	<string name="conversation_recent_files">Недавние файлы</string>
+	<string name="conversation_attach_allow">Разрешить доступ к файлам</string>
+	<string name="conversation_file_remove">Убрать файл</string>
+	<string name="conversation_file_rejected">Можно прикрепить фото, pdf, аудио или видео до 20 МБ</string>
 	<string name="emoji_category_recent">Недавние</string>
 	<string name="emoji_category_emotions">Смайлики и эмоции</string>
 	<string name="emoji_category_people">Люди</string>
@@ -41,11 +79,5 @@
 		<item quantity="few">%d комментария</item>
 		<item quantity="many">%d комментариев</item>
 		<item quantity="other">%d комментариев</item>
-	</plurals>
-	<plurals name="conversation_members">
-		<item quantity="one">%d участник</item>
-		<item quantity="few">%d участника</item>
-		<item quantity="many">%d участников</item>
-		<item quantity="other">%d участников</item>
 	</plurals>
 </resources>

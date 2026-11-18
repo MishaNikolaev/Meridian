@@ -3,6 +3,13 @@ package com.nmichail.meridian.features.conversation.presentation
 import com.nmichail.meridian.shared.chat.domain.entity.ChatLine
 
 sealed interface ConversationIntent {
+	data class DraftFile(
+		val name: String,
+		val type: String,
+		val bytes: ByteArray,
+		val document: Boolean = false,
+	)
+
 	data class LoadInitialData(
 		val chatId: String,
 		val title: String,
@@ -31,6 +38,45 @@ sealed interface ConversationIntent {
 	) : ConversationIntent
 
 	data object CancelReply : ConversationIntent
+
+	data class AttachFile(
+		val name: String,
+		val type: String,
+		val bytes: ByteArray,
+		val document: Boolean = false,
+	) : ConversationIntent
+
+	data class AttachPhotos(
+		val files: List<DraftFile>,
+	) : ConversationIntent
+
+	data class SendPoll(
+		val question: String,
+		val description: String,
+		val options: List<String>,
+		val correct: Int,
+		val solution: String,
+	) : ConversationIntent
+
+	data class Vote(
+		val pollId: String,
+		val option: Int,
+		val question: String,
+	) : ConversationIntent
+
+	data object ClearFile : ConversationIntent
+
+	data class OpenFile(
+		val fileId: String,
+		val fileName: String,
+		val fileType: String,
+	) : ConversationIntent
+
+	data class PlayFile(
+		val fileId: String,
+		val fileName: String,
+		val fileType: String,
+	) : ConversationIntent
 
 	data object Send : ConversationIntent
 

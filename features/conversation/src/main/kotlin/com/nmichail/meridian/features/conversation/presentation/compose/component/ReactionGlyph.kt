@@ -43,6 +43,30 @@ internal fun List<ChatReaction>.mineGlyph(
 	return others + next
 }
 
+internal fun Map<String, List<ChatReaction>>.mergeViewers(
+	current: Map<String, List<ChatReaction>>,
+	selfName: String,
+): Map<String, List<ChatReaction>> = (keys + current.keys).associate { id ->
+	val viewers = if (id !in current) {
+		get(id).orEmpty()
+	} else {
+		val mine = current.getValue(id).filter { viewer -> viewer.mine }
+		val others = get(id).orEmpty().filter { viewer -> !viewer.mine }
+
+		others + mine
+	}
+
+	id to viewers.map { viewer -> viewer.named(selfName) }
+}
+
+private fun ChatReaction.named(selfName: String): ChatReaction {
+	if (selfName.isEmpty() || !mine || name.isNotBlank()) {
+		return this
+	}
+
+	return copy(name = selfName)
+}
+
 internal fun List<String>.usedGlyph(glyph: String, active: Boolean): List<String> {
 	if (!active) {
 		return this

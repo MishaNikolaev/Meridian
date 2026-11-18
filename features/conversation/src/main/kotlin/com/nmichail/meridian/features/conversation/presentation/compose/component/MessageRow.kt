@@ -22,12 +22,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.nmichail.meridian.component.ui.swipe.MUiSwipeReply
-import com.nmichail.meridian.component.photopicker.compose.PhotoFace
+import com.nmichail.meridian.component.photo.PhotoFace
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.R as UiR
 import com.nmichail.meridian.component.ui.theme.palette
@@ -67,6 +68,7 @@ internal fun MessageRow(
 	corporate: Boolean,
 	comments: Int,
 	onReactions: (() -> Unit)?,
+	onQuote: (String, String) -> Unit,
 	onIntent: (ConversationIntent) -> Unit,
 ) {
 	if (line.service) {
@@ -81,7 +83,7 @@ internal fun MessageRow(
 	val quoted = if (line.id == "hello") {
 		stringResource(R.string.conversation_greeting)
 	} else {
-		line.text
+		line.text.toPoll()?.question ?: line.text
 	}
 
 	MUiSwipeReply(
@@ -95,20 +97,25 @@ internal fun MessageRow(
 			)
 		},
 	) {
-		if (line.mine) {
+		val deletion = rememberPixelDeletion(line)
+
+		if (deletion.line.mine) {
 			Outgoing(
-				line = line,
+				line = deletion.line,
+				deletion = deletion,
 				selected = selected,
 				reactions = reactions,
 				viewers = viewers,
 				corporate = corporate,
 				comments = comments,
 				onReactions = onReactions,
+				onQuote = onQuote,
 				onIntent = onIntent,
 			)
 		} else {
 			Incoming(
-				line = line,
+				line = deletion.line,
+				deletion = deletion,
 				continued = continued,
 				selected = selected,
 				reactions = reactions,
@@ -116,6 +123,7 @@ internal fun MessageRow(
 				corporate = corporate,
 				comments = comments,
 				onReactions = onReactions,
+				onQuote = onQuote,
 				onIntent = onIntent,
 			)
 		}
@@ -146,6 +154,7 @@ private fun ServiceNote(text: String) {
 @Composable
 private fun Incoming(
 	line: ChatLine,
+	deletion: PixelDeletion,
 	continued: Boolean,
 	selected: Boolean,
 	reactions: Set<String>,
@@ -153,6 +162,7 @@ private fun Incoming(
 	corporate: Boolean,
 	comments: Int,
 	onReactions: (() -> Unit)?,
+	onQuote: (String, String) -> Unit,
 	onIntent: (ConversationIntent) -> Unit,
 ) {
 	Row(
@@ -175,35 +185,33 @@ private fun Incoming(
 			if (selected) SelectionCheck(modifier = Modifier.align(Alignment.BottomCenter))
 		}
 
-		Column(
+		val photoOnly = line.photoOnly()
+		val photoWithText = line.photoWithText()
+
+		DeletingBubble(
+			deletion = deletion,
 			modifier = Modifier
-				.widthIn(max = 272.dp)
-				.width(IntrinsicSize.Max)
-				.clip(
-					RoundedCornerShape(
-						topStart = 18.dp,
-						topEnd = 18.dp,
-						bottomEnd = 18.dp,
-						bottomStart = if (continued) 4.dp else 18.dp,
-					),
-				)
-				.background(palette.chatIncoming)
-				.padding(horizontal = 12.dp, vertical = 8.dp),
-			verticalArrangement = Arrangement.spacedBy(6.dp),
+				.widthIn(max = if (photoOnly || photoWithText) 280.dp else 272.dp)
+				.then(if (photoWithText) Modifier.width(280.dp) else Modifier.width(IntrinsicSize.Max))
+				.then(if (photoOnly || photoWithText) Modifier else incomingBubble(continued)),
 		) {
+		Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
 			val author = line.author
 
 			if (!author.isNullOrBlank()) {
 				MessageAuthor(author = author, corporate = corporate)
 			}
 
-			MessageQuote(line, corporate)
+			MessageQuote(line, corporate, onQuote)
 
 			MessageText(
 				line = line,
 				glyph = palette.textPrimary,
 				meta = palette.textSecondary,
 				checked = false,
+				mine = false,
+				continued = continued,
+				onIntent = onIntent,
 			)
 
 			ReactionsAndComments(
@@ -216,18 +224,21 @@ private fun Incoming(
 				onIntent = onIntent,
 			)
 		}
+		}
 	}
 }
 
 @Composable
 private fun Outgoing(
 	line: ChatLine,
+	deletion: PixelDeletion,
 	selected: Boolean,
 	reactions: Set<String>,
 	viewers: List<ChatReaction>,
 	corporate: Boolean,
 	comments: Int,
 	onReactions: (() -> Unit)?,
+	onQuote: (String, String) -> Unit,
 	onIntent: (ConversationIntent) -> Unit,
 ) {
 	Row(
@@ -250,29 +261,27 @@ private fun Outgoing(
 
 		Spacer(modifier = Modifier.weight(1f))
 
-		Column(
+		val photoOnly = line.photoOnly()
+		val photoWithText = line.photoWithText()
+
+		DeletingBubble(
+			deletion = deletion,
 			modifier = Modifier
-				.widthIn(max = 272.dp)
-				.width(IntrinsicSize.Max)
-				.clip(
-					RoundedCornerShape(
-						topStart = 18.dp,
-						topEnd = 18.dp,
-						bottomStart = 18.dp,
-						bottomEnd = 4.dp,
-					),
-				)
-				.background(palette.chatOutgoing)
-				.padding(horizontal = 12.dp, vertical = 8.dp),
-			verticalArrangement = Arrangement.spacedBy(6.dp),
+				.widthIn(max = if (photoOnly || photoWithText) 280.dp else 272.dp)
+				.then(if (photoWithText) Modifier.width(280.dp) else Modifier.width(IntrinsicSize.Max))
+				.then(if (photoOnly || photoWithText) Modifier else outgoingBubble()),
 		) {
-			MessageQuote(line, corporate)
+		Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+			MessageQuote(line, corporate, onQuote)
 
 			MessageText(
 				line = line,
 				glyph = palette.chatOutgoingText,
 				meta = palette.chatOutgoingText,
 				checked = true,
+				mine = true,
+				continued = false,
+				onIntent = onIntent,
 			)
 
 			ReactionsAndComments(
@@ -284,6 +293,7 @@ private fun Outgoing(
 				onReactions = onReactions,
 				onIntent = onIntent,
 			)
+		}
 		}
 	}
 }
@@ -323,23 +333,57 @@ private fun MessageText(
 	glyph: Color,
 	meta: Color,
 	checked: Boolean,
+	mine: Boolean,
+	continued: Boolean,
+	onIntent: (ConversationIntent) -> Unit,
 ) {
 	val reserve = if (line.edited && !line.deleted) 112.dp else 58.dp
+	val spoken = if (line.id == "hello") stringResource(R.string.conversation_greeting) else line.text
+	val photo = line.photoOnly() || line.photoWithText()
+	val withText = spoken.isNotEmpty() && spoken != line.fileName
+	val openFile = {
+		onIntent(
+			ConversationIntent.OpenFile(
+				fileId = line.fileId,
+				fileName = line.fileName,
+				fileType = line.fileType,
+			),
+		)
+	}
 
 	Box(modifier = Modifier.fillMaxWidth()) {
-		Box(modifier = Modifier.padding(end = reserve)) {
-			MessageGlyphs(
-				text = if (line.id == "hello") stringResource(R.string.conversation_greeting) else line.text,
-				color = glyph,
-			)
-		}
+		MessageWords(
+			line = line,
+			spoken = spoken,
+			photo = photo,
+			withText = withText,
+			glyph = glyph,
+			reserve = reserve,
+			mine = mine,
+			continued = continued,
+			onOpen = openFile,
+			onIntent = onIntent,
+		)
 
 		Meta(
 			time = messageClock(line.sentAt),
-			color = meta,
+			color = if (photo && !withText) Color.White else meta,
 			checked = checked,
 			edited = line.edited && !line.deleted,
-			modifier = Modifier.align(Alignment.BottomEnd),
+			modifier = Modifier
+				.align(Alignment.BottomEnd)
+				.zIndex(1f)
+				.then(
+					when {
+						photo && !withText -> Modifier
+							.padding(end = 8.dp, bottom = 8.dp)
+							.clip(RoundedCornerShape(10.dp))
+							.background(Color(color = 0x8C000000))
+							.padding(horizontal = 6.dp, vertical = 2.dp)
+						photo -> Modifier.padding(end = 12.dp, bottom = 8.dp)
+						else -> Modifier
+					},
+				),
 		)
 	}
 }

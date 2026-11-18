@@ -1,10 +1,11 @@
 package com.nmichail.meridian.features.conversation.presentation
 
-import com.nmichail.meridian.core.network.error.presentation.BlockingErrorProcessResult
+import com.nmichail.meridian.component.photopicker.domain.usecase.DownloadPhotoUseCase
+import com.nmichail.meridian.component.photopicker.domain.usecase.NoteFacesUseCase
+import com.nmichail.meridian.component.photopicker.domain.usecase.UploadPhotoUseCase
 import com.nmichail.meridian.core.network.error.presentation.DefaultErrorEvent
 import com.nmichail.meridian.core.network.error.presentation.ErrorDelegate
 import com.nmichail.meridian.core.network.error.presentation.NonBlockingErrorProcessResult
-import com.nmichail.meridian.core.network.error.userMessage
 import com.nmichail.meridian.core.presentation.BaseViewModel
 import com.nmichail.meridian.core.validation.initials.InitialsUseCase
 import com.nmichail.meridian.core.validation.mention.ApplyMentionUseCase
@@ -12,18 +13,21 @@ import com.nmichail.meridian.core.validation.mention.EveryoneMentionUseCase
 import com.nmichail.meridian.core.validation.mention.MatchMentionUseCase
 import com.nmichail.meridian.core.validation.mention.MentionQueryUseCase
 import com.nmichail.meridian.features.conversation.domain.entity.toMention
+import com.nmichail.meridian.features.conversation.presentation.ConversationIntent.DraftFile
 import com.nmichail.meridian.features.conversation.presentation.compose.component.days
+import com.nmichail.meridian.features.conversation.presentation.compose.component.note
+import com.nmichail.meridian.features.conversation.presentation.compose.component.pollBody
+import com.nmichail.meridian.features.conversation.presentation.compose.component.voteBody
 import com.nmichail.meridian.features.conversation.presentation.compose.component.keepingEdits
 import com.nmichail.meridian.features.conversation.presentation.compose.component.markDeleted
+import com.nmichail.meridian.features.conversation.presentation.compose.component.mergeViewers
 import com.nmichail.meridian.features.conversation.presentation.compose.component.mineGlyph
 import com.nmichail.meridian.features.conversation.presentation.compose.component.reactionGlyph
 import com.nmichail.meridian.features.conversation.presentation.compose.component.reactionGlyphs
 import com.nmichail.meridian.features.conversation.presentation.compose.component.usedGlyph
 import com.nmichail.meridian.shared.chat.data.realtime.ChatRealtime
-import com.nmichail.meridian.shared.chat.domain.entity.Chat
 import com.nmichail.meridian.shared.chat.domain.entity.ChatLine
-import com.nmichail.meridian.shared.chat.domain.entity.ChatPerson
-import com.nmichail.meridian.shared.chat.domain.entity.ChatReaction
+import com.nmichail.meridian.shared.chat.domain.entity.ChatThread
 import com.nmichail.meridian.shared.chat.domain.usecase.DeleteMessageUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.LoadMessagesUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.ReadChatsUseCase
@@ -55,10 +59,10 @@ class ConversationViewModel @Inject constructor(
 	private val realtime: ChatRealtime,
 	private val errorDelegate: ErrorDelegate,
 	private val router: ConversationRouter,
+	private val uploadPhotoUseCase: UploadPhotoUseCase,
+	private val downloadPhotoUseCase: DownloadPhotoUseCase,
+	private val noteFacesUseCase: NoteFacesUseCase,
 ) : BaseViewModel<ConversationState, ConversationIntent, ConversationEvent>() {
-	private var markedChatId: String? = null
-
-	private var markedMessageId: String? = null
 
 	override fun initState(): ConversationState = ConversationState.Initial
 
@@ -71,8 +75,15 @@ class ConversationViewModel @Inject constructor(
 			is ConversationIntent.CancelEdit         -> handleCancelEdit()
 			is ConversationIntent.StartReply         -> handleStartReply(intent.author, intent.text)
 			is ConversationIntent.CancelReply        -> handleCancelReply()
-			is ConversationIntent.Send               -> handleSend()
-			is ConversationIntent.NavigateBack       -> router.navigateBack()
+			is ConversationIntent.AttachFile         -> handleAttach(intent.name, intent.type, intent.bytes, intent.document)
+			is ConversationIntent.AttachPhotos       -> handleAttachPhotos(intent.files)
+			is ConversationIntent.SendPoll           -> handleSendNote(pollBody(intent.question, intent.description, intent.options, intent.correct, intent.solution))
+			is ConversationIntent.Vote               -> handleSendNote(voteBody(intent.pollId, intent.option, intent.question))
+			is ConversationIntent.ClearFile          -> handleClearFile()
+			is ConversationIntent.OpenFile           -> handleOpenFile(intent.fileId, intent.fileName, intent.fileType)
+			is ConversationIntent.PlayFile           -> handleDownloadFile(intent.fileId, intent.fileName, intent.fileType)
+			is ConversationIntent.Send               -> handleSendDraft()
+			is ConversationIntent.NavigateBack       -> handleNavigateBack()
 			is ConversationIntent.SyncTitles         -> handleSyncTitles()
 			is ConversationIntent.OpenPerson         -> handleOpenPerson()
 			is ConversationIntent.OpenMessage        -> handleOpenMessage(intent.lineId)
@@ -91,125 +102,106 @@ class ConversationViewModel @Inject constructor(
 			return
 		}
 
-		if (load.chatId.startsWith("bot:")) {
-			handleOpenBot(
-				chatId = load.chatId.removePrefix("bot:"),
+		val lines = emptyList<ChatLine>()
+
+		setState(
+			ConversationState.Content(
 				title = load.title,
+				lines = lines,
+				days = lines.days(),
+				members = 0,
+				people = emptyList(),
+				selfName = "",
+				chatId = load.chatId.removePrefix("bot:"),
+				bot = load.chatId.startsWith("bot:"),
+				draft = "",
+				mentionQuery = null,
+				mentions = emptyList(),
+				mentionEveryone = false,
+				editingId = null,
+				editingText = "",
+				sending = false,
+				menuLineId = null,
+				pinnedId = null,
+				selectedIds = emptySet(),
+				reactions = emptyMap(),
+				reactionViewers = emptyMap(),
+				usedReactions = emptyList(),
 				corporate = load.corporate,
+				replyAuthor = "",
+				replyText = "",
 				rootId = load.rootId,
 				personId = load.personId,
-			)
-
-			return
-		}
-
-		handleOpenChat(
-			chatId = load.chatId,
-			title = load.title,
-			corporate = load.corporate,
-			rootId = load.rootId,
-			personId = load.personId,
-		)
-	}
-
-	private fun handleOpenBot(
-		chatId: String,
-		title: String,
-		corporate: Boolean,
-		rootId: String?,
-		personId: String,
-	) {
-		handlePublish(
-			chatId = chatId,
-			title = title,
-			corporate = corporate,
-			rootId = rootId,
-			personId = personId,
-			bot = true,
-			lines = listOf(
-				ChatLine(
-					id = "hello",
-					mine = false,
-					text = "",
-					sentAt = Instant.now().toString(),
-					author = title,
-					authorId = "",
-					replyAuthor = null,
-					replyText = null,
-					threadRoot = null,
-					deleted = false,
-					edited = false,
-					service = false,
-				),
+				files = emptyList(),
+				fileName = "",
+				previews = emptyList(),
+				photo = "",
 			),
-			members = 0,
-			people = emptyList(),
-			selfName = "",
-			reactions = emptyMap(),
-			reactionViewers = emptyMap(),
 		)
+
+		val current = state.value as? ConversationState.Content ?: return
+
+		if (current.bot) {
+			handleOpenBot()
+		} else {
+			handleOpenChat()
+		}
 	}
 
-	private fun handleOpenChat(
-		chatId: String,
-		title: String,
-		corporate: Boolean,
-		rootId: String?,
-		personId: String,
-	) {
-		val cached = readCachedMessagesUseCase(chatId)
+	private fun handleOpenBot() {
+		val current = state.value as? ConversationState.Content ?: return
 
 		handlePublish(
-			chatId = chatId,
-			title = title,
-			corporate = corporate,
-			rootId = rootId,
-			personId = personId,
-			bot = false,
-			lines = cached?.lines.orEmpty(),
-			members = cached?.members ?: 0,
-			people = cached?.people.orEmpty(),
-			selfName = cached?.selfName.orEmpty(),
-			reactions = reactionGlyphs(cached?.reactions.orEmpty()) + reactionGlyphs(readReactionsUseCase().chosen),
-			reactionViewers = cached?.reactionViewers.orEmpty(),
-		)
-
-		handleListen(
-			chatId = chatId,
-			title = title,
-			corporate = corporate,
-			rootId = rootId,
-			personId = personId,
-		)
-
-		handleLoadMessages(
-			chatId = chatId,
-			title = title,
-			corporate = corporate,
-			rootId = rootId,
-			personId = personId,
+			ChatThread(
+				lines = listOf(
+					ChatLine(
+						id = "hello",
+						mine = false,
+						text = "",
+						sentAt = Instant.now().toString(),
+						author = current.title,
+						authorId = "",
+						replyAuthor = null,
+						replyText = null,
+						threadRoot = null,
+						deleted = false,
+						edited = false,
+						service = false,
+						fileId = "",
+						fileName = "",
+						fileType = "",
+					),
+				),
+				members = 0,
+				readUpTo = null,
+				reactions = emptyMap(),
+				reactionViewers = emptyMap(),
+				people = emptyList(),
+				selfName = "",
+			),
 		)
 	}
 
-	private fun handleListen(
-		chatId: String,
-		title: String,
-		corporate: Boolean,
-		rootId: String?,
-		personId: String,
-	) {
+	private fun handleOpenChat() {
+		val current = state.value as? ConversationState.Content ?: return
+
+		val thread = readCachedMessagesUseCase(current.chatId)
+			?: ChatThread(emptyList(), 0, null, emptyMap(), emptyMap(), emptyList(), "")
+
+		handlePublish(thread)
+		handleListen()
+		handleLoadMessages()
+	}
+
+	private fun handleListen() {
 		realtime.ensureStarted()
 
 		launchTry {
 			realtime.chatIds.collect { changed ->
-				if (changed == chatId) {
-					handleLoadMessages(
-						chatId = chatId,
-						title = title,
-						corporate = corporate,
-						rootId = rootId,
-						personId = personId,
-					)
+				val current = state.value as? ConversationState.Content ?: return@collect
+
+				if (changed == current.chatId) {
+					handleLoadMessages()
 				}
 			}
 		} catch ::handleRefreshFailure
@@ -278,15 +270,78 @@ class ConversationViewModel @Inject constructor(
 	}
 
 	private fun handleCancelReply() {
-		val currentState = state.value as? ConversationState.Content ?: return
+		val current = state.value as? ConversationState.Content ?: return
 
-		setState(currentState.copy(replyAuthor = "", replyText = ""))
+		setState(current.copy(replyAuthor = "", replyText = ""))
 	}
 
-	private fun handleSend() {
+	private fun handleAttach(name: String, type: String, bytes: ByteArray, document: Boolean) {
+		val currentState = state.value as? ConversationState.Content ?: return
+		val file = DraftFile(name = name, type = type, bytes = bytes, document = document)
+
+		if (!file.accepted()) {
+			setEvent(ConversationEvent.FileRejected)
+
+			return
+		}
+
+		val files = listOf(file)
+		setState(currentState.copy(files = files, fileName = files.attachedName(), previews = files.previews()))
+	}
+
+	private fun handleAttachPhotos(picked: List<DraftFile>) {
+		val currentState = state.value as? ConversationState.Content ?: return
+		val accepted = picked.filter { file -> file.accepted() }.take(n = 10)
+
+		if (accepted.isEmpty()) {
+			setEvent(ConversationEvent.FileRejected)
+
+			return
+		}
+
+		setState(currentState.copy(files = accepted, fileName = accepted.attachedName(), previews = accepted.previews()))
+
+		if (accepted.size < picked.size) {
+			setEvent(ConversationEvent.FileRejected)
+		}
+	}
+
+	private fun handleClearFile() {
+		val current = state.value as? ConversationState.Content ?: return
+
+		setState(current.copy(files = emptyList(), fileName = "", previews = emptyList()))
+	}
+
+	private fun handleOpenFile(fileId: String, fileName: String, fileType: String) {
+		val current = state.value as? ConversationState.Content
+		val kind = fileType.mediaType()
+		val picture = kind.startsWith("image/") || kind.startsWith("video/")
+
+		if (current != null && picture) {
+			setState(current.copy(photo = fileId))
+		} else {
+			handleDownloadFile(fileId, fileName, fileType)
+		}
+	}
+
+	private fun handleNavigateBack() {
+		val current = state.value as? ConversationState.Content
+
+		if (current != null && current.photo.isNotEmpty()) {
+			setState(current.copy(photo = ""))
+		} else {
+			router.navigateBack()
+		}
+	}
+
+	private fun handleDownloadFile(fileId: String, fileName: String, fileType: String) = launchTry {
+		setEvent(ConversationEvent.OpenedFile(fileName, fileType, downloadPhotoUseCase(fileId)))
+	} catch ::handleRefreshFailure
+
+	private fun handleSendDraft() {
 		val currentState = state.value as? ConversationState.Content ?: return
 
-		val text = currentState.draft.trim()
+		val text = currentState.draft.trim().ifEmpty { currentState.files.spokenName() }
 
 		if (text.isEmpty() || currentState.sending) {
 			return
@@ -298,51 +353,70 @@ class ConversationViewModel @Inject constructor(
 			return
 		}
 
-		val replyAuthor = currentState.replyAuthor
-
-		val replyText = currentState.replyText
-
-		val threadRoot = currentState.rootId.orEmpty()
-
-		val chatId = currentState.chatId
-
 		if (currentState.bot) {
-			handleSendBot(text, replyAuthor, replyText)
+			handleSendBot(text, currentState.replyAuthor, currentState.replyText)
 
 			return
 		}
 
-		setState(
-			currentState.copy(
-				sending = true,
-				replyAuthor = "",
-				replyText = "",
-			),
-		)
+		handleSendMessage(currentState, text)
+	}
 
+	private fun handleSendMessage(currentState: ConversationState.Content, text: String) {
+		val files = currentState.files
+
+		setState(currentState.copy(sending = true, replyAuthor = "", replyText = "", fileName = "", previews = emptyList()))
 		handleDraft("")
 
 		launchTry {
-			sendMessageUseCase(
-				chatId,
-				text,
-				replyAuthor,
-				replyText,
-				threadRoot,
-			)
+			handleUpload(currentState, text, files)
 
 			val sent = state.value as? ConversationState.Content ?: return@launchTry
 
-			setState(sent.copy(sending = false))
+			setState(sent.copy(sending = false, files = emptyList()))
+			handleLoadMessages()
+		} catch { error ->
+			(state.value as? ConversationState.Content)?.let { shown ->
+				setState(shown.copy(fileName = shown.files.attachedName(), previews = shown.files.previews()))
+			}
+			handleSendFailure(error)
+		}
+	}
 
-			handleLoadMessages(chatId)
-		} catch ::handleSendFailure
+	private suspend fun handleUpload(currentState: ConversationState.Content, text: String, files: List<DraftFile>) {
+		val chatId = currentState.chatId
+		val replyAuthor = currentState.replyAuthor
+		val replyText = currentState.replyText
+		val threadRoot = currentState.rootId.orEmpty()
+
+		if (files.isEmpty()) {
+			sendMessageUseCase(chatId, text, replyAuthor, replyText, threadRoot, "", "", "", emptyList())
+
+			return
+		}
+
+		files.forEachIndexed { index, file ->
+			val photoId = uploadPhotoUseCase(file.bytes, file.type)
+			val caption = if (index == 0) text.ifEmpty { file.name } else file.name
+			val stored = if (file.document) file.type.markedFile(file.bytes.size) else file.type
+
+			sendMessageUseCase(
+				chatId,
+				caption,
+				if (index == 0) replyAuthor else "",
+				if (index == 0) replyText else "",
+				threadRoot,
+				photoId,
+				file.name,
+				stored,
+				listOf(photoId),
+			)
+		}
 	}
 
 	private fun handleSendBot(text: String, replyAuthor: String, replyText: String) {
 		val currentState = state.value as? ConversationState.Content ?: return
-
-		val line = ChatLine(
+		val lines = currentState.lines + ChatLine(
 			id = "${currentState.lines.size}",
 			mine = true,
 			text = text,
@@ -355,9 +429,10 @@ class ConversationViewModel @Inject constructor(
 			deleted = false,
 			edited = false,
 			service = false,
+			fileId = "",
+			fileName = "",
+			fileType = "",
 		)
-
-		val lines = currentState.lines + line
 
 		setState(
 			currentState.copy(
@@ -372,33 +447,40 @@ class ConversationViewModel @Inject constructor(
 	}
 
 	private fun handleSyncTitles() {
-		val current = state.value as? ConversationState.Content ?: return
+		if (state.value !is ConversationState.Content) {
+			return
+		}
 
 		launchTry {
-			setState(current.renamed(readChatsUseCase().savedTitle(current.chatId)) ?: return@launchTry)
+			val chatId = (state.value as? ConversationState.Content)?.chatId ?: return@launchTry
+			val next = readChatsUseCase()?.firstOrNull { chat -> chat.id == chatId }?.title
+			val current = state.value as? ConversationState.Content ?: return@launchTry
+
+			if (next.isNullOrEmpty() || next == current.title) {
+				return@launchTry
+			}
+
+			setState(current.copy(title = next))
 		} catch ::handleRefreshFailure
 	}
 
 	private fun handleOpenPerson() {
-		val currentState = state.value as? ConversationState.Content ?: return
+		val current = state.value as? ConversationState.Content ?: return
 
-		if (currentState.personId.isEmpty()) {
-			if (!currentState.bot) {
+		if (current.personId.isEmpty()) {
+			if (!current.bot) {
 				router.navigateToGroup(
-					chatId = currentState.chatId,
-					title = currentState.title,
-					members = memberNames(currentState.people),
-					corporate = currentState.corporate,
+					chatId = current.chatId,
+					title = current.title,
+					members = current.people.map { person -> person.displayName.ifBlank { person.username } },
+					corporate = current.corporate,
 				)
 			}
 
 			return
 		}
 
-		router.navigateToPerson(
-			userId = currentState.personId,
-			corporate = currentState.corporate,
-		)
+		router.navigateToPerson(userId = current.personId, corporate = current.corporate)
 	}
 
 	private fun handleOpenMessage(lineId: String) {
@@ -423,11 +505,8 @@ class ConversationViewModel @Inject constructor(
 		val currentState = state.value as? ConversationState.Content ?: return
 
 		val glyph = reactionGlyph(reaction)
-
 		val chosen = currentState.reactions[lineId].orEmpty()
-
 		val active = glyph !in chosen
-
 		val next = if (active) {
 			chosen + glyph
 		} else {
@@ -443,7 +522,7 @@ class ConversationViewModel @Inject constructor(
 						sentAt = Instant.now().toString(),
 						selfName = currentState.selfName,
 					)
-				),
+					),
 				usedReactions = currentState.usedReactions.usedGlyph(glyph = glyph, active = active),
 				menuLineId = null,
 			),
@@ -578,59 +657,19 @@ class ConversationViewModel @Inject constructor(
 		handleDraft("")
 	}
 
-	private fun handleLoadMessages(chatId: String) {
+	private fun handleLoadMessages() {
 		val current = state.value as? ConversationState.Content ?: return
 
-		handleLoadMessages(
-			chatId = chatId,
-			title = current.title,
-			corporate = current.corporate,
-			rootId = current.rootId,
-			personId = current.personId,
-		)
-	}
-
-	private fun handleLoadMessages(
-		chatId: String,
-		title: String,
-		corporate: Boolean,
-		rootId: String?,
-		personId: String,
-	) {
-		val failure = if (state.value is ConversationState.Content) ::handleRefreshFailure else ::handleLoadFailure
-
 		launchTry {
-			val thread = loadMessagesUseCase(chatId)
+			val thread = loadMessagesUseCase(current.chatId)
 
-			val contentState = state.value as? ConversationState.Content
-
-			handlePublish(
-				chatId = contentState?.chatId ?: chatId,
-				title = contentState?.title ?: title,
-				corporate = contentState?.corporate ?: corporate,
-				rootId = contentState?.rootId ?: rootId,
-				personId = contentState?.personId ?: personId,
-				bot = contentState?.bot ?: false,
-				lines = thread.lines,
-				members = thread.members,
-				people = thread.people,
-				selfName = thread.selfName,
-				reactions = reactionGlyphs(thread.reactions) + reactionGlyphs(readReactionsUseCase().chosen),
-				reactionViewers = thread.reactionViewers,
-			)
-
-			handleMarkRead(chatId, thread.readUpTo)
-		} catch failure
+			handlePublish(thread)
+			handleMarkRead(thread.readUpTo)
+		} catch ::handleRefreshFailure
 	}
 
-	private suspend fun handleMarkRead(chatId: String, messageId: String?) {
-		if (markedChatId != chatId) {
-			markedChatId = chatId
-
-			markedMessageId = null
-		}
-
-		if (messageId == null || messageId == markedMessageId) {
+	private suspend fun handleMarkRead(messageId: String?) {
+		if (messageId == null) {
 			return
 		}
 
@@ -640,10 +679,18 @@ class ConversationViewModel @Inject constructor(
 			throw error
 		} catch (error: Exception) {
 			handleRefreshFailure(error)
-			return
 		}
+	}
 
-		markedMessageId = messageId
+	private fun handleSendNote(text: String) = note(
+		current = state.value as? ConversationState.Content,
+		text = text,
+		send = sendMessageUseCase,
+		read = { state.value },
+		publish = ::setState,
+		reload = { handleLoadMessages() },
+	) { block ->
+		launchTry(block) catch ::handleSendFailure
 	}
 
 	private fun handleSendFailure(error: Exception) {
@@ -655,7 +702,7 @@ class ConversationViewModel @Inject constructor(
 	private fun handleDeleteFailure(error: Exception) {
 		handleRefreshFailure(error)
 
-		(state.value as? ConversationState.Content)?.let { current -> handleLoadMessages(current.chatId) }
+		(state.value as? ConversationState.Content)?.let { handleLoadMessages() }
 	}
 
 	private fun handleRefreshFailure(error: Exception) {
@@ -666,207 +713,56 @@ class ConversationViewModel @Inject constructor(
 		setEvent(recommended.toEvent())
 	}
 
-	private fun handleLoadFailure(error: Exception) {
-		val result = errorDelegate.processBlockingError(
-			exception = error,
-			retryIntent = ConversationIntent.NavigateBack,
-			backIntent = ConversationIntent.NavigateBack,
-		)
-
-		if (result is BlockingErrorProcessResult.Handled) {
-			return
-		}
-
-		setState(
-			ConversationState.Error(message = error.userMessage())
-		)
-	}
-
 	private fun DefaultErrorEvent.toEvent(): ConversationEvent =
 		when (this) {
 			DefaultErrorEvent.NoConnection -> ConversationEvent.NoConnection
-			DefaultErrorEvent.Default -> ConversationEvent.Error
+			DefaultErrorEvent.Default      -> ConversationEvent.Error
 		}
 
-	private fun handlePublish(
-		chatId: String,
-		title: String,
-		corporate: Boolean,
-		rootId: String?,
-		personId: String,
-		bot: Boolean,
-		lines: List<ChatLine>,
-		members: Int,
-		people: List<ChatPerson>,
-		selfName: String,
-		reactions: Map<String, Set<String>>,
-		reactionViewers: Map<String, List<ChatReaction>>,
-	) {
-		when (val current = state.value) {
-			is ConversationState.Content -> {
-				val kept = lines.keepingEdits(current.lines)
+	private fun handlePublish(thread: ChatThread) {
+		val current = state.value as? ConversationState.Content ?: return
+		val memory = readReactionsUseCase()
+		val reactions = reactionGlyphs(thread.reactions) + reactionGlyphs(memory.chosen)
+		val lines = thread.lines.keepingEdits(current.lines)
+		val selfName = thread.selfName.ifBlank { current.selfName }
 
-				setState(
-					current.copy(
-						lines = kept,
-						days = kept.days(),
-						members = members,
-						people = people,
-						selfName = selfName.ifBlank { current.selfName },
-						reactions = reactions,
-						reactionViewers = mergeReactionViewers(
-							remote = reactionViewers,
-							current = current.reactionViewers,
-							selfName = selfName.ifBlank { current.selfName },
-						),
-					),
-				)
+		setState(
+			current.copy(
+				lines = lines,
+				days = lines.days(),
+				members = thread.members,
+				people = thread.people,
+				selfName = selfName,
+				reactions = reactions,
+				reactionViewers = thread.reactionViewers.mergeViewers(current.reactionViewers, selfName),
+				usedReactions = current.usedReactions.ifEmpty { memory.used },
+			),
+		)
+		handleDraft(current.draft)
 
-				handleDraft(current.draft)
-			}
-
-			else                         -> setState(
-				freshConversation(
-					chatId = chatId,
-					title = title,
-					corporate = corporate,
-					rootId = rootId,
-					personId = personId,
-					bot = bot,
-					lines = lines,
-					members = members,
-					people = people,
-					selfName = selfName,
-					reactions = reactions,
-					reactionViewers = reactionViewers,
-					used = readReactionsUseCase().used,
-				),
-			)
-		}
+		launchTry { noteFacesUseCase(thread.lines.map { line -> line.authorId }) } catch ::handleRefreshFailure
 	}
 
 	private fun handleDraft(value: String) {
 		val current = state.value as? ConversationState.Content ?: return
+		val query = mentionQueryUseCase(value)
+		val mentions = if (query == null) {
+			emptyList()
+		} else {
+			current.people.filter { person ->
+				matchMentionUseCase(name = person.displayName, username = person.username, query = query)
+			}.map { person ->
+				person.toMention(initialsUseCase(person.displayName.ifBlank { person.username }))
+			}
+		}
 
 		setState(
-			current.drafted(
-				value = value,
-				mentionQueryUseCase = mentionQueryUseCase,
-				matchMentionUseCase = matchMentionUseCase,
-				everyoneMentionUseCase = everyoneMentionUseCase,
-				initialsUseCase = initialsUseCase,
+			current.copy(
+				draft = value,
+				mentionQuery = query,
+				mentions = mentions,
+				mentionEveryone = query != null && everyoneMentionUseCase(query),
 			),
 		)
 	}
-}
-
-private fun mergeReactionViewers(
-	remote: Map<String, List<ChatReaction>>,
-	current: Map<String, List<ChatReaction>>,
-	selfName: String,
-): Map<String, List<ChatReaction>> = (remote.keys + current.keys).associate { id ->
-	val viewers = if (id !in current) {
-		remote[id].orEmpty()
-	} else {
-		val mine = current.getValue(id).filter { viewer -> viewer.mine }
-		val others = remote[id].orEmpty().filter { viewer -> !viewer.mine }
-		others + mine
-	}
-
-	id to viewers.map { viewer ->
-		if (selfName.isNotEmpty() && viewer.mine && viewer.name.isBlank()) {
-			viewer.copy(name = selfName)
-		} else {
-			viewer
-		}
-	}
-}
-
-private fun ConversationState.Content.drafted(
-	value: String,
-	mentionQueryUseCase: MentionQueryUseCase,
-	matchMentionUseCase: MatchMentionUseCase,
-	everyoneMentionUseCase: EveryoneMentionUseCase,
-	initialsUseCase: InitialsUseCase,
-): ConversationState.Content {
-	val query = mentionQueryUseCase(value)
-
-	val mentions = if (query == null) {
-		emptyList()
-	} else {
-		people.filter { person ->
-			matchMentionUseCase(
-				name = person.displayName,
-				username = person.username,
-				query = query,
-			)
-		}.map { person ->
-			val title = person.displayName.ifBlank { person.username }
-			person.toMention(initialsUseCase(title))
-		}
-	}
-
-	return copy(
-		draft = value,
-		mentionQuery = query,
-		mentions = mentions,
-		mentionEveryone = query != null && everyoneMentionUseCase(query),
-	)
-}
-
-private fun memberNames(people: List<ChatPerson>): List<String> =
-	people.map { person -> person.displayName.ifBlank { person.username } }
-
-private fun freshConversation(
-	chatId: String,
-	title: String,
-	corporate: Boolean,
-	rootId: String?,
-	personId: String,
-	bot: Boolean,
-	lines: List<ChatLine>,
-	members: Int,
-	people: List<ChatPerson>,
-	selfName: String,
-	reactions: Map<String, Set<String>>,
-	reactionViewers: Map<String, List<ChatReaction>>,
-	used: List<String>,
-): ConversationState.Content = ConversationState.Content(
-	title = title,
-	lines = lines,
-	days = lines.days(),
-	members = members,
-	people = people,
-	selfName = selfName,
-	chatId = chatId,
-	bot = bot,
-	draft = "",
-	mentionQuery = null,
-	mentions = emptyList(),
-	mentionEveryone = false,
-	editingId = null,
-	editingText = "",
-	sending = false,
-	menuLineId = null,
-	pinnedId = null,
-	selectedIds = emptySet(),
-	reactions = reactions,
-	reactionViewers = reactionViewers,
-	usedReactions = used,
-	corporate = corporate,
-	replyAuthor = "",
-	replyText = "",
-	rootId = rootId,
-	personId = personId,
-)
-
-private fun List<Chat>?.savedTitle(chatId: String): String? =
-	this?.firstOrNull { chat -> chat.id == chatId }?.title?.takeIf { title -> title.isNotEmpty() }
-
-private fun ConversationState.Content.renamed(title: String?): ConversationState.Content? {
-	if (title == null || title == this.title) {
-		return null
-	}
-
-	return copy(title = title)
 }
