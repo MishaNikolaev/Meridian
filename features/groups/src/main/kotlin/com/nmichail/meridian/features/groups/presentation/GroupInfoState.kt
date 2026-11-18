@@ -1,9 +1,12 @@
 package com.nmichail.meridian.features.groups.presentation
 
 import com.nmichail.meridian.core.validation.username.UsernameValidationItem
+import com.nmichail.meridian.shared.organization.domain.entity.OrganizationMember
 
 sealed interface GroupInfoState {
 	data object Initial : GroupInfoState
+
+	data object Loading : GroupInfoState
 
 	data class Content(
 		val title: String,
@@ -18,6 +21,12 @@ sealed interface GroupInfoState {
 		val failed: Boolean,
 		val denied: Int,
 		val canEdit: Boolean,
+		val candidates: List<OrganizationMember>,
+		val query: String,
+		val media: Boolean,
+		val files: List<GroupFile>,
+		val tab: GroupTab,
+		val photo: String,
 	) : GroupInfoState
 
 	data class Error(

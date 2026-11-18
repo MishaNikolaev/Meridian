@@ -66,6 +66,7 @@ class GroupInfoFragment : FullScreenFragment() {
 						members = arguments.getStringArray("members")?.toList().orEmpty(),
 						corporate = arguments.getBoolean("corporate"),
 						state = viewModel.state,
+						event = viewModel.event,
 						onIntent = viewModel::applyIntent,
 					)
 				}

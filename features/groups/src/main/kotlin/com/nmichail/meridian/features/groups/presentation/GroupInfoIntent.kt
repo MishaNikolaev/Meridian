@@ -9,6 +9,12 @@ sealed interface GroupInfoIntent {
 
 	data object Back : GroupInfoIntent
 
+	data object CancelAdd : GroupInfoIntent
+
+	data class ChangeQuery(val query: String) : GroupInfoIntent
+
+	data class Pick(val userId: String) : GroupInfoIntent
+
 	data class Member(val name: String) : GroupInfoIntent
 
 	data class Profile(
@@ -39,6 +45,24 @@ sealed interface GroupInfoIntent {
 	data object ConfirmAdd : GroupInfoIntent
 
 	data object Leave : GroupInfoIntent
+
+	data object OpenMedia : GroupInfoIntent
+
+	data object CloseMedia : GroupInfoIntent
+
+	data class ChooseTab(val tab: GroupTab) : GroupInfoIntent
+
+	data class OpenStored(
+		val id: String,
+		val name: String,
+		val type: String,
+	) : GroupInfoIntent
+
+	data class PlayStored(
+		val id: String,
+		val name: String,
+		val type: String,
+	) : GroupInfoIntent
 
 	data class Apply(
 		val title: String,

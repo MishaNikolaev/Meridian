@@ -15,12 +15,14 @@ dependencies {
 
 	implementation(projects.component.ui)
 	implementation(projects.component.photopicker)
+	implementation(projects.component.photo)
 	api(projects.core.di)
 	implementation(projects.core.presentation)
 	implementation(projects.core.navigation)
 	implementation(projects.core.network)
 	implementation(projects.core.validation)
 	implementation(projects.shared.chat)
+	implementation(projects.shared.organization)
 
 	testImplementation(projects.testutils)
 	testImplementation(libs.bundles.test.junit5)

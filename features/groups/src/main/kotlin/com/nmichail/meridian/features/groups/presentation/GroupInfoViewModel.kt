@@ -1,6 +1,7 @@
 package com.nmichail.meridian.features.groups.presentation
 
 import com.nmichail.meridian.component.photopicker.PhotoLocalDataSource
+import com.nmichail.meridian.component.photopicker.domain.usecase.DownloadPhotoUseCase
 import com.nmichail.meridian.component.photopicker.domain.usecase.LoadPhotoUseCase
 import com.nmichail.meridian.core.network.error.ForbiddenException
 import com.nmichail.meridian.core.network.error.userMessage
@@ -8,17 +9,18 @@ import com.nmichail.meridian.core.presentation.BaseViewModel
 import com.nmichail.meridian.core.validation.username.UsernameValidationItem
 import com.nmichail.meridian.core.validation.username.ValidateUsernameUseCase
 import com.nmichail.meridian.core.validation.username.isValid
+import com.nmichail.meridian.shared.chat.domain.entity.ChatLine
+import com.nmichail.meridian.shared.organization.domain.entity.OrganizationMember
+import com.nmichail.meridian.shared.organization.domain.usecase.ReadOrganizationMembersUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.AddChatMemberUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.FindPersonUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.LeaveChatUseCase
+import com.nmichail.meridian.shared.chat.domain.usecase.LoadMessagesUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.PromoteChatUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.ReadChatProfileUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.RemoveChatMemberUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.TransferChatUseCase
 import javax.inject.Inject
-
-private const val ROLE_OWNER = "OWNER"
-private const val ROLE_ADMIN = "ADMIN"
 
 class GroupInfoViewModel @Inject constructor(
 	private val readChatProfileUseCase: ReadChatProfileUseCase,
@@ -30,8 +32,12 @@ class GroupInfoViewModel @Inject constructor(
 	private val leaveChatUseCase: LeaveChatUseCase,
 	private val validateUsernameUseCase: ValidateUsernameUseCase,
 	private val loadPhotoUseCase: LoadPhotoUseCase,
+	private val readOrganizationMembersUseCase: ReadOrganizationMembersUseCase,
+	private val loadMessagesUseCase: LoadMessagesUseCase,
+	private val downloadPhotoUseCase: DownloadPhotoUseCase,
 	private val router: GroupRouter,
-) : BaseViewModel<GroupInfoState, GroupInfoIntent, Nothing>() {
+) : BaseViewModel<GroupInfoState, GroupInfoIntent, GroupInfoEvent>() {
+
 	private var chatId = ""
 	private var generation = 0
 
@@ -41,27 +47,35 @@ class GroupInfoViewModel @Inject constructor(
 
 	override fun applyIntent(intent: GroupInfoIntent) {
 		when (intent) {
-			is GroupInfoIntent.Load -> handleLoad(intent)
-			is GroupInfoIntent.Back -> router.navigateBack()
-			is GroupInfoIntent.Member -> handleMember(intent.name)
-			is GroupInfoIntent.Profile -> handleProfile(intent.name, intent.corporate)
-			is GroupInfoIntent.Dismiss -> handleDismiss()
-			is GroupInfoIntent.MakeAdmin -> handleAdmin(intent.name)
-			is GroupInfoIntent.Remove -> handleRemove(intent.name)
-			is GroupInfoIntent.Transfer -> handleTransfer(intent.name)
-			is GroupInfoIntent.More -> handleMore()
-			is GroupInfoIntent.Expand -> handleExpand()
-			is GroupInfoIntent.Edit -> handleEdit()
-			is GroupInfoIntent.StartAdd -> handleStartAdd()
+			is GroupInfoIntent.Load        -> handleLoad(intent)
+			is GroupInfoIntent.Back        -> handleNavigateBack()
+			is GroupInfoIntent.CancelAdd   -> handleCancelAdd()
+			is GroupInfoIntent.ChangeQuery -> handleQuery(intent.query)
+			is GroupInfoIntent.Pick        -> handlePick(intent.userId)
+			is GroupInfoIntent.Member      -> handleMember(intent.name)
+			is GroupInfoIntent.Profile     -> handleProfile(intent.name, intent.corporate)
+			is GroupInfoIntent.Dismiss     -> handleDismiss()
+			is GroupInfoIntent.MakeAdmin   -> handleAdmin(intent.name)
+			is GroupInfoIntent.Remove      -> handleRemove(intent.name)
+			is GroupInfoIntent.Transfer    -> handleTransfer(intent.name)
+			is GroupInfoIntent.More        -> handleMore()
+			is GroupInfoIntent.Expand      -> handleExpand()
+			is GroupInfoIntent.Edit        -> handleEdit()
+			is GroupInfoIntent.StartAdd    -> handleStartAdd()
 			is GroupInfoIntent.ChangeLogin -> handleChangeLogin(intent.login)
-			is GroupInfoIntent.ConfirmAdd -> handleConfirm()
-			is GroupInfoIntent.Leave -> handleLeave()
-			is GroupInfoIntent.Apply -> handleApply(intent.title, intent.description)
+			is GroupInfoIntent.ConfirmAdd  -> handleConfirm()
+			is GroupInfoIntent.Leave       -> handleLeave()
+			is GroupInfoIntent.OpenMedia   -> handleOpenMedia()
+			is GroupInfoIntent.CloseMedia  -> handleCloseMedia()
+			is GroupInfoIntent.ChooseTab   -> handleTab(intent.tab)
+			is GroupInfoIntent.OpenStored  -> handleOpenStored(intent.id, intent.name, intent.type)
+			is GroupInfoIntent.PlayStored  -> handleDownloadFile(intent.id, intent.name, intent.type)
+			is GroupInfoIntent.Apply       -> handleApply(intent.title, intent.description)
 		}
 	}
 
 	private fun handleLoad(load: GroupInfoIntent.Load) {
-		if (state.value is GroupInfoState.Content) {
+		if (state.value is GroupInfoState.Content || state.value is GroupInfoState.Loading) {
 			return
 		}
 
@@ -71,45 +85,16 @@ class GroupInfoViewModel @Inject constructor(
 
 		val ticket = generation
 
-		val owner = GroupMate(
-			name = "",
-			self = true,
-			admin = false,
-			userId = "",
-			owner = false,
-		)
-
-		val mates = load.members.map { name ->
-			GroupMate(
-				name = name,
-				self = false,
-				admin = false,
-				userId = "",
-				owner = false,
-			)
+		if (load.chatId.isEmpty()) {
+			setState(shown(title = load.title, description = "", mates = seeded(load.members), canEdit = true))
+			return
 		}
 
-		setState(
-			GroupInfoState.Content(
-				title = load.title,
-				description = "",
-				mates = listOf(owner) + mates,
-				menu = null,
-				more = false,
-				expanded = false,
-				adding = false,
-				login = UsernameValidationItem(),
-				refused = false,
-				failed = false,
-				denied = 0,
-				canEdit = true,
-			),
-		)
-
-		refresh(ticket)
+		setState(GroupInfoState.Loading)
+		refresh(ticket = ticket, title = load.title, members = load.members)
 	}
 
-	private fun refresh(ticket: Int) {
+	private fun refresh(ticket: Int, title: String, members: List<String>) {
 		val id = chatId
 
 		if (id.isEmpty()) {
@@ -123,10 +108,9 @@ class GroupInfoViewModel @Inject constructor(
 				return@launchTry
 			}
 
-			val current = state.value as? GroupInfoState.Content ?: return@launchTry
-
+			val known = (state.value as? GroupInfoState.Content)?.mates ?: seeded(members)
 			val next = if (profile.members.isEmpty() || profile.selfId.isEmpty()) {
-				current.mates.map { mate ->
+				known.map { mate ->
 					val name = if (mate.self && profile.owner.isNotEmpty()) profile.owner else mate.name
 
 					mate.copy(name = name)
@@ -136,33 +120,32 @@ class GroupInfoViewModel @Inject constructor(
 					GroupMate(
 						name = person.displayName.ifBlank { person.username },
 						self = person.userId == profile.selfId,
-						admin = person.role == ROLE_ADMIN || person.role.isEmpty() && current.mates.any { mate ->
+						admin = person.role == "ADMIN" || person.role.isEmpty() && known.any { mate ->
 							mate.userId == person.userId && mate.admin
 						},
 						userId = person.userId,
-						owner = person.role == ROLE_OWNER,
+						owner = person.role == "OWNER",
 					)
 				}
 			}
-
 			val me = next.find { mate -> mate.self }
 
 			setState(
-				current.copy(
-					title = profile.title.ifBlank { current.title },
+				shown(
+					title = profile.title.ifBlank { title },
 					description = profile.description,
 					mates = next,
 					canEdit = me != null && (me.self || me.admin),
 				),
 			)
 
-			notePhotos(next)
+			keepPhotos(next)
 		} catch { error ->
 			setState(GroupInfoState.Error(message = error.userMessage()))
 		}
 	}
 
-	private suspend fun notePhotos(mates: List<GroupMate>) {
+	private suspend fun keepPhotos(mates: List<GroupMate>) {
 		mates.forEach { mate ->
 			if (mate.userId.isEmpty()) {
 				return@forEach
@@ -170,11 +153,11 @@ class GroupInfoViewModel @Inject constructor(
 
 			val photo = loadPhotoUseCase(mate.userId)?.photoId.orEmpty()
 
-			PhotoLocalDataSource.notePhoto(userId = mate.userId, photoId = photo)
+			PhotoLocalDataSource.keepPersonPhoto(userId = mate.userId, photoId = photo)
 		}
 	}
 
-	private fun keepShown(error: Exception) {
+	private fun handleFailure(error: Exception) {
 		if (state.value is GroupInfoState.Content) {
 			return
 		}
@@ -200,17 +183,86 @@ class GroupInfoViewModel @Inject constructor(
 		setState(current.copy(expanded = true, menu = null, more = false))
 	}
 
+	private fun handleNavigateBack() {
+		val current = state.value as? GroupInfoState.Content
+
+		if (current != null && current.photo.isNotEmpty()) {
+			setState(current.copy(photo = ""))
+
+			return
+		}
+
+		if (current != null && current.media) {
+			setState(current.copy(media = false))
+
+			return
+		}
+
+		if (current != null && current.adding) {
+			setState(current.copy(adding = false, query = ""))
+
+			return
+		}
+
+		router.navigateBack()
+	}
+
+	private fun handleCancelAdd() {
+		val current = state.value as? GroupInfoState.Content ?: return
+
+		setState(current.copy(adding = false, query = ""))
+	}
+
+	private fun handleQuery(query: String) {
+		val current = state.value as? GroupInfoState.Content ?: return
+
+		setState(current.copy(query = query))
+	}
+
 	private fun handleStartAdd() {
 		val current = state.value as? GroupInfoState.Content ?: return
 
 		setState(
 			current.copy(
 				adding = true,
+				query = "",
 				login = UsernameValidationItem(),
 				menu = null,
 				more = false,
 			),
 		)
+
+		launchTry {
+			val people = readOrganizationMembersUseCase()
+			val shown = state.value as? GroupInfoState.Content ?: return@launchTry
+
+			setState(shown.copy(candidates = people))
+			keepPhotos(people.map { person -> person.mate() })
+		} catch ::handleFailure
+	}
+
+	private fun handlePick(userId: String) {
+		val current = state.value as? GroupInfoState.Content ?: return
+		val person = current.candidates.find { candidate -> candidate.userId == userId } ?: return
+
+		if (current.mates.any { mate -> mate.userId == userId }) {
+			return
+		}
+
+		if (chatId.isEmpty()) {
+			setState(current.copy(mates = current.mates + person.mate()))
+
+			return
+		}
+
+		launchTry {
+			addChatMemberUseCase(chatId, userId)
+
+			val shown = state.value as? GroupInfoState.Content ?: return@launchTry
+
+			setState(shown.copy(mates = shown.mates + person.mate()))
+			keepPhotos(listOf(person.mate()))
+		} catch ::handleFailure
 	}
 
 	private fun handleChangeLogin(login: String) {
@@ -292,7 +344,7 @@ class GroupInfoViewModel @Inject constructor(
 					menu = null,
 				),
 			)
-		} catch ::keepShown
+		} catch ::handleFailure
 	}
 
 	private fun handleRemove(name: String) {
@@ -340,7 +392,7 @@ class GroupInfoViewModel @Inject constructor(
 			return
 		}
 
-		keepShown(error)
+		handleFailure(error)
 	}
 
 	private fun handleTransfer(name: String) {
@@ -366,8 +418,8 @@ class GroupInfoViewModel @Inject constructor(
 					mates = shown.mates.map { person ->
 						when {
 							person.userId == mate.userId -> person.copy(owner = true, admin = false)
-							person.self -> person.copy(owner = false, admin = true)
-							else -> person
+							person.self                  -> person.copy(owner = false, admin = true)
+							else                         -> person
 						}
 					},
 					menu = null,
@@ -419,8 +471,8 @@ class GroupInfoViewModel @Inject constructor(
 				),
 			)
 
-			notePhotos(listOf(mate))
-		} catch ::keepShown
+			keepPhotos(listOf(mate))
+		} catch ::handleFailure
 	}
 
 	private fun handleLeave() {
@@ -454,7 +506,104 @@ class GroupInfoViewModel @Inject constructor(
 			return
 		}
 
-		keepShown(error)
+		handleFailure(error)
+	}
+
+	private fun handleOpenMedia() {
+		val current = state.value as? GroupInfoState.Content ?: return
+
+		setState(current.copy(media = true, menu = null, more = false))
+
+		val id = chatId
+
+		if (id.isEmpty()) {
+			return
+		}
+
+		launchTry {
+			val stored = loadMessagesUseCase(id).lines.mapNotNull { line -> line.stored() }
+			val shown = state.value as? GroupInfoState.Content ?: return@launchTry
+
+			setState(shown.copy(files = stored))
+		} catch ::handleFailure
+	}
+
+	private fun handleCloseMedia() {
+		val current = state.value as? GroupInfoState.Content ?: return
+
+		setState(current.copy(media = false))
+	}
+
+	private fun handleTab(tab: GroupTab) {
+		val current = state.value as? GroupInfoState.Content ?: return
+
+		setState(current.copy(tab = tab))
+	}
+
+	private fun handleOpenStored(id: String, name: String, type: String) {
+		val current = state.value as? GroupInfoState.Content ?: return
+
+		if (type.startsWith("image/") || type.startsWith("video/")) {
+			setState(current.copy(photo = id))
+
+			return
+		}
+
+		handleDownloadFile(id, name, type)
+	}
+
+	private fun handleDownloadFile(id: String, name: String, type: String) {
+		launchTry {
+			setEvent(
+				GroupInfoEvent.Opened(
+					name = name,
+					type = type,
+					bytes = downloadPhotoUseCase(id),
+				),
+			)
+		} catch ::handleFailure
+	}
+
+	private fun shown(title: String, description: String, mates: List<GroupMate>, canEdit: Boolean) = GroupInfoState.Content(
+		title = title,
+		description = description,
+		mates = mates,
+		menu = null,
+		more = false,
+		expanded = false,
+		adding = false,
+		login = UsernameValidationItem(),
+		refused = false,
+		failed = false,
+		denied = 0,
+		canEdit = canEdit,
+		candidates = emptyList(),
+		query = "",
+		media = false,
+		files = emptyList(),
+		tab = GroupTab.Media,
+		photo = "",
+	)
+
+	private fun seeded(members: List<String>): List<GroupMate> {
+		val owner = GroupMate(
+			name = "",
+			self = true,
+			admin = false,
+			userId = "",
+			owner = false,
+		)
+		val mates = members.map { name ->
+			GroupMate(
+				name = name,
+				self = false,
+				admin = false,
+				userId = "",
+				owner = false,
+			)
+		}
+
+		return listOf(owner) + mates
 	}
 
 	private fun handleEdit() {
@@ -473,3 +622,19 @@ class GroupInfoViewModel @Inject constructor(
 		)
 	}
 }
+
+private fun ChatLine.stored(): GroupFile? {
+	if (deleted || fileId.isEmpty()) {
+		return null
+	}
+
+	return GroupFile(id = fileId, name = fileName, type = fileType)
+}
+
+private fun OrganizationMember.mate(): GroupMate = GroupMate(
+	name = displayName.ifBlank { username },
+	self = false,
+	admin = false,
+	userId = userId,
+	owner = false,
+)

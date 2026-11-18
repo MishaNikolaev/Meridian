@@ -14,7 +14,6 @@
 	<string name="group_name">Название группы</string>
 	<string name="group_description">Описание · необязательно</string>
 	<string name="group_description_hint">О чём эта группа</string>
-	<string name="group_members">Участники · %d</string>
 	<string name="group_members_title">Участники</string>
 	<string name="group_owner">Владелец</string>
 	<string name="group_admin">Админ</string>
@@ -23,6 +22,10 @@
 	<string name="group_call">Звонок</string>
 	<string name="group_more">Ещё</string>
 	<string name="group_media">Медиа</string>
+	<string name="group_media_files">Файлы</string>
+	<string name="group_media_voice">Аудио</string>
+	<string name="group_media_count">%d медиа</string>
+	<string name="group_media_empty">Здесь пока пусто</string>
 	<string name="group_notifications">Уведомления чата</string>
 	<string name="group_notifications_on">Включены</string>
 	<string name="group_pinned">Закреплённые сообщения</string>
@@ -38,14 +41,11 @@
 	<string name="group_transfer">Передать права владельца</string>
 	<string name="group_transfer_failed">Не удалось передать права владельца</string>
 	<string name="group_menu_edit">Редактировать</string>
-	<plurals name="group_people">
-		<item quantity="one">%d участник</item>
-		<item quantity="few">%d участника</item>
-		<item quantity="many">%d участников</item>
-		<item quantity="other">%d участников</item>
-	</plurals>
 	<string name="group_add">Добавить участников</string>
 	<string name="group_add_member">Добавить участника</string>
+	<string name="group_add_title">Добавить участников</string>
+	<string name="group_add_search">Поиск</string>
+	<string name="group_add_empty">В организации пока никого нет</string>
 	<string name="group_submit">Создать группу</string>
 	<string name="group_member_login">Логин участника</string>
 </resources>
