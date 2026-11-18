@@ -1,4 +1,4 @@
-package com.nmichail.meridian.component.photopicker.compose
+package com.nmichail.meridian.component.photo
 
 import android.Manifest
 import android.content.ContentResolver
@@ -57,7 +57,6 @@ import com.attafitamim.krop.core.crop.CropResult
 import com.attafitamim.krop.core.crop.crop
 import com.attafitamim.krop.core.crop.cropperStyle
 import com.attafitamim.krop.core.crop.rememberImageCropper
-import com.nmichail.meridian.component.photopicker.R
 import com.nmichail.meridian.component.photopicker.photoLoader
 import com.nmichail.meridian.component.ui.R as UiR
 import com.nmichail.meridian.component.ui.button.MUiButton

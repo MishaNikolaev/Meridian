@@ -18,6 +18,10 @@ internal suspend fun postMessage(
 	replyAuthor: String,
 	replyText: String,
 	threadRoot: String,
+	fileId: String,
+	fileName: String,
+	fileType: String,
+	photoId: List<String>,
 	self: String?,
 	deviceId: String?,
 ): PostMessageDto {
@@ -28,6 +32,9 @@ internal suspend fun postMessage(
 			text = text,
 			replyAuthor = replyAuthor,
 			replyText = replyText,
+			fileId = fileId,
+			fileName = fileName,
+			fileType = fileType,
 		),
 	)
 
@@ -51,5 +58,6 @@ internal suspend fun postMessage(
 			)
 		},
 		threadRoot = threadRoot.takeIf { it.isNotEmpty() },
+		photoId = photoId,
 	)
 }

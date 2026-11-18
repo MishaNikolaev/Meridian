@@ -144,6 +144,13 @@ class ProfileViewModelTest {
 	}
 
 	@Test
+	fun `about EXPECT about screen`() = runTest {
+		viewModel.applyIntent(ProfileIntent.OpenAbout)
+
+		verify(router).navigateToAbout()
+	}
+
+	@Test
 	fun `logout EXPECT logout use case`() = runTest {
 		viewModel.applyIntent(ProfileIntent.Logout)
 

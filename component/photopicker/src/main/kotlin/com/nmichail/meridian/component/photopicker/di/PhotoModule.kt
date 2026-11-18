@@ -15,5 +15,6 @@ object PhotoModule {
 	@JvmStatic
 	fun providePhotoRepository(ktorfit: Ktorfit): PhotoRepository = PhotoRepositoryImpl(
 		api = ktorfit.createPhotoApi(),
+		client = ktorfit.httpClient,
 	)
 }

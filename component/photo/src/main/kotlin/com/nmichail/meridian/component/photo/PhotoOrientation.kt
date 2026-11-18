@@ -1,4 +1,4 @@
-package com.nmichail.meridian.component.photopicker.compose
+package com.nmichail.meridian.component.photo
 
 import android.content.Context
 import android.graphics.Bitmap

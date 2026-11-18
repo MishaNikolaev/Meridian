@@ -3,6 +3,8 @@ package com.nmichail.meridian.features.profile.presentation
 sealed interface ProfileIntent {
 	data object LoadInitialData : ProfileIntent
 
+	data object OpenAbout : ProfileIntent
+
 	data object Logout : ProfileIntent
 
 	data object StartStatus : ProfileIntent

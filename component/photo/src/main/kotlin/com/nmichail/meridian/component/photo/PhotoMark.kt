@@ -1,4 +1,4 @@
-package com.nmichail.meridian.component.photopicker.compose
+package com.nmichail.meridian.component.photo
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -18,16 +18,15 @@ import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.request.crossfade
-import com.nmichail.meridian.component.photopicker.R
 import com.nmichail.meridian.component.photopicker.photoLoader
+import com.nmichail.meridian.component.photopicker.photoRequest
 import com.nmichail.meridian.component.photopicker.photoUrl
 import com.nmichail.meridian.component.ui.initials.initials
 import com.nmichail.meridian.component.ui.initials.markColor
@@ -42,6 +41,7 @@ fun PhotoMark(
 	onOpen: () -> Unit,
 ) {
 	val context = LocalContext.current
+	val pixels = with(LocalDensity.current) { 76.dp.roundToPx() }
 
 	val openPicker = {
 		if (enabled) {
@@ -72,10 +72,7 @@ fun PhotoMark(
 
 			if (url.isNotEmpty()) {
 				AsyncImage(
-					model = ImageRequest.Builder(context)
-						.data(url)
-						.crossfade(enable = true)
-						.build(),
+					model = photoRequest(context, photoId, pixels),
 					contentDescription = stringResource(R.string.photo_profile),
 					imageLoader = photoLoader(),
 					contentScale = ContentScale.Crop,
@@ -116,7 +113,7 @@ private fun CameraBadge(
 		Image(
 			painter = painterResource(R.drawable.ic_photo_camera),
 			contentDescription = stringResource(R.string.photo_profile),
-			colorFilter = ColorFilter.tint(palette.textSecondary),
+			colorFilter = ColorFilter.tint(palette.textPrimary),
 			modifier = Modifier.size(13.dp),
 		)
 	}

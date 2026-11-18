@@ -1,4 +1,4 @@
-package com.nmichail.meridian.component.photopicker.compose
+package com.nmichail.meridian.component.photo
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -12,13 +12,13 @@ import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.request.crossfade
 import com.nmichail.meridian.component.photopicker.PhotoLocalDataSource
 import com.nmichail.meridian.component.photopicker.photoLoader
+import com.nmichail.meridian.component.photopicker.photoRequest
 import com.nmichail.meridian.component.photopicker.photoUrl
 import com.nmichail.meridian.component.ui.initials.initials
 import com.nmichail.meridian.component.ui.initials.markColor
@@ -38,6 +38,7 @@ fun PhotoFace(
 ) {
 	val stored = storedPhoto(userId = userId, chatId = chatId)
 	val photo = photoId.ifEmpty { stored }
+	val pixels = with(LocalDensity.current) { size.roundToPx() }
 	val shape = RoundedCornerShape(corner)
 
 	Box(
@@ -63,10 +64,7 @@ fun PhotoFace(
 
 		if (url.isNotEmpty()) {
 			AsyncImage(
-				model = ImageRequest.Builder(LocalContext.current)
-					.data(url)
-					.crossfade(enable = true)
-					.build(),
+				model = photoRequest(LocalContext.current, photo, pixels),
 				contentDescription = null,
 				imageLoader = photoLoader(),
 				contentScale = ContentScale.Crop,
@@ -79,8 +77,8 @@ fun PhotoFace(
 @Composable
 private fun storedPhoto(userId: String, chatId: String): String {
 	if (chatId.isNotEmpty()) {
-		return PhotoLocalDataSource.chats[chatId].orEmpty()
+		return PhotoLocalDataSource.storedChatPhoto(chatId)
 	}
 
-	return PhotoLocalDataSource.ids[userId].orEmpty()
+	return PhotoLocalDataSource.storedPersonPhoto(userId)
 }

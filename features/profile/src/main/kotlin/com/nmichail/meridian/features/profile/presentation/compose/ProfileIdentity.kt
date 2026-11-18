@@ -26,8 +26,8 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.nmichail.meridian.component.photopicker.compose.PhotoMark
-import com.nmichail.meridian.component.photopicker.compose.PhotoPicker
+import com.nmichail.meridian.component.photo.PhotoMark
+import com.nmichail.meridian.component.photo.PhotoPicker
 import com.nmichail.meridian.component.ui.field.MUiTextField
 import com.nmichail.meridian.component.ui.field.model.MUiFieldIcon
 import com.nmichail.meridian.component.ui.field.model.MUiTextFieldModel

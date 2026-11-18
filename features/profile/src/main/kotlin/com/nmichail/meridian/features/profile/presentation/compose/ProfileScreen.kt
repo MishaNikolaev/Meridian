@@ -202,7 +202,10 @@ private fun ColumnScope.ProfileList(
 			)
 		}
 
-		AppearanceBlock(version = appVersion())
+		AppearanceBlock(
+			version = appVersion(),
+			onAbout = { onIntent(ProfileIntent.OpenAbout) },
+		)
 
 		LogoutRow(onIntent = onIntent)
 	}

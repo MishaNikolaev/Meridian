@@ -1,4 +1,4 @@
-package com.nmichail.meridian.component.photopicker.compose
+package com.nmichail.meridian.component.photo
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -24,7 +24,6 @@ import com.attafitamim.krop.core.crop.CropState
 import com.attafitamim.krop.core.crop.CropperStyle
 import com.attafitamim.krop.core.crop.RectCropShape
 import com.attafitamim.krop.ui.ImageCropperDialog
-import com.nmichail.meridian.component.photopicker.R
 import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.component.ui.theme.select
 

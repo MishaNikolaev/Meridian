@@ -124,6 +124,7 @@ internal fun MoreBlock(
 	version: String,
 	theme: String,
 	onAppearance: () -> Unit,
+	onAbout: () -> Unit,
 ) {
 	Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 		SectionTitle(stringResource(R.string.profile_more))
@@ -148,6 +149,7 @@ internal fun MoreBlock(
 				icon = R.drawable.ic_profile_info,
 				title = R.string.profile_about,
 				value = version,
+				onClick = onAbout,
 			)
 		}
 	}
