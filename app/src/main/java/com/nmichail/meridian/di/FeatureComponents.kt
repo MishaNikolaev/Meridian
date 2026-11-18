@@ -28,6 +28,9 @@ import com.nmichail.meridian.features.authorization.workspace.presentation.Works
 import com.nmichail.meridian.features.person.di.PersonComponentHolder
 import com.nmichail.meridian.features.person.di.personFeatureDependencies
 import com.nmichail.meridian.features.person.presentation.PersonRouter
+import com.nmichail.meridian.features.profile.about.di.AboutComponentHolder
+import com.nmichail.meridian.features.profile.about.di.aboutFeatureDependencies
+import com.nmichail.meridian.features.profile.about.presentation.AboutRouter
 import com.nmichail.meridian.features.profile.di.ProfileComponentHolder
 import com.nmichail.meridian.features.profile.di.profileFeatureDependencies
 import com.nmichail.meridian.features.mainhost.presentation.MainHostRouter
@@ -48,6 +51,7 @@ class FeatureComponents @Inject constructor(
 	private val splashRouter: SplashRouter,
 	private val workspaceRouter: WorkspaceRouter,
 	private val profileRouter: ProfileRouter,
+	private val aboutRouter: AboutRouter,
 	private val personRouter: PersonRouter,
 	private val mainHostRouter: MainHostRouter,
 ) {
@@ -63,7 +67,7 @@ class FeatureComponents @Inject constructor(
 		SignInComponentHolder.dependencyProvider = { signInFeatureDependencies(core, signInRouter) }
 		SplashComponentHolder.dependencyProvider = { splashFeatureDependencies(core, splashRouter) }
 		ProfileComponentHolder.dependencyProvider = { profileFeatureDependencies(core, profileRouter) }
-		PersonComponentHolder.dependencyProvider = { personFeatureDependencies(core, personRouter) }
+		AboutComponentHolder.dependencyProvider = { aboutFeatureDependencies(core, aboutRouter) }
 		MainHostRouterHolder.init(mainHostRouter)
 	}
 
@@ -93,6 +97,13 @@ class FeatureComponents @Inject constructor(
 				groupRouter,
 			)
 		}
+		PersonComponentHolder.dependencyProvider = {
+			personFeatureDependencies(
+				core,
+				checkNotNull(ChatSessionHolder.current()),
+				personRouter,
+			)
+		}
 	}
 
 	fun closeSession() {
@@ -100,6 +111,7 @@ class FeatureComponents @Inject constructor(
 		ChatComponentHolder.clear()
 		ConversationComponentHolder.clear()
 		GroupComponentHolder.clear()
+		PersonComponentHolder.clear()
 		ChatSessionHolder.reset()
 	}
 }

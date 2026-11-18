@@ -43,6 +43,7 @@ import javax.inject.Singleton
 		SplashRoutersModule::class,
 		PersonRoutersModule::class,
 		ErrorRoutersModule::class,
+		AboutRoutersModule::class,
 	],
 )
 abstract class RoutersModule {
