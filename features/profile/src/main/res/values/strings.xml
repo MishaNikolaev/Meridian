@@ -16,6 +16,7 @@
 	<string name="profile_email">Email</string>
 	<string name="profile_more">Приложение</string>
 	<string name="profile_about">О приложении</string>
+	<string name="profile_plan">Планирование встреч</string>
 	<string name="profile_appearance">Оформление</string>
 	<string name="profile_theme_system">Как в системе</string>
 	<string name="profile_theme_light">Светлая</string>

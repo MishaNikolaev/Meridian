@@ -1,45 +1,12 @@
 package com.nmichail.meridian.component.ui.theme
 
 import android.content.Context
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 
 private const val PREFERENCES = "meridian"
 private const val THEME = "app_theme"
-
-enum class ThemeChoice {
-	System,
-	Light,
-	Dark,
-}
-
-object SelectedTheme {
-
-	private val darkTheme: MutableState<Boolean?> = mutableStateOf(null)
-
-	private val themeFlow = MutableStateFlow<Boolean?>(null)
-	val darkThemeFlow = themeFlow.asStateFlow()
-
-	fun setAppTheme(darkTheme: Boolean?) {
-		this.darkTheme.value = darkTheme
-		themeFlow.value = darkTheme
-	}
-
-	fun getAppTheme(): Boolean? = darkTheme.value
-
-	@Composable
-	fun isDarkTheme(): Boolean = darkTheme.value ?: isSystemInDarkTheme()
-}
-
-fun ThemeChoice.toBoolean(): Boolean? = when (this) {
-	ThemeChoice.Light -> false
-	ThemeChoice.Dark -> true
-	ThemeChoice.System -> null
-}
 
 fun loadTheme(context: Context) {
 	val stored = context.applicationContext
@@ -62,8 +29,11 @@ fun selectTheme(context: Context, next: ThemeChoice) {
 }
 
 @Composable
-fun themeChoice(): ThemeChoice = when (SelectedTheme.getAppTheme()) {
-	null -> ThemeChoice.System
-	false -> ThemeChoice.Light
-	true -> ThemeChoice.Dark
+fun themeChoice(): ThemeChoice {
+	val selected by SelectedTheme.darkThemeFlow.collectAsState()
+	return when (selected) {
+		null  -> ThemeChoice.System
+		false -> ThemeChoice.Light
+		true  -> ThemeChoice.Dark
+	}
 }

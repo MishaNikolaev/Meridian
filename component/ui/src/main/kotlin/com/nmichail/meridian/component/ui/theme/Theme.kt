@@ -11,6 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
@@ -24,10 +26,12 @@ val palette: MeridianPalette
 
 @Composable
 fun MeridianTheme(
-	themeState: Boolean? = SelectedTheme.getAppTheme(),
+	themeState: Boolean? = null,
 	content: @Composable () -> Unit,
 ) {
-	val darkTheme = themeState ?: isSystemInDarkTheme()
+	val selected by SelectedTheme.darkThemeFlow.collectAsState()
+	val preference = themeState ?: selected
+	val darkTheme = preference ?: isSystemInDarkTheme()
 
 	val colors = if (darkTheme) {
 		DarkPalette

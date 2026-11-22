@@ -2,6 +2,7 @@
 <resources>
 	<string name="person_write">Написать</string>
 	<string name="person_call">Позвонить</string>
+	<string name="person_call_self">Вы не можете позвонить себе</string>
 	<string name="person_video">Видео</string>
 	<string name="person_external">Внешний</string>
 	<string name="person_company">Корпоративная информация</string>
