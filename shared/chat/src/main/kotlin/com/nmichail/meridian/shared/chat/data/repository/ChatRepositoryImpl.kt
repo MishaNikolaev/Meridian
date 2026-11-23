@@ -12,21 +12,21 @@ import com.nmichail.meridian.shared.chat.data.datasource.MemberDataSource
 import com.nmichail.meridian.shared.chat.data.datasource.ReactionDataSource
 import com.nmichail.meridian.shared.chat.data.dto.CreateChatDto
 import com.nmichail.meridian.shared.chat.data.dto.UserCardDto
-import com.nmichail.meridian.shared.chat.data.dto.ReactionRequestDto
 import com.nmichail.meridian.shared.chat.data.dto.ReadKindDto
 import com.nmichail.meridian.shared.chat.data.dto.ReadRequestDto
 import com.nmichail.meridian.shared.chat.data.mapper.toDto
 import com.nmichail.meridian.shared.chat.data.mapper.toEntity
+import com.nmichail.meridian.shared.chat.data.mapper.toText
 import com.nmichail.meridian.shared.chat.data.chat.toChats
 import com.nmichail.meridian.shared.chat.data.chat.toCreatedChat
 import com.nmichail.meridian.shared.chat.data.message.postMessage
 import com.nmichail.meridian.shared.chat.data.message.toThread
 import com.nmichail.meridian.shared.chat.domain.entity.Chat
+import com.nmichail.meridian.shared.chat.domain.entity.ChatNote
 import com.nmichail.meridian.shared.chat.domain.entity.ChatPerson
 import com.nmichail.meridian.shared.chat.domain.entity.ChatThread
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType
 import com.nmichail.meridian.shared.chat.domain.entity.CreatedChat
-import com.nmichail.meridian.shared.chat.domain.entity.ReactionMemory
 import com.nmichail.meridian.shared.chat.domain.repository.ChatRepository
 import java.util.UUID
 import javax.inject.Inject
@@ -39,6 +39,13 @@ class ChatRepositoryImpl @Inject constructor(
 	private val deletionDataSource: DeletionDataSource,
 	private val chatDataSource: ChatDataSource,
 ) : ChatRepository {
+	override suspend fun readChat(chatId: String): Chat {
+		val dto = api.getChat(chatId).chat
+		val title = dto.title?.takeIf { value -> value.isNotBlank() } ?: dto.personName.orEmpty()
+
+		return dto.toEntity(mentioned = false).copy(title = title)
+	}
+
 	override suspend fun loadChats(): List<Chat> {
 		val chats = api.getChats().toChats(
 			api = api,
@@ -98,31 +105,6 @@ class ChatRepositoryImpl @Inject constructor(
 			deletions = deletionDataSource,
 		)
 
-	override fun readReactions(): ReactionMemory = ReactionMemory(
-		chosen = reactionDataSource.getReactions(),
-		used = reactionDataSource.used(),
-	)
-
-	override fun saveReaction(messageId: String, reactions: Set<String>, saveUsed: Boolean) {
-		val previous = reactionDataSource.getReactions()[messageId].orEmpty()
-
-		reactionDataSource.saveReactions(messageId, reactions)
-
-		if (saveUsed) {
-			(reactions - previous).forEach(reactionDataSource::saveUsed)
-		}
-	}
-
-	override suspend fun react(messageId: String, reaction: String, active: Boolean) {
-		api.setReaction(
-			messageId,
-			ReactionRequestDto(
-				reaction = reaction,
-				active = active,
-			),
-		).execute()
-	}
-
 	override suspend fun delete(messageId: String) {
 		api.deleteMessages(messageId).execute()
 
@@ -134,6 +116,25 @@ class ChatRepositoryImpl @Inject constructor(
 			messageId,
 			ReadRequestDto(kind = ReadKindDto.READ),
 		).execute()
+	}
+
+	override suspend fun sendNote(chatId: String, threadRoot: String, note: ChatNote) {
+		val text = when (note) {
+			is ChatNote.PollBody -> note.poll.toText()
+			is ChatNote.VoteBody -> note.vote.toText()
+		}
+
+		sendMessage(
+			chatId = chatId,
+			text = text,
+			replyAuthor = "",
+			replyText = "",
+			threadRoot = threadRoot,
+			fileId = "",
+			fileName = "",
+			fileType = "",
+			photoId = emptyList(),
+		)
 	}
 
 	override suspend fun sendMessage(

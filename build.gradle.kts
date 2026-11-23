@@ -18,21 +18,34 @@ plugins {
 allprojects {
 	apply(plugin = "base")
 
+	val numberedCopy = Regex(""" \d+(?=\.|$)""")
+	val dropCopies = {
+		val buildDir = layout.buildDirectory.asFile.get()
+
+		if (buildDir.exists()) {
+			buildDir.walkBottomUp()
+				.filter { file -> numberedCopy.containsMatchIn(file.name) }
+				.forEach { file ->
+					val restored = file.parentFile.resolve(numberedCopy.replace(file.name, ""))
+
+					if (restored.exists()) {
+						if (file.isDirectory) file.deleteRecursively() else file.delete()
+					} else {
+						file.renameTo(restored)
+					}
+				}
+		}
+	}
+
+	val scrubCopies = tasks.register("scrubCopies") {
+		doLast { dropCopies() }
+	}
+
 	tasks.configureEach {
-		val scrub = "Resource" in name || "Dex" in name || "Class" in name || "bundleLib" in name
+		val scrub = "Resource" in name || "Dex" in name || "Class" in name || "bundleLib" in name || name == "jar" || "Jar" in name
 
 		if (scrub) {
-			doFirst {
-				val buildDir = layout.buildDirectory.asFile.get()
-
-				if (!buildDir.exists()) {
-					return@doFirst
-				}
-
-				buildDir.walkTopDown()
-					.filter { file -> file.isFile && " 2." in file.name }
-					.forEach { file -> file.delete() }
-			}
+			dependsOn(scrubCopies)
 		}
 	}
 }

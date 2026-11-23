@@ -6,4 +6,5 @@ data class ChatProfile(
 	val owner: String,
 	val members: List<ChatPerson>,
 	val selfId: String,
+	val photoId: String,
 )

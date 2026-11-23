@@ -14,6 +14,9 @@ sealed interface GroupState {
 		val adding: Boolean,
 		val members: List<ChatPerson>,
 		val photo: String,
+		val editing: Boolean,
+		val chatId: String,
+		val uploading: Boolean,
 	) : GroupState
 
 	data class Content(
@@ -23,6 +26,9 @@ sealed interface GroupState {
 		val adding: Boolean,
 		val members: List<ChatPerson>,
 		val photo: String,
+		val editing: Boolean,
+		val chatId: String,
+		val uploading: Boolean,
 	) : GroupState
 
 	data class Error(
@@ -31,6 +37,10 @@ sealed interface GroupState {
 		val login: UsernameValidationItem,
 		val adding: Boolean,
 		val members: List<ChatPerson>,
+		val photo: String,
+		val editing: Boolean,
+		val chatId: String,
+		val uploading: Boolean,
 		val message: Int,
 	) : GroupState
 }

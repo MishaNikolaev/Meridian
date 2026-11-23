@@ -8,7 +8,7 @@ import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
-internal object MessageCipher {
+object MessageCipher {
 
 	private val random = SecureRandom()
 

@@ -5,7 +5,7 @@ import com.nmichail.meridian.core.network.error.presentation.DefaultErrorEvent
 import com.nmichail.meridian.core.network.error.presentation.ErrorDelegate
 import com.nmichail.meridian.core.network.error.presentation.NonBlockingErrorProcessResult
 import com.nmichail.meridian.core.presentation.BaseViewModel
-import com.nmichail.meridian.shared.chat.data.realtime.ChatRealtime
+import com.nmichail.meridian.shared.chat.domain.realtime.ChatRealtime
 import com.nmichail.meridian.shared.chat.domain.entity.Chat
 import com.nmichail.meridian.shared.chat.domain.entity.ChatDiscussion
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType

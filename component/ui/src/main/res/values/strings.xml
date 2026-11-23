@@ -15,6 +15,13 @@
 	<string name="error_title">Ошибка</string>
 	<string name="error_retry">Повторить</string>
 	<string name="error_back">Назад</string>
+	<string name="theme_title">Оформление</string>
+	<string name="theme_system">Как в системе</string>
+	<string name="theme_light">Светлая</string>
+	<string name="theme_dark">Тёмная</string>
+	<string name="theme_cancel">Отмена</string>
+	<string name="theme_done">Готово</string>
+
 	<string name="password_show">Показать пароль</string>
 	<string name="password_hide">Скрыть пароль</string>
 </resources>

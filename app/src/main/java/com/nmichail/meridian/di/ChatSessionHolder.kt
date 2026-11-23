@@ -1,20 +1,19 @@
 package com.nmichail.meridian.di
 
 import com.nmichail.meridian.core.network.di.CoreApi
-import com.nmichail.meridian.shared.chat.di.ChatSessionApi
 
 object ChatSessionHolder {
 
 	private var core: CoreApi? = null
-	private var component: ChatSessionApi? = null
+	private var component: ChatSessionComponent? = null
 
 	fun install(core: CoreApi) {
 		this.core = core
 	}
 
-	fun current(): ChatSessionApi? = component
+	fun current(): ChatSessionComponent? = component
 
-	fun open(): ChatSessionApi {
+	fun open(): ChatSessionComponent {
 		val existing = component
 		if (existing != null) {
 			return existing

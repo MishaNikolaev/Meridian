@@ -1,12 +1,12 @@
 package com.nmichail.meridian.shared.chat.domain.usecase
 
-import com.nmichail.meridian.shared.chat.domain.repository.ChatRepository
+import com.nmichail.meridian.shared.chat.domain.repository.ReactionRepository
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 
 class SaveReactionUseCaseTest {
-	private val repository: ChatRepository = mock()
+	private val repository: ReactionRepository = mock()
 	private val useCase = SaveReactionUseCase(repository)
 
 	@Test

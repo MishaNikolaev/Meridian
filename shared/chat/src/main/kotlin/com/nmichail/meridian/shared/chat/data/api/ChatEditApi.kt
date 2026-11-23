@@ -2,6 +2,7 @@ package com.nmichail.meridian.shared.chat.data.api
 
 import com.nmichail.meridian.shared.chat.data.dto.AddMemberDto
 import com.nmichail.meridian.shared.chat.data.dto.ChatDetailsDto
+import com.nmichail.meridian.shared.chat.data.dto.InviteDto
 import com.nmichail.meridian.shared.chat.data.dto.PatchChatDto
 import com.nmichail.meridian.shared.chat.data.dto.TransferChatDto
 import de.jensklingenberg.ktorfit.http.Body
@@ -16,6 +17,12 @@ interface ChatEditApi {
 
 	@POST("api/gateway/chats/{chatId}/members")
 	suspend fun addMember(@Path("chatId") chatId: String, @Body body: AddMemberDto)
+
+	@POST("api/gateway/chats/{chatId}/invites")
+	suspend fun invite(@Path("chatId") chatId: String): InviteDto
+
+	@POST("api/gateway/chat-invites/{code}/accept")
+	suspend fun accept(@Path("code") code: String): ChatDetailsDto
 
 	@POST("api/gateway/chats/{chatId}/leave")
 	suspend fun leave(@Path("chatId") chatId: String)

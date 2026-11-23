@@ -22,6 +22,11 @@
 	<string name="conversation_message_info">Информация о сообщении</string>
 	<string name="conversation_emoji">Эмодзи</string>
 	<string name="conversation_attach">Прикрепить файл</string>
+	<string name="conversation_send">Отправить</string>
+	<string name="conversation_voice">Голосовое сообщение</string>
+	<string name="conversation_voice_pause">Пауза</string>
+	<string name="conversation_voice_play">Слушать</string>
+	<string name="conversation_voice_cancel">Отмена</string>
 	<string name="conversation_attach_gallery">Галерея</string>
 	<string name="conversation_attach_file">Файл</string>
 	<string name="conversation_attach_poll">Опрос</string>
@@ -50,7 +55,10 @@
 	<string name="conversation_poll_solution">Пояснение при неверном ответе</string>
 	<string name="conversation_poll_timed">Ограничить время</string>
 	<string name="conversation_poll_timed_note">Опрос закроется в заданное время</string>
-	<string name="conversation_poll_send">Создать</string>
+	<string name="conversation_poll_new">Новый опрос</string>
+	<string name="conversation_poll_add_option">Добавить вариант</string>
+	<string name="conversation_poll_anonymous">Анонимное голосование</string>
+	<string name="conversation_poll_submit">Отправить опрос</string>
 	<string name="conversation_attach_browse">Выбрать файл</string>
 	<string name="conversation_storage">Внутреннее хранилище</string>
 	<string name="conversation_storage_note">Обзор файлов на устройстве</string>
@@ -59,6 +67,7 @@
 	<string name="conversation_attach_allow">Разрешить доступ к файлам</string>
 	<string name="conversation_file_remove">Убрать файл</string>
 	<string name="conversation_file_rejected">Можно прикрепить фото, pdf, аудио или видео до 20 МБ</string>
+	<string name="conversation_call_self">Вы не можете позвонить себе</string>
 	<string name="emoji_category_recent">Недавние</string>
 	<string name="emoji_category_emotions">Смайлики и эмоции</string>
 	<string name="emoji_category_people">Люди</string>

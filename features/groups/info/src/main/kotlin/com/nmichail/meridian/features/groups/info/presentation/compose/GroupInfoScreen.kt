@@ -1,0 +1,385 @@
+package com.nmichail.meridian.features.groups.info.presentation.compose
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.nmichail.meridian.component.ui.effect.LiveDataEffect
+import kotlinx.coroutines.flow.StateFlow
+import com.nmichail.meridian.component.photo.PhotoFace
+import com.nmichail.meridian.component.ui.error.MUiErrorInPlace
+import com.nmichail.meridian.component.ui.snackbar.MUiSnackbarHost
+import com.nmichail.meridian.component.ui.snackbar.showErrorSnackBar
+import com.nmichail.meridian.component.ui.R as UiR
+import com.nmichail.meridian.component.ui.theme.MeridianType
+import com.nmichail.meridian.component.ui.theme.palette
+import com.nmichail.meridian.features.groups.info.R
+import com.nmichail.meridian.features.groups.info.presentation.GroupInfoEvent
+import com.nmichail.meridian.features.groups.info.presentation.GroupInfoIntent
+import com.nmichail.meridian.features.groups.info.presentation.GroupInfoState
+import com.nmichail.meridian.features.groups.info.presentation.GroupMate
+import com.nmichail.meridian.features.groups.info.presentation.compose.component.AddMembers
+import com.nmichail.meridian.features.groups.info.presentation.compose.component.DetailCard
+import com.nmichail.meridian.features.groups.info.presentation.compose.component.GroupActions
+import com.nmichail.meridian.features.groups.info.presentation.compose.component.GroupGallery
+import com.nmichail.meridian.features.groups.info.presentation.compose.component.GroupMedia
+import com.nmichail.meridian.features.groups.info.presentation.compose.component.LeaveRow
+import com.nmichail.meridian.features.groups.info.presentation.compose.component.MemberCard
+import com.nmichail.meridian.features.groups.info.presentation.openSaved
+
+@Composable
+internal fun GroupInfoScreen(
+	chatId: String,
+	title: String,
+	members: List<String>,
+	corporate: Boolean,
+	state: StateFlow<GroupInfoState>,
+	event: LiveData<GroupInfoEvent>,
+	onIntent: (GroupInfoIntent) -> Unit,
+) {
+	val uiState by state.collectAsStateWithLifecycle()
+	val context = LocalContext.current
+
+	LiveDataEffect(event) { value ->
+		if (value is GroupInfoEvent.Opened) {
+			context.openSaved(name = value.name, type = value.type, bytes = value.bytes)
+		}
+	}
+
+	LaunchedEffect(Unit) {
+		onIntent(
+			GroupInfoIntent.Load(
+				chatId = chatId,
+				title = title,
+				members = members,
+			),
+		)
+	}
+
+	GroupInfoPages(
+		uiState = uiState,
+		chatId = chatId,
+		title = title,
+		members = members,
+		corporate = corporate,
+		onIntent = onIntent,
+	)
+}
+
+@Composable
+private fun GroupInfoPages(
+	uiState: GroupInfoState,
+	chatId: String,
+	title: String,
+	members: List<String>,
+	corporate: Boolean,
+	onIntent: (GroupInfoIntent) -> Unit,
+) {
+	when (val current = uiState) {
+		GroupInfoState.Initial -> Unit
+
+		GroupInfoState.Loading -> Box(
+			modifier = Modifier.fillMaxSize(),
+			contentAlignment = Alignment.Center,
+		) {
+			CircularProgressIndicator(color = palette.accentPrimary)
+		}
+
+		is GroupInfoState.Content -> GroupInfoLoaded(current = current, chatId = chatId, corporate = corporate, onIntent = onIntent)
+
+		is GroupInfoState.Error -> Box(modifier = Modifier.fillMaxSize()) {
+			MUiErrorInPlace(
+				message = stringResource(current.message),
+				retry = stringResource(UiR.string.error_retry),
+				back = stringResource(UiR.string.error_back),
+				onRetry = {
+					onIntent(GroupInfoIntent.Load(
+						chatId = chatId,
+						title = title,
+						members = members
+						)
+					)
+				},
+				onBack = { onIntent(GroupInfoIntent.Back) },
+				modifier = Modifier.align(Alignment.Center),
+			)
+		}
+	}
+}
+
+@Composable
+private fun GroupInfoLoaded(
+	current: GroupInfoState.Content,
+	chatId: String,
+	corporate: Boolean,
+	onIntent: (GroupInfoIntent) -> Unit,
+) {
+	Box(modifier = Modifier.fillMaxSize()) {
+		if (current.adding) {
+			AddMembers(
+				candidates = current.candidates,
+				query = current.query,
+				onIntent = onIntent,
+			)
+		} else if (current.media) {
+			GroupMedia(
+				title = current.title,
+				files = current.files,
+				tab = current.tab,
+				onIntent = onIntent,
+			)
+		} else {
+			GroupInfoBody(
+				chatId = chatId,
+				title = current.title,
+				description = current.description,
+				mates = current.mates,
+				menu = current.menu,
+				more = current.more,
+				expanded = current.expanded,
+				canEdit = current.canEdit,
+				corporate = corporate,
+				onIntent = onIntent,
+			)
+		}
+
+		GroupAlerts(
+			refused = current.refused,
+			failed = current.failed,
+			denied = current.denied,
+		)
+
+		if (current.photo.isNotEmpty()) {
+			GroupGallery(
+				files = current.files,
+				photoId = current.photo,
+				onClose = { onIntent(GroupInfoIntent.Back) },
+				onPlay = { file ->
+					onIntent(GroupInfoIntent.PlaySaved(id = file.id, name = file.name, type = file.type))
+				},
+			)
+		}
+	}
+}
+
+@Composable
+private fun GroupInfoBar(
+	canEdit: Boolean,
+	onIntent: (GroupInfoIntent) -> Unit,
+) {
+	val border = palette.borderDefault
+
+	Row(
+		modifier = Modifier
+			.fillMaxWidth()
+			.background(palette.bar)
+			.drawBehind {
+				val width = 1.dp.toPx()
+
+				drawLine(
+					border,
+					Offset(0f, size.height),
+					Offset(size.width, size.height),
+					width,
+				)
+			}
+			.padding(horizontal = 16.dp, vertical = 14.dp),
+		verticalAlignment = Alignment.CenterVertically,
+		horizontalArrangement = Arrangement.spacedBy(4.dp),
+	) {
+		Image(
+			painter = painterResource(UiR.drawable.ic_back),
+			contentDescription = null,
+			colorFilter = ColorFilter.tint(palette.textPrimary),
+			modifier = Modifier
+				.size(16.dp)
+				.clickable { onIntent(GroupInfoIntent.Back) },
+		)
+
+		Box(modifier = Modifier.weight(1f))
+
+		if (canEdit) {
+			Image(
+				painter = painterResource(R.drawable.ic_group_edit),
+				contentDescription = null,
+				colorFilter = ColorFilter.tint(palette.textPrimary),
+				modifier = Modifier
+					.size(16.dp)
+					.clickable { onIntent(GroupInfoIntent.Edit) },
+			)
+		}
+	}
+}
+
+@Composable
+private fun GroupInfoBody(
+	chatId: String,
+	title: String,
+	description: String,
+	mates: List<GroupMate>,
+	menu: String?,
+	more: Boolean,
+	expanded: Boolean,
+	canEdit: Boolean,
+	corporate: Boolean,
+	onIntent: (GroupInfoIntent) -> Unit,
+) {
+	Column(
+		modifier = Modifier
+			.fillMaxSize()
+			.background(palette.page),
+	) {
+		GroupInfoBar(
+			canEdit = canEdit,
+			onIntent = onIntent,
+		)
+
+		Column(
+			modifier = Modifier
+				.weight(1f)
+				.fillMaxWidth()
+				.verticalScroll(rememberScrollState())
+				.padding(start = 16.dp, top = 20.dp, end = 16.dp, bottom = 16.dp),
+			verticalArrangement = Arrangement.spacedBy(12.dp),
+		) {
+			GroupHead(
+				chatId = chatId,
+				title = title,
+			)
+
+			if (description.isNotEmpty()) {
+				DescriptionCard(description = description)
+			}
+
+			GroupActions(
+				more = more,
+				canEdit = canEdit,
+				onIntent = onIntent,
+			)
+
+			DetailCard(onIntent = onIntent)
+
+			MemberCard(
+				mates = mates,
+				menu = menu,
+				expanded = expanded,
+				corporate = corporate,
+				onIntent = onIntent,
+			)
+
+			LeaveRow(onIntent = onIntent)
+		}
+	}
+}
+
+@Composable
+private fun GroupHead(
+	chatId: String,
+	title: String,
+) {
+	Column(
+		modifier = Modifier.fillMaxWidth(),
+		horizontalAlignment = Alignment.CenterHorizontally,
+		verticalArrangement = Arrangement.spacedBy(6.dp),
+	) {
+		PhotoFace(
+			name = title,
+			chatId = chatId,
+			size = 88.dp,
+			corner = 14.dp,
+			style = MeridianType.titleCard,
+		)
+
+		Text(
+			text = title,
+			style = MeridianType.titleCard,
+			color = palette.textPrimary,
+			textAlign = TextAlign.Center,
+		)
+	}
+}
+
+@Composable
+private fun BoxScope.GroupAlerts(
+	refused: Boolean,
+	failed: Boolean,
+	denied: Int,
+) {
+	val scope = rememberCoroutineScope()
+
+	val snackBarHostState = remember { SnackbarHostState() }
+	val leaveMessage = stringResource(R.string.group_leave_owner)
+	val transferMessage = stringResource(R.string.group_transfer_failed)
+	val removeMessage = stringResource(R.string.group_remove_owner)
+
+	LaunchedEffect(refused) {
+		if (refused) {
+			scope.showErrorSnackBar(snackBarHostState = snackBarHostState, message = leaveMessage)
+		}
+	}
+
+	LaunchedEffect(failed) {
+		if (failed) {
+			scope.showErrorSnackBar(snackBarHostState = snackBarHostState, message = transferMessage)
+		}
+	}
+
+	LaunchedEffect(denied) {
+		if (denied > 0) {
+			scope.showErrorSnackBar(snackBarHostState = snackBarHostState, message = removeMessage)
+		}
+	}
+
+	MUiSnackbarHost(
+		snackBarHostState = snackBarHostState,
+		modifier = Modifier
+			.align(Alignment.BottomCenter)
+			.padding(horizontal = 16.dp, vertical = 24.dp),
+	)
+}
+
+@Composable
+private fun DescriptionCard(description: String) {
+	Text(
+		text = description,
+		style = MeridianType.bodySmall,
+		color = palette.textPrimary,
+		modifier = Modifier
+			.fillMaxWidth()
+			.clip(RoundedCornerShape(20.dp))
+			.background(palette.surface)
+			.padding(horizontal = 16.dp, vertical = 14.dp),
+	)
+}

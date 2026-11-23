@@ -13,7 +13,7 @@ import com.nmichail.meridian.core.network.session.SessionRepository
 import com.nmichail.meridian.testutils.InstantExecutorExtension
 import com.nmichail.meridian.testutils.TestCoroutineExtension
 import com.nmichail.meridian.testutils.doThrowSafe
-import com.nmichail.meridian.shared.chat.data.realtime.ChatRealtime
+import com.nmichail.meridian.shared.chat.domain.realtime.ChatRealtime
 import com.nmichail.meridian.shared.chat.domain.entity.Chat
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType
 import com.nmichail.meridian.shared.chat.domain.usecase.LoadChatsUseCase

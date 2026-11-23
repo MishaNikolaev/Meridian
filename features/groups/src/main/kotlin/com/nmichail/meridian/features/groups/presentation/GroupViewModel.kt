@@ -31,27 +31,22 @@ class GroupViewModel @Inject constructor(
 	private val errorDelegate: ErrorDelegate,
 	private val router: GroupRouter,
 ) : BaseViewModel<GroupState, GroupIntent, GroupEvent>() {
-	private var editing = false
-
-	private var chatId = ""
-	private var uploading = false
-	private var picked = ""
 
 	override fun initState(): GroupState = GroupState.Initial
 
 	override fun applyIntent(intent: GroupIntent) {
 		when (intent) {
-			is GroupIntent.Load -> handleLoad()
-			is GroupIntent.Open -> handleOpen(intent.chatId, intent.title, intent.description)
-			is GroupIntent.ChangeTitle -> handleChangeTitle(intent.title)
+			is GroupIntent.Load             -> handleLoad()
+			is GroupIntent.Open             -> handleOpen(intent.chatId, intent.title, intent.description)
+			is GroupIntent.ChangeTitle      -> handleChangeTitle(intent.title)
 			is GroupIntent.ChangeDescription -> handleChangeDescription(intent.description)
-			is GroupIntent.ChangeLogin -> handleChangeLogin(intent.login)
-			is GroupIntent.OpenMembers -> handleOpenMembers()
-			is GroupIntent.AddMember -> handleAddMember()
-			is GroupIntent.RemoveMember -> handleRemoveMember(intent.userId)
-			is GroupIntent.Submit -> handleSubmit()
-			is GroupIntent.InstallPhoto -> handleInstall(intent.bytes, intent.type)
-			is GroupIntent.NavigateBack -> router.navigateBack()
+			is GroupIntent.ChangeLogin      -> handleChangeLogin(intent.login)
+			is GroupIntent.OpenMembers      -> handleOpenMembers()
+			is GroupIntent.AddMember        -> handleAddMember()
+			is GroupIntent.RemoveMember     -> handleRemoveMember(intent.userId)
+			is GroupIntent.Submit           -> handleSubmit()
+			is GroupIntent.InstallPhoto     -> handleInstall(intent.bytes, intent.type)
+			is GroupIntent.NavigateBack     -> router.navigateBack()
 		}
 	}
 
@@ -68,10 +63,11 @@ class GroupViewModel @Inject constructor(
 				adding = false,
 				members = emptyList(),
 				photo = "",
+				editing = false,
+				chatId = "",
+				uploading = false,
 			),
 		)
-
-		picked = ""
 	}
 
 	private fun handleOpen(chatId: String, title: String, description: String) {
@@ -79,13 +75,7 @@ class GroupViewModel @Inject constructor(
 			return
 		}
 
-		editing = true
-
-		this.chatId = chatId
-
 		val stored = PhotoLocalDataSource.storedChatPhoto(chatId)
-
-		picked = stored
 
 		setState(
 			GroupState.Content(
@@ -95,41 +85,44 @@ class GroupViewModel @Inject constructor(
 				adding = false,
 				members = emptyList(),
 				photo = stored,
+				editing = true,
+				chatId = chatId,
+				uploading = false,
 			),
 		)
 	}
 
 	private fun handleInstall(bytes: ByteArray, type: String) {
-		if (uploading || state.value == GroupState.Initial) {
+		val current = state.value
+
+		if (current.uploading() || current is GroupState.Initial) {
 			return
 		}
 
-		uploading = true
+		setState(current.withUploading(true))
 
 		launchTry {
 			val photoId = uploadPhotoUseCase(bytes, type)
 
-			PhotoLocalDataSource.keepChatPhoto(chatId = chatId, photoId = photoId)
+			PhotoLocalDataSource.keepChatPhoto(chatId = current.chatId(), photoId = photoId)
 
 			remember(photoId)
 
-			uploading = false
+			setState(state.value.withUploading(false))
 		} catch ::handleUploadFailure
 	}
 
 	private fun remember(photoId: String) {
-		picked = photoId
-
 		when (val current = state.value) {
 			GroupState.Initial -> Unit
 			is GroupState.Loading -> setState(current.copy(photo = photoId))
 			is GroupState.Content -> setState(current.copy(photo = photoId))
-			is GroupState.Error -> Unit
+			is GroupState.Error -> setState(current.copy(photo = photoId))
 		}
 	}
 
 	private fun handleUploadFailure(error: Exception) {
-		uploading = false
+		setState(state.value.withUploading(false))
 
 		errorDelegate.processNonBlockingError(error)
 	}
@@ -150,7 +143,10 @@ class GroupViewModel @Inject constructor(
 					login = current.login,
 					adding = current.adding,
 					members = current.members,
-					photo = picked,
+					photo = current.photo,
+					editing = current.editing,
+					chatId = current.chatId,
+					uploading = current.uploading,
 				),
 			)
 		}
@@ -169,7 +165,10 @@ class GroupViewModel @Inject constructor(
 					login = current.login,
 					adding = current.adding,
 					members = current.members,
-					photo = picked,
+					photo = current.photo,
+					editing = current.editing,
+					chatId = current.chatId,
+					uploading = current.uploading,
 				),
 			)
 		}
@@ -191,7 +190,10 @@ class GroupViewModel @Inject constructor(
 					login = validateUsernameUseCase(login),
 					adding = current.adding,
 					members = current.members,
-					photo = picked,
+					photo = current.photo,
+					editing = current.editing,
+					chatId = current.chatId,
+					uploading = current.uploading,
 				),
 			)
 		}
@@ -210,7 +212,10 @@ class GroupViewModel @Inject constructor(
 					login = current.login,
 					adding = true,
 					members = current.members,
-					photo = picked,
+					photo = current.photo,
+					editing = current.editing,
+					chatId = current.chatId,
+					uploading = current.uploading,
 				),
 			)
 		}
@@ -232,7 +237,10 @@ class GroupViewModel @Inject constructor(
 					login = current.login,
 					adding = current.adding,
 					members = current.members.filter { person -> person.userId != userId },
-					photo = picked,
+					photo = current.photo,
+					editing = current.editing,
+					chatId = current.chatId,
+					uploading = current.uploading,
 				),
 			)
 		}
@@ -250,6 +258,9 @@ class GroupViewModel @Inject constructor(
 				adding = current.adding,
 				members = current.members,
 				photo = current.photo,
+				editing = current.editing,
+				chatId = current.chatId,
+				uploading = current.uploading,
 			)
 
 			is GroupState.Error -> handleFindPerson(
@@ -258,7 +269,10 @@ class GroupViewModel @Inject constructor(
 				login = current.login,
 				adding = current.adding,
 				members = current.members,
-				photo = picked,
+				photo = current.photo,
+				editing = current.editing,
+				chatId = current.chatId,
+				uploading = current.uploading,
 			)
 		}
 	}
@@ -270,8 +284,10 @@ class GroupViewModel @Inject constructor(
 		adding: Boolean,
 		members: List<ChatPerson>,
 		photo: String,
+		editing: Boolean,
+		chatId: String,
+		uploading: Boolean,
 	) {
-		picked = photo
 		val checked = validateUsernameUseCase(login.data.trim())
 
 		if (!checked.isValid()) {
@@ -283,6 +299,9 @@ class GroupViewModel @Inject constructor(
 					adding = adding,
 					members = members,
 					photo = photo,
+					editing = editing,
+					chatId = chatId,
+					uploading = uploading,
 				),
 			)
 
@@ -298,6 +317,9 @@ class GroupViewModel @Inject constructor(
 					adding = false,
 					members = members,
 					photo = photo,
+					editing = editing,
+					chatId = chatId,
+					uploading = uploading,
 				),
 			)
 
@@ -312,6 +334,9 @@ class GroupViewModel @Inject constructor(
 				adding = adding,
 				members = members,
 				photo = photo,
+				editing = editing,
+				chatId = chatId,
+				uploading = uploading,
 			),
 		)
 
@@ -332,13 +357,16 @@ class GroupViewModel @Inject constructor(
 					adding = false,
 					members = opened.members + person,
 					photo = opened.photo,
+					editing = opened.editing,
+					chatId = opened.chatId,
+					uploading = opened.uploading,
 				),
 			)
 		} catch ::handleAddFailure
 	}
 
 	private fun handleSubmit() {
-		if (editing) {
+		if (state.value.editing()) {
 			handleSave()
 
 			return
@@ -348,23 +376,8 @@ class GroupViewModel @Inject constructor(
 			GroupState.Initial,
 			is GroupState.Loading,
 			-> return
-			is GroupState.Content -> handleCreateChat(
-				title = current.title,
-				description = current.description,
-				login = current.login,
-				adding = current.adding,
-				members = current.members,
-				photo = current.photo,
-			)
-
-			is GroupState.Error -> handleCreateChat(
-				title = current.title,
-				description = current.description,
-				login = current.login,
-				adding = current.adding,
-				members = current.members,
-				photo = picked,
-			)
+			is GroupState.Content -> handleCreateChat(current)
+			is GroupState.Error -> handleCreateChat(current.form())
 		}
 	}
 
@@ -373,8 +386,6 @@ class GroupViewModel @Inject constructor(
 		val title = opened.title
 		val description = opened.description
 		val photo = opened.photo
-
-		picked = photo
 
 		val checked = validateDisplayNameUseCase(title.data.trim())
 
@@ -387,13 +398,16 @@ class GroupViewModel @Inject constructor(
 					adding = false,
 					members = emptyList(),
 					photo = photo,
+					editing = opened.editing,
+					chatId = opened.chatId,
+					uploading = opened.uploading,
 				),
 			)
 
 			return
 		}
 
-		val id = chatId
+		val id = opened.chatId
 
 		setState(
 			GroupState.Loading(
@@ -403,6 +417,9 @@ class GroupViewModel @Inject constructor(
 				adding = false,
 				members = emptyList(),
 				photo = photo,
+				editing = opened.editing,
+				chatId = opened.chatId,
+				uploading = opened.uploading,
 			),
 		)
 
@@ -411,7 +428,12 @@ class GroupViewModel @Inject constructor(
 				id,
 				checked.data,
 				description.trim(),
+				photo,
 			)
+
+			if (photo.isNotEmpty()) {
+				PhotoLocalDataSource.keepChatPhoto(chatId = id, photoId = photo)
+			}
 
 			setEvent(
 				GroupEvent.Saved(
@@ -433,7 +455,10 @@ class GroupViewModel @Inject constructor(
 				login = current.login,
 				adding = current.adding,
 				members = current.members,
-				photo = picked,
+				photo = current.photo,
+				editing = current.editing,
+				chatId = current.chatId,
+				uploading = current.uploading,
 			)
 
 			GroupState.Initial,
@@ -446,28 +471,18 @@ class GroupViewModel @Inject constructor(
 		handleRequestFailure(error)
 	}
 
-	private fun handleCreateChat(
-		title: DisplayNameValidationItem,
-		description: String,
-		login: UsernameValidationItem,
-		adding: Boolean,
-		members: List<ChatPerson>,
-		photo: String,
-	) {
-		picked = photo
-
+	private fun handleCreateChat(form: GroupState.Content) {
+		val title = form.title
+		val description = form.description
+		val login = form.login
+		val adding = form.adding
+		val members = form.members
+		val photo = form.photo
 		val checked = validateDisplayNameUseCase(title.data.trim())
 
 		if (!checked.isValid()) {
 			setState(
-				GroupState.Content(
-					title = checked,
-					description = description,
-					login = login,
-					adding = adding,
-					members = members,
-					photo = photo,
-				),
+				form.copy(title = checked),
 			)
 
 			return
@@ -481,6 +496,9 @@ class GroupViewModel @Inject constructor(
 				adding = adding,
 				members = members,
 				photo = photo,
+				editing = form.editing,
+				chatId = form.chatId,
+				uploading = form.uploading,
 			),
 		)
 
@@ -491,7 +509,15 @@ class GroupViewModel @Inject constructor(
 				members.map { person -> person.username },
 			)
 
-			PhotoLocalDataSource.keepChatPhoto(chatId = chat.id, photoId = photo)
+			if (photo.isNotEmpty()) {
+				updateChatUseCase(
+					chat.id,
+					checked.data,
+					description.trim(),
+					photo,
+				)
+				PhotoLocalDataSource.keepChatPhoto(chatId = chat.id, photoId = photo)
+			}
 
 			router.navigateBack()
 
@@ -515,8 +541,6 @@ class GroupViewModel @Inject constructor(
 	private fun handleRequestFailure(error: Exception) {
 		val failed = state.value as? GroupState.Loading ?: return
 
-		picked = failed.photo
-
 		val result = errorDelegate.processNonBlockingError(error)
 
 		if (result is NonBlockingErrorProcessResult.Handled) {
@@ -528,6 +552,9 @@ class GroupViewModel @Inject constructor(
 					adding = failed.adding,
 					members = failed.members,
 					photo = failed.photo,
+					editing = failed.editing,
+					chatId = failed.chatId,
+					uploading = failed.uploading,
 				),
 			)
 
@@ -541,8 +568,52 @@ class GroupViewModel @Inject constructor(
 				login = failed.login,
 				adding = failed.adding,
 				members = failed.members,
+				photo = failed.photo,
+				editing = failed.editing,
+				chatId = failed.chatId,
+				uploading = failed.uploading,
 				message = error.userMessage(),
 			),
 		)
 	}
 }
+
+private fun GroupState.editing(): Boolean = when (this) {
+	is GroupState.Content -> editing
+	is GroupState.Loading -> editing
+	is GroupState.Error -> editing
+	GroupState.Initial -> false
+}
+
+private fun GroupState.chatId(): String = when (this) {
+	is GroupState.Content -> chatId
+	is GroupState.Loading -> chatId
+	is GroupState.Error -> chatId
+	GroupState.Initial -> ""
+}
+
+private fun GroupState.uploading(): Boolean = when (this) {
+	is GroupState.Content -> uploading
+	is GroupState.Loading -> uploading
+	is GroupState.Error -> uploading
+	GroupState.Initial -> false
+}
+
+private fun GroupState.withUploading(value: Boolean): GroupState = when (this) {
+	is GroupState.Content -> copy(uploading = value)
+	is GroupState.Loading -> copy(uploading = value)
+	is GroupState.Error -> copy(uploading = value)
+	GroupState.Initial -> this
+}
+
+private fun GroupState.Error.form(): GroupState.Content = GroupState.Content(
+	title = title,
+	description = description,
+	login = login,
+	adding = adding,
+	members = members,
+	photo = photo,
+	editing = editing,
+	chatId = chatId,
+	uploading = uploading,
+)

@@ -18,6 +18,7 @@ dependencies {
 	implementation(projects.core.di)
 	implementation(projects.core.network)
 	implementation(projects.shared.session)
+	implementation(projects.component.photopicker)
 
 	testImplementation(projects.testutils)
 	testImplementation(libs.bundles.test.junit5)

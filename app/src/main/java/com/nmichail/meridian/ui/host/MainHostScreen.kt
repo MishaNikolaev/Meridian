@@ -14,7 +14,9 @@ import androidx.lifecycle.LiveData
 import com.nmichail.meridian.component.ui.bar.MUiBottomBar
 import com.nmichail.meridian.component.ui.bar.model.MUiBottomDestination
 import com.nmichail.meridian.component.ui.theme.palette
-import com.nmichail.meridian.features.calls.presentation.compose.CallsScreen
+import com.nmichail.meridian.features.calls.presentation.CallsIntent
+import com.nmichail.meridian.features.calls.presentation.CallsState
+import com.nmichail.meridian.features.calls.presentation.compose.home.CallsScreen
 import com.nmichail.meridian.features.chat.presentation.ChatEvent
 import com.nmichail.meridian.features.chat.presentation.ChatIntent
 import com.nmichail.meridian.features.chat.presentation.ChatState
@@ -34,6 +36,8 @@ fun MainHostScreen(
 	chatEvent: LiveData<ChatEvent>,
 	profileState: StateFlow<ProfileState>,
 	onProfileIntent: (ProfileIntent) -> Unit,
+	callsState: CallsState,
+	onCallsIntent: (CallsIntent) -> Unit,
 ) {
 	Column(
 		modifier = Modifier
@@ -53,7 +57,10 @@ fun MainHostScreen(
 					event = chatEvent,
 				)
 				MUiBottomDestination.CONTACTS -> ContactsScreen()
-				MUiBottomDestination.CALLS -> CallsScreen()
+				MUiBottomDestination.CALLS -> CallsScreen(
+					state = callsState,
+					onIntent = onCallsIntent,
+				)
 				MUiBottomDestination.PROFILE -> ProfileScreen(
 					state = profileState,
 					onIntent = onProfileIntent,

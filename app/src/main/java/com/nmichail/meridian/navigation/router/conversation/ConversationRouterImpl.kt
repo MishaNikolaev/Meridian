@@ -4,8 +4,10 @@ import com.nmichail.meridian.core.navigation.router.GlobalRouter
 import com.nmichail.meridian.di.ChatSessionHolder
 import com.nmichail.meridian.features.conversation.presentation.ConversationRouter
 import com.nmichail.meridian.features.conversation.presentation.getConversationScreen
-import com.nmichail.meridian.features.groups.presentation.getGroupInfoScreen
+import com.nmichail.meridian.features.groups.info.presentation.getGroupInfoScreen
 import com.nmichail.meridian.features.person.presentation.getPersonScreen
+import com.nmichail.meridian.ui.call.getCallScreen
+import com.nmichail.meridian.ui.call.getConferenceScreen
 import javax.inject.Inject
 
 class ConversationRouterImpl @Inject constructor(
@@ -57,5 +59,23 @@ class ConversationRouterImpl @Inject constructor(
 
 	override fun navigateBack() {
 		router.navigateBack()
+	}
+
+	override fun navigateToCall(chatId: String, title: String, personId: String, video: Boolean) {
+		router.navigateTo(
+			getCallScreen(
+				chatId = chatId,
+				title = title,
+				personId = personId,
+				incoming = false,
+				callId = "",
+				video = video,
+				onBack = { router.navigateBack() },
+			),
+		)
+	}
+
+	override fun navigateToConference(code: String) {
+		router.navigateTo(getConferenceScreen(code) { router.navigateBack() })
 	}
 }

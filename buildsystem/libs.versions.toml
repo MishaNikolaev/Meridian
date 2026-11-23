@@ -36,6 +36,8 @@ fragment = "1.8.9"
 emoji2 = "1.7.0"
 composeBom = "2024.09.00"
 datastore = "1.0.0"
+webrtc = "1.3.10"
+livekit = "2.17.2"
 
 [libraries]
 gradle-android = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
@@ -102,6 +104,8 @@ coil-network-ktor3 = { group = "io.coil-kt.coil3", name = "coil-network-ktor3", 
 krop-ui = { group = "com.attafitamim.krop", name = "ui", version.ref = "krop" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
 bouncycastle = { group = "org.bouncycastle", name = "bcprov-jdk18on", version.ref = "bouncycastle" }
+stream-webrtc = { group = "io.getstream", name = "stream-webrtc-android", version.ref = "webrtc" }
+livekit = { group = "io.livekit", name = "livekit-android", version.ref = "livekit" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

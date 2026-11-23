@@ -6,4 +6,12 @@ import javax.inject.Inject
 
 class UpdateChatUseCase @Inject constructor(
 	private val repository: GroupEditRepository,
-) : suspend (String, String, String) -> ChatProfile by repository::updateChat
+) {
+
+	suspend operator fun invoke(
+		chatId: String,
+		title: String,
+		description: String,
+		photoId: String,
+	): ChatProfile = repository.updateChat(chatId, title, description, photoId)
+}

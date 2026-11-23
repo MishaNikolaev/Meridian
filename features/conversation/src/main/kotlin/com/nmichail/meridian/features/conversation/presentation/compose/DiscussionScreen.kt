@@ -40,18 +40,17 @@ import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.features.conversation.R
 import com.nmichail.meridian.features.conversation.presentation.ConversationIntent
 import com.nmichail.meridian.features.conversation.presentation.ConversationState
-import com.nmichail.meridian.features.conversation.presentation.compose.component.MessageReactions
-import com.nmichail.meridian.features.conversation.presentation.compose.component.LocalTallies
-import com.nmichail.meridian.features.conversation.presentation.compose.component.MessageRow
-import com.nmichail.meridian.features.conversation.presentation.compose.component.PollCard
-import com.nmichail.meridian.features.conversation.presentation.compose.component.quotedScroll
-import com.nmichail.meridian.features.conversation.presentation.compose.component.toPoll
-import com.nmichail.meridian.features.conversation.presentation.compose.component.vote
-import com.nmichail.meridian.features.conversation.presentation.compose.component.tallies
-import com.nmichail.meridian.features.conversation.presentation.compose.component.SelectionBar
+import com.nmichail.meridian.features.conversation.presentation.compose.message.SpokenText
+import com.nmichail.meridian.features.conversation.presentation.compose.message.MessageReactions
+import com.nmichail.meridian.features.conversation.presentation.compose.poll.LocalTallies
+import com.nmichail.meridian.features.conversation.presentation.compose.message.MessageRow
+import com.nmichail.meridian.features.conversation.presentation.compose.poll.PollCard
+import com.nmichail.meridian.features.conversation.presentation.compose.message.quotedScroll
+import com.nmichail.meridian.features.conversation.presentation.compose.poll.tallies
+import com.nmichail.meridian.features.conversation.presentation.compose.message.SelectionBar
 import com.nmichail.meridian.features.conversation.presentation.compose.component.messageClock
 import com.nmichail.meridian.features.conversation.presentation.compose.component.messageDay
-import com.nmichail.meridian.features.conversation.presentation.compose.component.pressMessage
+import com.nmichail.meridian.features.conversation.presentation.compose.message.pressMessage
 import com.nmichail.meridian.shared.chat.domain.entity.ChatLine
 import com.nmichail.meridian.shared.chat.domain.entity.ChatReaction
 import kotlinx.coroutines.launch
@@ -192,59 +191,59 @@ private fun CommentList(
 	val scope = rememberCoroutineScope()
 	val you = stringResource(R.string.conversation_you)
 	val greeting = stringResource(R.string.conversation_greeting)
-	val shown = comments.filter { line -> line.vote() == null }
+	val messages = comments.filter { line -> line.vote == null }
 
 	CompositionLocalProvider(LocalTallies provides tallies) {
-	LazyColumn(
-		state = listState,
-		modifier = modifier.fillMaxWidth(),
-		contentPadding = PaddingValues(vertical = 10.dp),
-		verticalArrangement = Arrangement.spacedBy(6.dp),
-	) {
-		if (root != null) {
-			item(key = "post") {
-				DiscussionPost(
-					line = root,
-					title = title,
-					count = comments.size,
-					viewers = reactionViewers[root.id].orEmpty(),
-					selfName = selfName,
+		LazyColumn(
+			state = listState,
+			modifier = modifier.fillMaxWidth(),
+			contentPadding = PaddingValues(vertical = 10.dp),
+			verticalArrangement = Arrangement.spacedBy(6.dp),
+		) {
+			if (root != null) {
+				item(key = "post") {
+					DiscussionPost(
+						line = root,
+						title = title,
+						count = comments.size,
+						viewers = reactionViewers[root.id].orEmpty(),
+						selfName = selfName,
+						onIntent = onIntent,
+					)
+				}
+
+				item(key = "pill") {
+					CommentPill(count = comments.size)
+				}
+			}
+
+			items(messages, key = { line -> line.id }) { line ->
+				MessageRow(
+					line = line,
+					continued = false,
+					selected = line.id in selectedIds,
+					reactions = reactions[line.id].orEmpty(),
+					viewers = reactionViewers[line.id].orEmpty(),
+					corporate = corporate,
+					comments = 0,
+					onReactions = if (reactionViewers[line.id].orEmpty().isEmpty()) {
+						null
+					} else {
+						{ onReactions(line.id) }
+					},
+					onQuote = quotedScroll(
+						lines = comments + listOfNotNull(root),
+						shown = messages,
+						offset = if (root != null) 2 else 0,
+						you = you,
+						greeting = greeting,
+					) { index ->
+						scope.launch { listState.animateScrollToItem(index) }
+					},
 					onIntent = onIntent,
 				)
 			}
-
-			item(key = "pill") {
-				CommentPill(count = comments.size)
-			}
 		}
-
-		items(shown, key = { line -> line.id }) { line ->
-			MessageRow(
-				line = line,
-				continued = false,
-				selected = line.id in selectedIds,
-				reactions = reactions[line.id].orEmpty(),
-				viewers = reactionViewers[line.id].orEmpty(),
-				corporate = corporate,
-				comments = 0,
-				onReactions = if (reactionViewers[line.id].orEmpty().isEmpty()) {
-					null
-				} else {
-					{ onReactions(line.id) }
-				},
-				onQuote = quotedScroll(
-					lines = comments + listOfNotNull(root),
-					shown = shown,
-					offset = if (root != null) 2 else 0,
-					you = you,
-					greeting = greeting,
-				) { index ->
-					scope.launch { listState.animateScrollToItem(index) }
-				},
-				onIntent = onIntent,
-			)
-		}
-	}
 	}
 }
 
@@ -301,11 +300,15 @@ private fun DiscussionPost(
 @Composable
 private fun PostBody(line: ChatLine, onIntent: (ConversationIntent) -> Unit) {
 	val spoken = if (line.id == "hello") stringResource(R.string.conversation_greeting) else line.text
-	val poll = if (line.deleted) null else spoken.toPoll()
+	val poll = if (line.deleted) null else line.poll
 	val tally = LocalTallies.current[line.id]
 
 	if (poll == null) {
-		Text(text = spoken, style = MeridianType.chatMessage, color = palette.textPrimary)
+		SpokenText(
+			text = spoken,
+			color = palette.textPrimary,
+			onLink = { url -> onIntent(ConversationIntent.OpenLink(url)) },
+		)
 		return
 	}
 
@@ -318,6 +321,7 @@ private fun PostBody(line: ChatLine, onIntent: (ConversationIntent) -> Unit) {
 		correct = poll.correct,
 		solution = poll.solution,
 		voters = tally?.voters.orEmpty(),
+		anonymous = poll.anonymous,
 		onPick = { index ->
 			onIntent(ConversationIntent.Vote(pollId = line.id, option = index, question = poll.question))
 		},

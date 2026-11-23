@@ -27,6 +27,7 @@ import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.core.text.getSpans
+import com.nmichail.meridian.component.ui.emoji.withSystemEmoji
 import com.nmichail.meridian.component.ui.theme.palette
 
 @Composable
@@ -40,6 +41,7 @@ fun MUiLinkedText(
 	maxLines: Int = Int.MAX_VALUE,
 	overflow: TextOverflow = TextOverflow.Clip,
 	onTextLayout: ((TextLayoutResult) -> Unit)? = null,
+	mentionColor: Color? = null,
 	onLinkClick: (String) -> Unit = {},
 	onLinkLongClick: (String) -> Unit = {},
 ) {
@@ -57,6 +59,7 @@ fun MUiLinkedText(
 		text = text,
 		linkText = linkText,
 		linkStyles = linkStyles,
+		mentionColor = mentionColor,
 		onLinkClick = currentOnLinkClick,
 	)
 
@@ -88,20 +91,36 @@ private fun rememberLinkedString(
 	text: String,
 	linkText: String?,
 	linkStyles: TextLinkStyles,
+	mentionColor: Color?,
 	onLinkClick: (String) -> Unit,
-): AnnotatedString = remember(text, linkText, linkStyles) {
+): AnnotatedString = remember(text, linkText, linkStyles, mentionColor) {
 	if (linkText != null) {
 		linkedPhrase(text, linkText, linkStyles, onLinkClick)
 	} else {
-		linkedEmails(text, linkStyles, onLinkClick)
+		linkedEmails(text, linkStyles, mentionColor, onLinkClick)
 	}
 }
+
+private val conferenceLink = Regex("""(?i)(?:https?://)?meridian\.ftc\.ru/c/[A-Za-z0-9_-]+""")
+private val mentionPattern = Regex("@[\\p{L}\\p{N}_]+")
 
 private fun linkedEmails(
 	text: String,
 	linkStyles: TextLinkStyles,
+	mentionColor: Color?,
 	onLinkClick: (String) -> Unit,
-): AnnotatedString = AnnotatedString.Builder(text).apply {
+): AnnotatedString = AnnotatedString.Builder(withSystemEmoji(text)).apply {
+	conferenceLink.findAll(text).forEach { match ->
+		addLink(
+			clickable = LinkAnnotation.Clickable(
+				tag = match.value,
+				styles = linkStyles,
+				linkInteractionListener = { onLinkClick(match.value) },
+			),
+			start = match.range.first,
+			end = match.range.last + 1,
+		)
+	}
 	val spannable = SpannableString(text).apply { Linkify.addLinks(this, Linkify.EMAIL_ADDRESSES) }
 
 	spannable.getSpans<URLSpan>().forEach { span ->
@@ -116,6 +135,15 @@ private fun linkedEmails(
 			start = spannable.getSpanStart(span),
 			end = spannable.getSpanEnd(span),
 		)
+	}
+	if (mentionColor != null) {
+		mentionPattern.findAll(text).forEach { match ->
+			addStyle(
+				style = SpanStyle(color = mentionColor),
+				start = match.range.first,
+				end = match.range.last + 1,
+			)
+		}
 	}
 }.toAnnotatedString()
 

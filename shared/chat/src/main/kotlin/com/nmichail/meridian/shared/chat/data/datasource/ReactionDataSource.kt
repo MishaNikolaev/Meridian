@@ -81,7 +81,7 @@ class ReactionDataSourceImpl internal constructor(
 
 		val saved = getReactions() + updates
 
-		val encoded = saved.mapValues { (_, glyphs) -> glyphs.toList() }
+		val encoded = saved.mapValues { (_, emojis) -> emojis.toList() }
 
 		preferences.edit { putString(REACTIONS, Json.encodeToString(encoded)) }
 	}

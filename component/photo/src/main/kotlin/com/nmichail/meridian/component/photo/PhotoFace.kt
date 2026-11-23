@@ -36,10 +36,16 @@ fun PhotoFace(
 	corner: Dp = size / 2,
 	style: TextStyle = MeridianType.bodyName,
 ) {
-	val stored = storedPhoto(userId = userId, chatId = chatId)
-	val photo = photoId.ifEmpty { stored }
+	val stored = if (chatId.isNotEmpty()) {
+		PhotoLocalDataSource.storedChatPhoto(chatId)
+	} else {
+		PhotoLocalDataSource.storedPersonPhoto(userId)
+	}
+	val photo = stored.ifEmpty { photoId }
 	val pixels = with(LocalDensity.current) { size.roundToPx() }
 	val shape = RoundedCornerShape(corner)
+
+	val url = photoUrl(photo)
 
 	Box(
 		modifier = modifier
@@ -51,18 +57,16 @@ fun PhotoFace(
 
 				compositingStrategy = CompositingStrategy.Offscreen
 			}
-			.background(markColor(name)),
+			.then(if (url.isEmpty()) Modifier.background(markColor(name)) else Modifier),
 		contentAlignment = Alignment.Center,
 	) {
-		Text(
-			text = initials(name),
-			style = style,
-			color = palette.textOnAccent,
-		)
-
-		val url = photoUrl(photo)
-
-		if (url.isNotEmpty()) {
+		if (url.isEmpty()) {
+			Text(
+				text = initials(name),
+				style = style,
+				color = palette.textOnAccent,
+			)
+		} else {
 			AsyncImage(
 				model = photoRequest(LocalContext.current, photo, pixels),
 				contentDescription = null,
@@ -72,13 +76,4 @@ fun PhotoFace(
 			)
 		}
 	}
-}
-
-@Composable
-private fun storedPhoto(userId: String, chatId: String): String {
-	if (chatId.isNotEmpty()) {
-		return PhotoLocalDataSource.storedChatPhoto(chatId)
-	}
-
-	return PhotoLocalDataSource.storedPersonPhoto(userId)
 }

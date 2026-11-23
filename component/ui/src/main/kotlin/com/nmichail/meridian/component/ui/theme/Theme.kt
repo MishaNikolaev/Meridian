@@ -3,7 +3,6 @@ package com.nmichail.meridian.component.ui.theme
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -24,10 +23,10 @@ val palette: MeridianPalette
 
 @Composable
 fun MeridianTheme(
-	themeState: Boolean? = SelectedTheme.getAppTheme(),
+	themeState: Boolean? = null,
 	content: @Composable () -> Unit,
 ) {
-	val darkTheme = themeState ?: isSystemInDarkTheme()
+	val darkTheme = themeState ?: SelectedTheme.isDarkTheme()
 
 	val colors = if (darkTheme) {
 		DarkPalette

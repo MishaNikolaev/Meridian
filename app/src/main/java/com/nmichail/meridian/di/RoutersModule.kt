@@ -44,6 +44,8 @@ import javax.inject.Singleton
 		PersonRoutersModule::class,
 		ErrorRoutersModule::class,
 		AboutRoutersModule::class,
+		BusyRoutersModule::class,
+		RingRoutersModule::class,
 	],
 )
 abstract class RoutersModule {

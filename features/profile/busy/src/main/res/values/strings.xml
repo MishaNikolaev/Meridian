@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="busy_title">Планирование встреч</string>
+	<string name="busy_hint">Отметьте, когда у вас созвон или вы заняты</string>
+</resources>

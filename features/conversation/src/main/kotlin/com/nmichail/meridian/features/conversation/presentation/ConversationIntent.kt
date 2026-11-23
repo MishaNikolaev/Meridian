@@ -3,13 +3,6 @@ package com.nmichail.meridian.features.conversation.presentation
 import com.nmichail.meridian.shared.chat.domain.entity.ChatLine
 
 sealed interface ConversationIntent {
-	data class DraftFile(
-		val name: String,
-		val type: String,
-		val bytes: ByteArray,
-		val document: Boolean = false,
-	)
-
 	data class LoadInitialData(
 		val chatId: String,
 		val title: String,
@@ -27,7 +20,7 @@ sealed interface ConversationIntent {
 	) : ConversationIntent
 
 	data class BeginEdit(
-		val line: ChatLine,
+		val message: ChatLine,
 	) : ConversationIntent
 
 	data object CancelEdit : ConversationIntent
@@ -56,6 +49,7 @@ sealed interface ConversationIntent {
 		val options: List<String>,
 		val correct: Int,
 		val solution: String,
+		val anonymous: Boolean,
 	) : ConversationIntent
 
 	data class Vote(
@@ -85,6 +79,10 @@ sealed interface ConversationIntent {
 	data object SyncTitles : ConversationIntent
 
 	data object OpenPerson : ConversationIntent
+
+	data object StartCall : ConversationIntent
+
+	data class OpenLink(val url: String) : ConversationIntent
 
 	data class OpenMessage(
 		val lineId: String,

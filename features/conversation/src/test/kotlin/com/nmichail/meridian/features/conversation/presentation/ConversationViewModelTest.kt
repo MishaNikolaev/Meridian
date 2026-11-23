@@ -13,11 +13,13 @@ import com.nmichail.meridian.core.network.session.SessionRepository
 import com.nmichail.meridian.testutils.InstantExecutorExtension
 import com.nmichail.meridian.testutils.TestCoroutineExtension
 import com.nmichail.meridian.core.validation.initials.InitialsUseCase
+import com.nmichail.meridian.core.validation.shortname.ShortNameUseCase
 import com.nmichail.meridian.core.validation.mention.ApplyMentionUseCase
 import com.nmichail.meridian.core.validation.mention.EveryoneMentionUseCase
 import com.nmichail.meridian.core.validation.mention.MatchMentionUseCase
 import com.nmichail.meridian.core.validation.mention.MentionQueryUseCase
-import com.nmichail.meridian.shared.chat.data.realtime.ChatRealtime
+import com.nmichail.meridian.shared.chat.domain.realtime.ChatRealtime
+import com.nmichail.meridian.shared.session.domain.usecase.GetUserIdUseCase
 import com.nmichail.meridian.shared.chat.domain.entity.Chat
 import com.nmichail.meridian.shared.chat.domain.entity.ChatLine
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType
@@ -33,6 +35,7 @@ import com.nmichail.meridian.shared.chat.domain.usecase.ReadCachedMessagesUseCas
 import com.nmichail.meridian.shared.chat.domain.usecase.ReadReactionsUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.SaveReactionUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.SendMessageUseCase
+import com.nmichail.meridian.shared.chat.domain.usecase.SendNoteUseCase
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -72,6 +75,7 @@ class ConversationViewModelTest {
 		readCachedMessagesUseCase,
 		readChatsUseCase,
 		sendMessageUseCase,
+		mock<SendNoteUseCase>(),
 		markReadUseCase,
 		readReactionsUseCase,
 		saveReactionUseCase,
@@ -82,6 +86,7 @@ class ConversationViewModelTest {
 		MatchMentionUseCase(),
 		EveryoneMentionUseCase(),
 		InitialsUseCase(),
+		ShortNameUseCase(),
 		realtime,
 		ErrorDelegate(
 			errorLogger = ErrorLogger(),
@@ -92,6 +97,7 @@ class ConversationViewModelTest {
 			deviceIdentityRepository = mock<DeviceIdentityRepository>(),
 		),
 		router,
+		mock<GetUserIdUseCase>(),
 		mock<UploadPhotoUseCase>(),
 		mock<DownloadPhotoUseCase>(),
 		mock<NoteFacesUseCase>(),
@@ -112,6 +118,8 @@ class ConversationViewModelTest {
 		fileId = "",
 		fileName = "",
 		fileType = "",
+		poll = null,
+		vote = null,
 	)
 	private val emptyThread = ChatThread(
 		lines = emptyList(),
@@ -258,7 +266,7 @@ class ConversationViewModelTest {
 	fun `edit own line EXPECT edited mark`() = runTest {
 		whenever(loadMessagesUseCase.invoke("1")) doReturn emptyThread.copy(lines = listOf(ownLine))
 		viewModel.applyIntent(openAnna)
-		viewModel.applyIntent(ConversationIntent.BeginEdit(line = ownLine))
+		viewModel.applyIntent(ConversationIntent.BeginEdit(message = ownLine))
 		viewModel.applyIntent(ConversationIntent.ChangeDraft(draft = "пока"))
 
 		viewModel.applyIntent(ConversationIntent.Send)
@@ -271,7 +279,7 @@ class ConversationViewModelTest {
 		viewModel.applyIntent(openBot)
 		val line = (viewModel.state.value as ConversationState.Content).lines.first()
 
-		viewModel.applyIntent(ConversationIntent.BeginEdit(line = line))
+		viewModel.applyIntent(ConversationIntent.BeginEdit(message = line))
 
 		assertEquals(null, (viewModel.state.value as ConversationState.Content).editingId)
 	}

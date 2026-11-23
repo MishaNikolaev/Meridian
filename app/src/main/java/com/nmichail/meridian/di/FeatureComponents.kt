@@ -1,6 +1,8 @@
 package com.nmichail.meridian.di
 
 import com.nmichail.meridian.core.network.di.CoreApi
+import com.nmichail.meridian.features.calls.di.CallsComponentHolder
+import com.nmichail.meridian.features.calls.di.callsFeatureDependencies
 import com.nmichail.meridian.features.conversation.di.ConversationComponentHolder
 import com.nmichail.meridian.features.conversation.di.conversationFeatureDependencies
 import com.nmichail.meridian.features.conversation.presentation.ConversationRouter
@@ -8,6 +10,9 @@ import com.nmichail.meridian.features.chat.di.ChatComponentHolder
 import com.nmichail.meridian.features.chat.di.chatFeatureDependencies
 import com.nmichail.meridian.features.chat.presentation.ChatRouter
 import com.nmichail.meridian.features.groups.di.GroupComponentHolder
+import com.nmichail.meridian.features.groups.info.di.GroupInfoComponentHolder
+import com.nmichail.meridian.features.groups.info.di.groupInfoFeatureDependencies
+import com.nmichail.meridian.features.groups.info.presentation.GroupInfoRouter
 import com.nmichail.meridian.features.groups.di.groupFeatureDependencies
 import com.nmichail.meridian.features.groups.presentation.GroupRouter
 import com.nmichail.meridian.features.search.di.SearchComponentHolder
@@ -29,6 +34,9 @@ import com.nmichail.meridian.features.person.di.PersonComponentHolder
 import com.nmichail.meridian.features.person.di.personFeatureDependencies
 import com.nmichail.meridian.features.person.presentation.PersonRouter
 import com.nmichail.meridian.features.profile.about.di.AboutComponentHolder
+import com.nmichail.meridian.features.profile.busy.di.BusyComponentHolder
+import com.nmichail.meridian.features.profile.busy.di.busyFeatureDependencies
+import com.nmichail.meridian.features.profile.busy.presentation.BusyRouter
 import com.nmichail.meridian.features.profile.about.di.aboutFeatureDependencies
 import com.nmichail.meridian.features.profile.about.presentation.AboutRouter
 import com.nmichail.meridian.features.profile.di.ProfileComponentHolder
@@ -44,6 +52,7 @@ import javax.inject.Singleton
 class FeatureComponents @Inject constructor(
 	private val chatRouter: ChatRouter,
 	private val groupRouter: GroupRouter,
+	private val groupInfoRouter: GroupInfoRouter,
 	private val searchRouter: SearchRouter,
 	private val conversationRouter: ConversationRouter,
 	private val registrationRouter: RegistrationRouter,
@@ -52,6 +61,7 @@ class FeatureComponents @Inject constructor(
 	private val workspaceRouter: WorkspaceRouter,
 	private val profileRouter: ProfileRouter,
 	private val aboutRouter: AboutRouter,
+	private val busyRouter: BusyRouter,
 	private val personRouter: PersonRouter,
 	private val mainHostRouter: MainHostRouter,
 ) {
@@ -68,12 +78,13 @@ class FeatureComponents @Inject constructor(
 		SplashComponentHolder.dependencyProvider = { splashFeatureDependencies(core, splashRouter) }
 		ProfileComponentHolder.dependencyProvider = { profileFeatureDependencies(core, profileRouter) }
 		AboutComponentHolder.dependencyProvider = { aboutFeatureDependencies(core, aboutRouter) }
+		BusyComponentHolder.dependencyProvider = { busyFeatureDependencies(core, busyRouter) }
 		MainHostRouterHolder.init(mainHostRouter)
 	}
 
 	fun openSession() {
 		ChatSessionHolder.open()
-		ChatRealtimeHolder.get(core)
+		ChatRealtimeHolder.get(core).chatRealtime().ensureStarted()
 		ChatComponentHolder.dependencyProvider = {
 			chatFeatureDependencies(
 				core,
@@ -97,6 +108,17 @@ class FeatureComponents @Inject constructor(
 				groupRouter,
 			)
 		}
+		GroupInfoComponentHolder.dependencyProvider = {
+			groupInfoFeatureDependencies(
+				core,
+				checkNotNull(ChatSessionHolder.current()),
+				groupInfoRouter,
+			)
+		}
+		CallsComponentHolder.dependencyProvider = {
+			val session = checkNotNull(ChatSessionHolder.current())
+			callsFeatureDependencies(core, session, session, session)
+		}
 		PersonComponentHolder.dependencyProvider = {
 			personFeatureDependencies(
 				core,
@@ -111,7 +133,9 @@ class FeatureComponents @Inject constructor(
 		ChatComponentHolder.clear()
 		ConversationComponentHolder.clear()
 		GroupComponentHolder.clear()
+		GroupInfoComponentHolder.clear()
 		PersonComponentHolder.clear()
+		CallsComponentHolder.clear()
 		ChatSessionHolder.reset()
 	}
 }

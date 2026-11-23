@@ -1,7 +1,7 @@
 package com.nmichail.meridian.shared.chat.di
 
 import com.nmichail.meridian.core.network.di.CoreApi
-import com.nmichail.meridian.shared.chat.data.realtime.ChatRealtime
+import com.nmichail.meridian.shared.chat.domain.realtime.ChatRealtime
 import dagger.Component
 
 @ChatRealtimeScope

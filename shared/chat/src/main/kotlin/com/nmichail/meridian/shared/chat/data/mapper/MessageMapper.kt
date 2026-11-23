@@ -12,11 +12,12 @@ internal fun MessageDto.toEntity(self: String?, author: String?): ChatLine {
 	val serviceText = notice?.let(::noticeText)
 
 	val opened = if (serviceText == null) opened() else null
+	val text = serviceText ?: opened?.text.orEmpty()
 
 	val line = ChatLine(
 		id = messageId,
 		mine = senderUserId == self && serviceText == null,
-		text = serviceText ?: opened?.text.orEmpty(),
+		text = text,
 		sentAt = createdAt,
 		author = author?.takeIf { senderUserId != self && serviceText == null },
 		authorId = senderUserId,
@@ -26,6 +27,8 @@ internal fun MessageDto.toEntity(self: String?, author: String?): ChatLine {
 		fileId = opened?.fileId.orEmpty(),
 		fileName = opened?.fileName.orEmpty(),
 		fileType = opened?.fileType.orEmpty(),
+		poll = text.toPoll(),
+		vote = text.toVote(),
 		deleted = false,
 		edited = false,
 		service = serviceText != null,
@@ -40,6 +43,7 @@ internal fun MessageDto.toEntity(self: String?, author: String?): ChatLine {
 
 internal fun ReactionDto.toEntity(name: String, mine: Boolean): ChatReaction =
 	ChatReaction(
+		userId = userId,
 		name = name,
 		reaction = reaction,
 		sentAt = createdAt,
