@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.conversation.presentation.compose.component
+package com.nmichail.meridian.features.conversation.presentation.compose.attach
 
 import android.app.Activity
 import android.content.Context
@@ -43,6 +43,8 @@ import coil3.compose.AsyncImage
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.features.conversation.R
+import com.nmichail.meridian.features.conversation.presentation.compose.poll.SheetHeight
+import com.nmichail.meridian.features.conversation.presentation.compose.poll.rememberPollScroll
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.conversation.presentation.compose.component
+package com.nmichail.meridian.features.conversation.presentation.compose.message
 
 import android.content.ClipData
 import androidx.annotation.DrawableRes
@@ -47,7 +47,7 @@ internal fun MessageAction.choose(
 			),
 		)
 
-		MessageAction.EDIT -> onIntent(ConversationIntent.BeginEdit(line = line))
+		MessageAction.EDIT -> onIntent(ConversationIntent.BeginEdit(message = line))
 		MessageAction.START_DISCUSSION -> onIntent(
 			ConversationIntent.StartDiscussion(lineId = line.id),
 		)

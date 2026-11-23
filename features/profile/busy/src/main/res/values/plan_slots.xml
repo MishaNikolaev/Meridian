@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="busy_slot_09_10">9:00–10:00</string>
+	<string name="busy_slot_10_11">10:00–11:00</string>
+	<string name="busy_slot_11_12">11:00–12:00</string>
+	<string name="busy_slot_12_13">12:00–13:00</string>
+	<string name="busy_slot_13_14">13:00–14:00</string>
+	<string name="busy_slot_14_15">14:00–15:00</string>
+	<string name="busy_slot_15_16">15:00–16:00</string>
+	<string name="busy_slot_16_17">16:00–17:00</string>
+	<string name="busy_slot_17_18">17:00–18:00</string>
+	<string name="busy_slot_18_19">18:00–19:00</string>
+</resources>

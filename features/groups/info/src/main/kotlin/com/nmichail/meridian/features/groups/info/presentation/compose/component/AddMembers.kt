@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.groups.presentation.compose
+package com.nmichail.meridian.features.groups.info.presentation.compose.component
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -29,19 +29,16 @@ import com.nmichail.meridian.component.ui.field.model.MUiFieldIcon
 import com.nmichail.meridian.component.ui.field.model.MUiTextFieldModel
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
-import com.nmichail.meridian.features.groups.R
+import com.nmichail.meridian.features.groups.info.R
 import com.nmichail.meridian.shared.organization.domain.entity.OrganizationMember
-import com.nmichail.meridian.features.groups.presentation.GroupInfoIntent
-import com.nmichail.meridian.features.groups.presentation.GroupMate
+import com.nmichail.meridian.features.groups.info.presentation.GroupInfoIntent
 
 @Composable
 internal fun AddMembers(
 	candidates: List<OrganizationMember>,
-	mates: List<GroupMate>,
 	query: String,
 	onIntent: (GroupInfoIntent) -> Unit,
 ) {
-	val shown = candidates.matching(query = query, mates = mates)
 
 	Column(
 		modifier = Modifier
@@ -85,7 +82,7 @@ internal fun AddMembers(
 				.padding(horizontal = 16.dp),
 		)
 
-		if (shown.isEmpty()) {
+		if (candidates.isEmpty()) {
 			Text(
 				text = stringResource(R.string.group_add_empty),
 				style = MeridianType.bodyDefault,
@@ -94,7 +91,7 @@ internal fun AddMembers(
 			)
 		} else {
 			LazyColumn(modifier = Modifier.fillMaxWidth()) {
-				items(items = shown, key = { person -> person.userId }) { person ->
+				items(items = candidates, key = { person -> person.userId }) { person ->
 					MemberLine(person = person, onIntent = onIntent)
 				}
 			}
@@ -137,18 +134,5 @@ private fun MemberLine(
 				overflow = TextOverflow.Ellipsis,
 			)
 		}
-	}
-}
-
-private fun List<OrganizationMember>.matching(query: String, mates: List<GroupMate>): List<OrganizationMember> {
-	val needle = query.trim()
-	val taken = mates.map { mate -> mate.userId }.filter { id -> id.isNotEmpty() }.toSet()
-
-	return filter { person ->
-		person.userId !in taken && (
-			needle.isEmpty() ||
-				person.displayName.contains(needle, ignoreCase = true) ||
-				person.username.contains(needle, ignoreCase = true)
-			)
 	}
 }
