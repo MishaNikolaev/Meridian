@@ -6,4 +6,5 @@ import kotlinx.serialization.Serializable
 data class PatchChatDto(
 	val title: String,
 	val description: String,
+	val photoId: String? = null,
 )
