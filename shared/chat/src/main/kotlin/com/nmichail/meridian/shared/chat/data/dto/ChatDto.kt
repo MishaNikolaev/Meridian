@@ -14,4 +14,5 @@ data class ChatDto(
 	val lastDiscussion: MessageDto?,
 	val corporate: Boolean,
 	val description: String?,
+	val photoId: String? = null,
 )

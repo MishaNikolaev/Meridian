@@ -233,6 +233,8 @@ class ChatRepositoryImplTest {
 					fileId = "",
 					fileName = "",
 					fileType = "",
+					poll = null,
+					vote = null,
 				),
 			),
 			members = 1,
