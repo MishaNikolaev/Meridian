@@ -3,7 +3,7 @@ package com.nmichail.meridian.features.person.data.repository
 import com.nmichail.meridian.core.network.session.SessionRepository
 import com.nmichail.meridian.features.person.data.api.PersonApi
 import com.nmichail.meridian.features.person.data.datasource.PersonLocalDataSource
-import com.nmichail.meridian.features.person.data.mapper.toEntry
+import com.nmichail.meridian.features.person.data.mapper.toDto
 import com.nmichail.meridian.features.person.data.mapper.toProfile
 import com.nmichail.meridian.features.person.domain.entity.PersonProfile
 import com.nmichail.meridian.features.person.domain.repository.PersonRepository
@@ -25,7 +25,7 @@ class PersonRepositoryImpl @Inject constructor(
 
 		personLocalDataSource.savePerson(
 			userId = userId,
-			entry = profile.toEntry(),
+			person = profile.toDto(),
 		)
 
 		return profile
