@@ -1,8 +1,8 @@
-package com.nmichail.meridian.features.profile.busy.data.api
+package com.nmichail.meridian.shared.busy.data.api
 
-import com.nmichail.meridian.features.profile.busy.data.model.BusyBoardDto
-import com.nmichail.meridian.features.profile.busy.data.model.BusyDayDto
-import com.nmichail.meridian.features.profile.busy.data.model.BusyRequestDto
+import com.nmichail.meridian.shared.busy.data.model.BusyBoardDto
+import com.nmichail.meridian.shared.busy.data.model.BusyDayDto
+import com.nmichail.meridian.shared.busy.data.model.BusyRequestDto
 import de.jensklingenberg.ktorfit.http.Body
 import de.jensklingenberg.ktorfit.http.GET
 import de.jensklingenberg.ktorfit.http.PUT

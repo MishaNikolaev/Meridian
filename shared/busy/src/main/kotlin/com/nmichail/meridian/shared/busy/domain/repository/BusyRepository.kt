@@ -1,6 +1,6 @@
-package com.nmichail.meridian.features.profile.busy.domain.repository
+package com.nmichail.meridian.shared.busy.domain.repository
 
-import com.nmichail.meridian.features.profile.busy.domain.entity.BusyPerson
+import com.nmichail.meridian.shared.busy.domain.entity.BusyPerson
 
 interface BusyRepository {
 

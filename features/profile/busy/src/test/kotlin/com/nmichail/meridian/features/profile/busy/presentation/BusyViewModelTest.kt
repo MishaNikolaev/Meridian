@@ -7,8 +7,8 @@ import com.nmichail.meridian.core.network.error.presentation.ErrorDelegate
 import com.nmichail.meridian.core.network.error.presentation.ErrorLogger
 import com.nmichail.meridian.core.network.error.presentation.ErrorRouter
 import com.nmichail.meridian.core.network.session.SessionRepository
-import com.nmichail.meridian.features.profile.busy.domain.usecase.LoadOwnBusyUseCase
-import com.nmichail.meridian.features.profile.busy.domain.usecase.SaveBusySlotsUseCase
+import com.nmichail.meridian.shared.busy.domain.usecase.LoadOwnBusyUseCase
+import com.nmichail.meridian.shared.busy.domain.usecase.SaveBusySlotsUseCase
 import com.nmichail.meridian.features.profile.busy.presentation.compose.planDate
 import com.nmichail.meridian.testutils.TestCoroutineExtension
 import kotlinx.coroutines.test.runTest

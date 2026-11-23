@@ -3,8 +3,8 @@ package com.nmichail.meridian.features.profile.busy.presentation
 import com.nmichail.meridian.core.network.error.presentation.ErrorDelegate
 import com.nmichail.meridian.core.network.error.userMessage
 import com.nmichail.meridian.core.presentation.BaseViewModel
-import com.nmichail.meridian.features.profile.busy.domain.usecase.LoadOwnBusyUseCase
-import com.nmichail.meridian.features.profile.busy.domain.usecase.SaveBusySlotsUseCase
+import com.nmichail.meridian.shared.busy.domain.usecase.LoadOwnBusyUseCase
+import com.nmichail.meridian.shared.busy.domain.usecase.SaveBusySlotsUseCase
 import com.nmichail.meridian.features.profile.busy.presentation.compose.PLAN_DAYS
 import com.nmichail.meridian.features.profile.busy.presentation.compose.planDate
 import com.nmichail.meridian.features.profile.busy.presentation.compose.planSlotLabels

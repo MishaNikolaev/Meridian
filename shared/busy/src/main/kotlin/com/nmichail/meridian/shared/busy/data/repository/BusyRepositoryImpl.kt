@@ -1,10 +1,10 @@
-package com.nmichail.meridian.features.profile.busy.data.repository
+package com.nmichail.meridian.shared.busy.data.repository
 
 import com.nmichail.meridian.core.network.session.SessionRepository
-import com.nmichail.meridian.features.profile.busy.data.api.BusyApi
-import com.nmichail.meridian.features.profile.busy.data.model.BusyRequestDto
-import com.nmichail.meridian.features.profile.busy.domain.entity.BusyPerson
-import com.nmichail.meridian.features.profile.busy.domain.repository.BusyRepository
+import com.nmichail.meridian.shared.busy.data.api.BusyApi
+import com.nmichail.meridian.shared.busy.data.model.BusyRequestDto
+import com.nmichail.meridian.shared.busy.domain.entity.BusyPerson
+import com.nmichail.meridian.shared.busy.domain.repository.BusyRepository
 import javax.inject.Inject
 
 class BusyRepositoryImpl @Inject constructor(

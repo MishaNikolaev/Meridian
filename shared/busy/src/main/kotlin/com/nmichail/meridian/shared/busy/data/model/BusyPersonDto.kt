@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.profile.busy.data.model
+package com.nmichail.meridian.shared.busy.data.model
 
 import kotlinx.serialization.Serializable
 
