@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.conversation.presentation.compose.component
+package com.nmichail.meridian.features.conversation.presentation.compose.poll
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -35,6 +35,7 @@ internal fun PollCard(
 	correct: Int,
 	solution: String,
 	voters: List<PollVoter>,
+	anonymous: Boolean,
 	onPick: (Int) -> Unit,
 ) {
 	val total = counts.sum()
@@ -64,14 +65,15 @@ internal fun PollCard(
 			)
 		}
 		if (total > 0) {
+			val open = !anonymous
 			Text(
 				text = stringResource(R.string.conversation_poll_votes, total),
 				style = MeridianType.bodyDefault,
-				color = palette.accentPrimary,
+				color = if (open) palette.accentPrimary else palette.textSecondary,
 				textAlign = TextAlign.Center,
 				modifier = Modifier
 					.fillMaxWidth()
-					.clickable { openVotes(options, voters) }
+					.then(if (open) Modifier.clickable { openVotes(options, voters) } else Modifier)
 					.padding(vertical = 6.dp),
 			)
 		}

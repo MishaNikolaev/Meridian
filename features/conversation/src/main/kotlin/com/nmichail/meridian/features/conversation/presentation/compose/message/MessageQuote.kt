@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.conversation.presentation.compose.component
+package com.nmichail.meridian.features.conversation.presentation.compose.message
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import com.nmichail.meridian.component.ui.R as UiR
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
+import com.nmichail.meridian.features.conversation.presentation.compose.component.DayLine
 import com.nmichail.meridian.shared.chat.domain.entity.ChatLine
 
 @Composable
@@ -92,7 +93,7 @@ internal fun MessageQuote(line: ChatLine, corporate: Boolean, onOpen: (String, S
 internal fun List<ChatLine>.quotedId(author: String, text: String, you: String, greeting: String): String? =
 	asReversed().firstOrNull { line ->
 		val name = line.author?.takeIf { known -> known.isNotBlank() } ?: you
-		val body = if (line.id == "hello") greeting else line.text.toPoll()?.question ?: line.text
+		val body = if (line.id == "hello") greeting else line.poll?.question ?: line.text
 
 		!line.deleted && name == author && body == text
 	}?.id
@@ -102,7 +103,7 @@ internal fun Map<String, List<DayLine>>.quoteIndex(id: String): Int {
 
 	entries.reversed().forEach { (label, dayLines) ->
 		dayLines.asReversed().forEach { row ->
-			if (row.line.vote() != null) {
+			if (row.line.vote != null) {
 				return@forEach
 			}
 

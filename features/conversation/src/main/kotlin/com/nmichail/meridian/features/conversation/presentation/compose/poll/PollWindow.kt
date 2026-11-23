@@ -1,13 +1,9 @@
-package com.nmichail.meridian.features.conversation.presentation.compose.component
+package com.nmichail.meridian.features.conversation.presentation.compose.poll
 
-import androidx.compose.animation.core.animate
-import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
@@ -16,39 +12,21 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 
 internal class SheetHeight(
 	val fraction: Float,
-	val approach: (Float) -> Unit,
 	val slide: (Float) -> Unit,
 )
 
 @Composable
 @Suppress("MagicNumber")
-internal fun rememberSheetHeight(open: Boolean): SheetHeight {
+internal fun rememberSheetHeight(): SheetHeight {
 	var fraction by remember { mutableFloatStateOf(value = 0.52f) }
-	val scope = rememberCoroutineScope()
-	val motion = remember { arrayOfNulls<Job>(1) }
-	val approach = { target: Float ->
-		motion[0]?.cancel()
-		motion[0] = scope.launch {
-			animate(initialValue = fraction, targetValue = target, animationSpec = tween(durationMillis = 280)) { value, _ ->
-				fraction = value
-			}
-		}
-	}
 	val slide = { next: Float ->
-		motion[0]?.cancel()
 		fraction = next
 	}
 
-	LaunchedEffect(open) {
-		approach(if (open) 0.92f else 0.52f)
-	}
-
-	return SheetHeight(fraction = fraction, approach = approach, slide = slide)
+	return SheetHeight(fraction = fraction, slide = slide)
 }
 
 @Composable

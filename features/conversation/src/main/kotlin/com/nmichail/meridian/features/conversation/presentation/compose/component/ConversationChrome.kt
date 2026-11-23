@@ -63,7 +63,12 @@ internal fun ConversationBar(
 		Row(
 			modifier = Modifier
 				.fillMaxWidth()
-				.padding(start = 10.dp, end = 12.dp, top = 10.dp, bottom = 10.dp),
+				.padding(
+					start = 10.dp,
+					end = 12.dp,
+					top = 10.dp,
+					bottom = 10.dp
+				),
 			verticalAlignment = Alignment.CenterVertically,
 			horizontalArrangement = Arrangement.spacedBy(10.dp),
 		) {
@@ -90,12 +95,21 @@ internal fun ConversationBar(
 					)
 
 					if (note.isNotEmpty()) {
-						Text(text = note, style = MeridianType.captionSmall, color = palette.textSecondary, maxLines = 1)
+						Text(
+							text = note,
+							style = MeridianType.captionSmall,
+							color = palette.textSecondary,
+							maxLines = 1
+						)
 					}
 				}
 			}
 
-			BarIcon(R.drawable.ic_phone, size = 22, onClick = null)
+			BarIcon(
+				R.drawable.ic_phone,
+				size = 22,
+				onClick = if (bot) null else ({ onIntent(ConversationIntent.StartCall) }),
+			)
 
 			BarIcon(R.drawable.ic_more, size = 18, onClick = null)
 		}
@@ -111,7 +125,11 @@ private fun PinnedLine(text: String) {
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
-			.padding(start = 86.dp, end = 12.dp, bottom = 10.dp),
+			.padding(
+				start = 86.dp,
+				end = 12.dp,
+				bottom = 10.dp
+			),
 		horizontalArrangement = Arrangement.spacedBy(8.dp),
 		verticalAlignment = Alignment.CenterVertically,
 	) {
@@ -150,7 +168,12 @@ internal fun EditBar(text: String, onIntent: (ConversationIntent) -> Unit) {
 					stroke,
 				)
 			}
-			.padding(start = 14.dp, end = 10.dp, top = 8.dp, bottom = 8.dp),
+			.padding(
+				start = 14.dp,
+				end = 10.dp,
+				top = 8.dp,
+				bottom = 8.dp
+			),
 		verticalAlignment = Alignment.CenterVertically,
 		horizontalArrangement = Arrangement.spacedBy(12.dp),
 	) {
@@ -171,7 +194,9 @@ internal fun EditBar(text: String, onIntent: (ConversationIntent) -> Unit) {
 			)
 		}
 
-		BarIcon(UiR.drawable.ic_close, size = 22) { onIntent(ConversationIntent.CancelEdit) }
+		BarIcon(UiR.drawable.ic_close, size = 22) {
+			onIntent(ConversationIntent.CancelEdit)
+		}
 	}
 }
 
@@ -193,7 +218,12 @@ internal fun ReplyBar(author: String, text: String, onIntent: (ConversationInten
 					stroke,
 				)
 			}
-			.padding(start = 14.dp, end = 10.dp, top = 8.dp, bottom = 8.dp),
+			.padding(
+				start = 14.dp,
+				end = 10.dp,
+				top = 8.dp,
+				bottom = 8.dp
+			),
 		verticalAlignment = Alignment.CenterVertically,
 		horizontalArrangement = Arrangement.spacedBy(12.dp),
 	) {
@@ -222,7 +252,9 @@ internal fun ReplyBar(author: String, text: String, onIntent: (ConversationInten
 			)
 		}
 
-		BarIcon(UiR.drawable.ic_close, size = 16) { onIntent(ConversationIntent.CancelReply) }
+		BarIcon(UiR.drawable.ic_close, size = 16) {
+			onIntent(ConversationIntent.CancelReply)
+		}
 	}
 }
 
@@ -271,7 +303,11 @@ private fun PeerMark(title: String, bot: Boolean, personId: String, chatId: Stri
 			.background(markColor(title)),
 		contentAlignment = Alignment.Center,
 	) {
-		Text(text = initials(title), style = MeridianType.captionDefault, color = palette.textOnAccent)
+		Text(
+			text = initials(title),
+			style = MeridianType.captionDefault,
+			color = palette.textOnAccent
+		)
 	}
 }
 

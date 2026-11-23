@@ -31,7 +31,7 @@ import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.component.ui.theme.select
 import com.nmichail.meridian.features.conversation.R
-import com.nmichail.meridian.features.conversation.domain.entity.Mention
+import com.nmichail.meridian.features.conversation.presentation.Mention
 
 @Composable
 internal fun MentionList(

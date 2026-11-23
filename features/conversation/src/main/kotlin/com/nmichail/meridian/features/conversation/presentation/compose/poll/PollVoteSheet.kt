@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.conversation.presentation.compose
+package com.nmichail.meridian.features.conversation.presentation.compose.poll
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -6,12 +6,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -27,24 +27,18 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.nmichail.meridian.component.photo.PhotoFace
 import com.nmichail.meridian.component.ui.R as UiR
-import com.nmichail.meridian.component.ui.initials.initials
-import com.nmichail.meridian.component.ui.initials.markColor
 import com.nmichail.meridian.component.ui.sheet.MUiSheet
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
-import com.nmichail.meridian.component.ui.theme.select
 import com.nmichail.meridian.features.conversation.R
-import com.nmichail.meridian.features.conversation.presentation.compose.component.messageClock
-import com.nmichail.meridian.features.conversation.presentation.compose.component.messageDay
-import com.nmichail.meridian.features.conversation.presentation.compose.component.reactionGlyph
-import com.nmichail.meridian.features.conversation.presentation.compose.component.reactionToday
-import com.nmichail.meridian.shared.chat.domain.entity.ChatReaction
 
 @Composable
-internal fun ReactionSheet(
+internal fun PollVoteSheet(
 	open: Boolean,
-	viewers: List<ChatReaction>,
+	options: List<String>,
+	voters: List<PollVoter>,
 	onDismiss: () -> Unit,
 ) {
 	MUiSheet(
@@ -73,14 +67,10 @@ internal fun ReactionSheet(
 			}
 
 			Text(
-				text = stringResource(R.string.conversation_reactions, viewers.size),
+				text = stringResource(R.string.conversation_poll_votes_title, voters.size),
 				style = MeridianType.titleCard,
 				color = palette.textPrimary,
-				modifier = Modifier.padding(
-					start = 16.dp,
-					top = 10.dp,
-					bottom = 10.dp
-				),
+				modifier = Modifier.padding(start = 16.dp, top = 10.dp, bottom = 10.dp),
 			)
 
 			Column(
@@ -88,8 +78,11 @@ internal fun ReactionSheet(
 					.fillMaxWidth()
 					.verticalScroll(rememberScrollState()),
 			) {
-				viewers.forEach { viewer ->
-					ReactionPerson(viewer)
+				voters.forEach { voter ->
+					PollVotePerson(
+						voter = voter,
+						option = options.getOrElse(voter.option) { "" },
+					)
 				}
 			}
 		}
@@ -97,15 +90,7 @@ internal fun ReactionSheet(
 }
 
 @Composable
-private fun ReactionPerson(viewer: ChatReaction) {
-	val name = if (viewer.mine) {
-		stringResource(R.string.conversation_you)
-	} else {
-		viewer.name
-	}
-
-	val reaction = reactionGlyph(viewer.reaction)
-
+private fun PollVotePerson(voter: PollVoter, option: String) {
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -113,25 +98,23 @@ private fun ReactionPerson(viewer: ChatReaction) {
 		horizontalArrangement = Arrangement.spacedBy(12.dp),
 		verticalAlignment = Alignment.CenterVertically,
 	) {
-		ReactionMark(name = viewer.name)
+		PollVoteFace(name = voter.name, userId = voter.userId)
 
 		Column(
 			modifier = Modifier.weight(1f),
 			verticalArrangement = Arrangement.spacedBy(1.dp),
 		) {
 			Text(
-				text = name,
+				text = voter.name,
 				style = MeridianType.bodyName,
 				color = palette.textPrimary,
 				maxLines = 1,
 				overflow = TextOverflow.Ellipsis,
 			)
 
-			val sentAt = viewer.sentAt
-
-			if (!sentAt.isNullOrBlank()) {
+			if (option.isNotEmpty()) {
 				Text(
-					text = reactionWhen(sentAt),
+					text = option,
 					style = MeridianType.captionDefault,
 					color = palette.textSecondary,
 					maxLines = 1,
@@ -139,55 +122,34 @@ private fun ReactionPerson(viewer: ChatReaction) {
 				)
 			}
 		}
-
-		if (reaction.isNotBlank()) {
-			Text(
-				text = reaction,
-				style = MeridianType.chatEmoji,
-			)
-		}
 	}
 }
 
 @Composable
-private fun ReactionMark(name: String) {
-	Box(
-		modifier = Modifier
-			.size(40.dp)
-			.clip(CircleShape)
-			.background(
-				select(
-					active = name.isBlank(),
-					on = palette.field,
-					off = markColor(name),
-				),
-			),
-		contentAlignment = Alignment.Center,
-	) {
-		if (name.isBlank()) {
+private fun PollVoteFace(name: String, userId: String) {
+	if (name.isBlank()) {
+		Box(
+			modifier = Modifier
+				.size(40.dp)
+				.clip(CircleShape)
+				.background(palette.field),
+			contentAlignment = Alignment.Center,
+		) {
 			Image(
 				painter = painterResource(UiR.drawable.ic_tab_profile),
 				contentDescription = null,
 				colorFilter = ColorFilter.tint(palette.textSecondary),
 				modifier = Modifier.size(24.dp),
 			)
-		} else {
-			Text(
-				text = initials(name),
-				style = MeridianType.bodySmall,
-				color = palette.textOnAccent,
-			)
 		}
-	}
-}
 
-@Composable
-private fun reactionWhen(iso: String): String {
-	val clock = messageClock(iso)
-
-	if (reactionToday(iso)) {
-		return stringResource(R.string.conversation_reaction_today, clock)
+		return
 	}
 
-	return stringResource(R.string.conversation_reaction_when, messageDay(iso).orEmpty(), clock)
+	PhotoFace(
+		name = name,
+		userId = userId,
+		size = 40.dp,
+		style = MeridianType.bodySmall,
+	)
 }

@@ -38,31 +38,33 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.features.conversation.presentation.ConversationEvent
+import com.nmichail.meridian.shared.chat.data.mapper.mediaType
 import com.nmichail.meridian.features.conversation.presentation.ConversationIntent
 import com.nmichail.meridian.features.conversation.presentation.ConversationState
 import com.nmichail.meridian.component.ui.emoji.MessageReaction
-import com.nmichail.meridian.features.conversation.presentation.compose.component.ChatGallery
+import com.nmichail.meridian.features.conversation.presentation.compose.attach.ChatGallery
 import com.nmichail.meridian.features.conversation.presentation.compose.component.DayLine
 import com.nmichail.meridian.features.conversation.R
 import com.nmichail.meridian.features.conversation.presentation.compose.component.ConversationBar
-import com.nmichail.meridian.features.conversation.presentation.compose.component.DayPill
-import com.nmichail.meridian.features.conversation.presentation.compose.component.LocalPollVotes
-import com.nmichail.meridian.features.conversation.presentation.compose.component.LocalTallies
-import com.nmichail.meridian.features.conversation.presentation.compose.component.PollVoteSheet
-import com.nmichail.meridian.features.conversation.presentation.compose.component.PollVoter
-import com.nmichail.meridian.features.conversation.presentation.compose.component.vote
-import com.nmichail.meridian.features.conversation.presentation.compose.component.tallies
-import com.nmichail.meridian.features.conversation.presentation.compose.component.toPoll
+import com.nmichail.meridian.features.conversation.presentation.compose.message.DayPill
+import com.nmichail.meridian.features.conversation.presentation.compose.poll.LocalComposePoll
+import com.nmichail.meridian.features.conversation.presentation.compose.poll.LocalPollVotes
+import com.nmichail.meridian.features.conversation.presentation.compose.poll.LocalTallies
+import com.nmichail.meridian.features.conversation.presentation.compose.poll.OpenPoll
+import com.nmichail.meridian.features.conversation.presentation.compose.poll.PollVoteSheet
+import com.nmichail.meridian.features.conversation.presentation.compose.poll.PollVoter
+import com.nmichail.meridian.features.conversation.presentation.compose.poll.tallies
 import com.nmichail.meridian.features.conversation.presentation.compose.component.EditBar
 import com.nmichail.meridian.features.conversation.presentation.compose.component.MentionList
 import com.nmichail.meridian.features.conversation.presentation.compose.component.MessageBar
-import com.nmichail.meridian.features.conversation.presentation.compose.component.MessageMenuHost
-import com.nmichail.meridian.features.conversation.presentation.compose.component.MessageRow
-import com.nmichail.meridian.features.conversation.presentation.compose.component.quoteIndex
-import com.nmichail.meridian.features.conversation.presentation.compose.component.quotedId
-import com.nmichail.meridian.features.conversation.presentation.compose.component.ReactionSheet
+import com.nmichail.meridian.component.playback.MediaPlayback
+import com.nmichail.meridian.features.conversation.presentation.compose.message.MessageMenuHost
+import com.nmichail.meridian.features.conversation.presentation.compose.message.MessageRow
+import com.nmichail.meridian.features.conversation.presentation.compose.message.quoteIndex
+import com.nmichail.meridian.features.conversation.presentation.compose.message.quotedId
+import com.nmichail.meridian.features.conversation.presentation.compose.message.ReactionSheet
 import com.nmichail.meridian.features.conversation.presentation.compose.component.ReplyBar
-import com.nmichail.meridian.features.conversation.presentation.compose.component.SelectionBar
+import com.nmichail.meridian.features.conversation.presentation.compose.message.SelectionBar
 import com.nmichail.meridian.shared.chat.domain.entity.ChatLine
 import com.nmichail.meridian.shared.chat.domain.entity.ChatReaction
 
@@ -80,6 +82,7 @@ fun ConversationScreen(
 	val uiState by state.collectAsStateWithLifecycle()
 
 	var reactionsLine by remember { mutableStateOf<String?>(null) }
+	var composing by remember { mutableStateOf(false) }
 
 	val snackBarHostState = remember { SnackbarHostState() }
 
@@ -102,28 +105,36 @@ fun ConversationScreen(
 		snackBarHostState = snackBarHostState,
 	)
 
-	Box(
-		modifier = Modifier
-			.fillMaxSize()
-			.chatFoodBackground(),
-	) {
-		ConversationBody(
-			state = uiState,
-			title = title,
-			chatId = chatId,
-			personId = personId,
-			reactionsLine = reactionsLine,
-			onReactions = { lineId -> reactionsLine = lineId },
-			onDismissReactions = { reactionsLine = null },
-			onIntent = onIntent,
-		)
-
-		MUiSnackbarHost(
-			snackBarHostState = snackBarHostState,
+	CompositionLocalProvider(LocalComposePoll provides { composing = true }) {
+		Box(
 			modifier = Modifier
-				.align(Alignment.BottomCenter)
-				.padding(horizontal = 16.dp, vertical = 24.dp),
-		)
+				.fillMaxSize()
+				.chatFoodBackground(),
+		) {
+			ConversationBody(
+				state = uiState,
+				title = title,
+				chatId = chatId,
+				personId = personId,
+				reactionsLine = reactionsLine,
+				onReactions = { lineId -> reactionsLine = lineId },
+				onDismissReactions = { reactionsLine = null },
+				onIntent = onIntent,
+			)
+
+			MUiSnackbarHost(
+				snackBarHostState = snackBarHostState,
+				modifier = Modifier
+					.align(Alignment.BottomCenter)
+					.padding(horizontal = 16.dp, vertical = 24.dp),
+			)
+
+			OpenPoll(
+				open = composing,
+				onClose = { composing = false },
+				onIntent = onIntent,
+			)
+		}
 	}
 }
 
@@ -211,6 +222,14 @@ private fun EventObserver(
 	var picture by remember { mutableStateOf<ByteArray?>(null) }
 
 	LiveDataEffect(event) { value ->
+		if (value is ConversationEvent.OpenedFile) {
+			val kind = value.type.mediaType()
+			if (kind.startsWith("audio/") || kind.startsWith("video/")) {
+				MediaPlayback.play(context, value.fileId, value.bytes, kind)
+				return@LiveDataEffect
+			}
+		}
+
 		if (value is ConversationEvent.OpenedFile && value.type.startsWith("image/")) {
 			picture = value.bytes
 
@@ -223,10 +242,19 @@ private fun EventObserver(
 			return@LiveDataEffect
 		}
 
+		if (value is ConversationEvent.CannotCallSelf) {
+			showErrorSnackBar(
+				snackBarHostState = snackBarHostState,
+				message = context.getString(R.string.conversation_call_self),
+			)
+			return@LiveDataEffect
+		}
+
 		val title = when (value) {
 			ConversationEvent.NoConnection -> NetworkR.string.error_event_connection_title
 			ConversationEvent.Error -> NetworkR.string.error_event_title
 			ConversationEvent.FileRejected -> NetworkR.string.error_event_title
+			ConversationEvent.CannotCallSelf -> NetworkR.string.error_event_title
 			is ConversationEvent.OpenedFile -> NetworkR.string.error_event_title
 		}
 
@@ -249,6 +277,7 @@ private fun ConversationEvent.messageId(): Int =
 		ConversationEvent.NoConnection -> NetworkR.string.error_no_connection
 		ConversationEvent.Error -> NetworkR.string.error_unknown
 		ConversationEvent.FileRejected -> R.string.conversation_file_rejected
+		ConversationEvent.CannotCallSelf -> R.string.conversation_call_self
 		is ConversationEvent.OpenedFile -> NetworkR.string.error_unknown
 	}
 
@@ -341,7 +370,7 @@ internal fun MessageInput(
 
 	if (uiState.replyAuthor.isNotEmpty()) {
 		ReplyBar(
-			author = uiState.replyAuthor,
+			author = uiState.replyName,
 			text = uiState.replyText,
 			onIntent = onIntent,
 		)
@@ -395,7 +424,7 @@ private fun MessageList(
 	) {
 		days.entries.reversed().forEach { (label, dayLines) ->
 			items(
-				items = dayLines.asReversed().filter { row -> row.line.vote() == null },
+				items = dayLines.asReversed().filter { row -> row.line.vote == null },
 				key = { row -> row.line.id },
 			) { row ->
 				MessageRow(
@@ -443,7 +472,7 @@ internal fun pinnedText(line: ChatLine?): String? {
 		return stringResource(R.string.conversation_greeting)
 	}
 
-	return line.text.toPoll()?.question ?: line.text
+	return line.poll?.question ?: line.text
 }
 
 @Composable

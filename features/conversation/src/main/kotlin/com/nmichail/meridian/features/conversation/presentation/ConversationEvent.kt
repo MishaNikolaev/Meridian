@@ -8,9 +8,12 @@ sealed interface ConversationEvent {
 
 	data object FileRejected : ConversationEvent
 
+	data object CannotCallSelf : ConversationEvent
+
 	data class OpenedFile(
 		val name: String,
 		val type: String,
 		val bytes: ByteArray,
+		val fileId: String,
 	) : ConversationEvent
 }

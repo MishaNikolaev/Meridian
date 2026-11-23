@@ -1,9 +1,10 @@
-package com.nmichail.meridian.features.conversation.presentation.compose.component
+package com.nmichail.meridian.shared.chat.domain.entity
 
-internal data class Poll(
+data class Poll(
 	val question: String,
 	val description: String,
 	val options: List<String>,
 	val correct: Int,
 	val solution: String,
+	val anonymous: Boolean,
 )

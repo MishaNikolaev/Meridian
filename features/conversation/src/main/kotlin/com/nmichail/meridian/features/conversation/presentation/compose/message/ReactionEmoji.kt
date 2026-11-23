@@ -1,25 +1,26 @@
-package com.nmichail.meridian.features.conversation.presentation.compose.component
+package com.nmichail.meridian.features.conversation.presentation.compose.message
 
 import com.nmichail.meridian.component.ui.emoji.MessageReaction
 import com.nmichail.meridian.shared.chat.domain.entity.ChatReaction
+import com.nmichail.meridian.shared.chat.domain.entity.ChatThread
 
 private const val USED_LIMIT = 32
 
-fun reactionGlyph(token: String): String {
+fun reactionEmoji(token: String): String {
 	val named = MessageReaction.entries.firstOrNull { reaction ->
 		reaction.name.equals(token, ignoreCase = true)
 	}
 
-	return named?.glyph ?: token
+	return named?.emoji ?: token
 }
 
-fun reactionGlyphs(saved: Map<String, Set<String>>): Map<String, Set<String>> = saved
+fun reactionEmojis(saved: Map<String, Set<String>>): Map<String, Set<String>> = saved
 	.mapValues { (_, tokens) ->
-		tokens.map { token -> reactionGlyph(token) }.filter { glyph -> glyph.isNotBlank() }.toSet()
+		tokens.map { token -> reactionEmoji(token) }.filter { emoji -> emoji.isNotBlank() }.toSet()
 	}
 
-internal fun List<ChatReaction>.mineGlyph(
-	glyph: String,
+internal fun List<ChatReaction>.mineReaction(
+	emoji: String,
 	sentAt: String,
 	selfName: String,
 ): List<ChatReaction> {
@@ -27,14 +28,16 @@ internal fun List<ChatReaction>.mineGlyph(
 
 	val mine = filter { viewer -> viewer.mine }
 
-	val next = if (mine.any { viewer -> reactionGlyph(viewer.reaction) == glyph }) {
-		mine.filter { viewer -> reactionGlyph(viewer.reaction) != glyph }
+	val next = if (mine.any { viewer -> reactionEmoji(viewer.reaction) == emoji }) {
+		mine.filter { viewer -> reactionEmoji(viewer.reaction) != emoji }
 	} else {
 		val known = mine.firstOrNull { viewer -> viewer.name.isNotBlank() }?.name.orEmpty()
+		val knownId = mine.firstOrNull { viewer -> viewer.userId.isNotEmpty() }?.userId.orEmpty()
 
 		mine + ChatReaction(
+			userId = knownId,
 			name = selfName.ifBlank { known },
-			reaction = glyph,
+			reaction = emoji,
 			sentAt = sentAt,
 			mine = true,
 		)
@@ -67,10 +70,17 @@ private fun ChatReaction.named(selfName: String): ChatReaction {
 	return copy(name = selfName)
 }
 
-internal fun List<String>.usedGlyph(glyph: String, active: Boolean): List<String> {
+internal fun ChatThread.faceIds(): List<String> {
+	val authors = lines.map { line -> line.authorId }
+	val reactors = reactionViewers.values.flatten().map { viewer -> viewer.userId }
+
+	return authors + reactors
+}
+
+internal fun List<String>.usedReaction(emoji: String, active: Boolean): List<String> {
 	if (!active) {
 		return this
 	}
 
-	return (this + glyph).takeLast(USED_LIMIT)
+	return (this + emoji).takeLast(USED_LIMIT)
 }

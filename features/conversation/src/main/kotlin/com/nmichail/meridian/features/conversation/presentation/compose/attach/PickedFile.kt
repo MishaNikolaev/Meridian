@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.conversation.presentation.compose.component
+package com.nmichail.meridian.features.conversation.presentation.compose.attach
 
 internal data class PickedFile(
 	val name: String,

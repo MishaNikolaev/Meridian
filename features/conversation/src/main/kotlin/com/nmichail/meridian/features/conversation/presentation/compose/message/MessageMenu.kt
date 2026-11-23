@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.conversation.presentation.compose
+package com.nmichail.meridian.features.conversation.presentation.compose.message
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -36,7 +36,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.R as UiR
@@ -149,32 +148,6 @@ internal fun SelectionBar(count: Int, onIntent: (ConversationIntent) -> Unit) {
 }
 
 @Composable
-internal fun ReactionMark(reaction: String, modifier: Modifier = Modifier) {
-	val shape = RoundedCornerShape(12.dp)
-
-	Row(
-		modifier = modifier
-			.clip(shape)
-			.background(palette.surface)
-			.border(width = 1.dp, color = palette.borderStrong, shape = shape)
-			.padding(start = 6.dp, end = 8.dp, top = 3.dp, bottom = 3.dp),
-		horizontalArrangement = Arrangement.spacedBy(4.dp),
-		verticalAlignment = Alignment.CenterVertically,
-	) {
-		Text(
-			text = reaction,
-			style = MeridianType.chatEmoji,
-		)
-
-		Text(
-			text = "1",
-			style = MeridianType.captionDefault.copy(fontWeight = FontWeight.SemiBold),
-			color = palette.textSecondary,
-		)
-	}
-}
-
-@Composable
 internal fun SelectionCheck(modifier: Modifier = Modifier) {
 	Box(
 		modifier = modifier
@@ -236,7 +209,7 @@ private fun ReactionPicker(
 				ReactionChoice(
 					lineId = lineId,
 					reaction = reaction,
-					selected = reaction.glyph in selected,
+					selected = reaction.emoji in selected,
 					onIntent = onIntent,
 				)
 			}
@@ -261,11 +234,11 @@ private fun ReactionPicker(
 			MUiReactionBoard(
 				reactions = rest,
 				selected = selected,
-				onPick = { glyph ->
+				onPick = { emoji ->
 					onIntent(
 						ConversationIntent.PickReaction(
 							lineId = lineId,
-							reaction = glyph,
+							reaction = emoji,
 						),
 					)
 				},
@@ -282,7 +255,7 @@ private fun ReactionChoice(
 	onIntent: (ConversationIntent) -> Unit,
 ) {
 	Text(
-		text = reaction.glyph,
+		text = reaction.emoji,
 		style = MeridianType.reactionMenu,
 		modifier = Modifier
 			.clip(CircleShape)
@@ -297,7 +270,7 @@ private fun ReactionChoice(
 			onIntent(
 				ConversationIntent.PickReaction(
 					lineId = lineId,
-					reaction = reaction.glyph,
+					reaction = reaction.emoji,
 				),
 			)
 		},
@@ -373,6 +346,7 @@ private fun ActionRow(
 		Image(
 			painter = painterResource(action.icon),
 			contentDescription = null,
+			colorFilter = ColorFilter.tint(palette.textPrimary),
 			modifier = Modifier.size(20.dp),
 		)
 

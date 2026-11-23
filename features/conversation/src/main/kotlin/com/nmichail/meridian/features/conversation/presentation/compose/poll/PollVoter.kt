@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.conversation.presentation.compose.component
+package com.nmichail.meridian.features.conversation.presentation.compose.poll
 
 internal data class PollVoter(
 	val option: Int,

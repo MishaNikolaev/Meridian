@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.conversation.presentation.compose.component
+package com.nmichail.meridian.features.conversation.presentation.compose.message
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseIn

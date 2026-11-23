@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.conversation.presentation.compose.component
+package com.nmichail.meridian.features.conversation.presentation.compose.message
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -33,6 +33,9 @@ import com.nmichail.meridian.component.ui.sheet.MUiSheet
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.features.conversation.R
+import com.nmichail.meridian.features.conversation.presentation.compose.component.messageClock
+import com.nmichail.meridian.features.conversation.presentation.compose.component.messageDay
+import com.nmichail.meridian.features.conversation.presentation.compose.component.reactionToday
 import com.nmichail.meridian.shared.chat.domain.entity.ChatReaction
 
 @Composable
@@ -90,7 +93,7 @@ internal fun ReactionSheet(
 private fun ReactionPerson(viewer: ChatReaction) {
 	val name = viewer.name
 
-	val reaction = reactionGlyph(viewer.reaction)
+	val reaction = reactionEmoji(viewer.reaction)
 
 	Row(
 		modifier = Modifier
@@ -99,7 +102,7 @@ private fun ReactionPerson(viewer: ChatReaction) {
 		horizontalArrangement = Arrangement.spacedBy(12.dp),
 		verticalAlignment = Alignment.CenterVertically,
 	) {
-		ReactionMark(name = name)
+		ReactionMark(name = name, userId = viewer.userId)
 
 		Column(
 			modifier = Modifier.weight(1f),
@@ -136,7 +139,7 @@ private fun ReactionPerson(viewer: ChatReaction) {
 }
 
 @Composable
-private fun ReactionMark(name: String) {
+private fun ReactionMark(name: String, userId: String) {
 	if (name.isBlank()) {
 		Box(
 			modifier = Modifier
@@ -158,6 +161,7 @@ private fun ReactionMark(name: String) {
 
 	PhotoFace(
 		name = name,
+		userId = userId,
 		size = 40.dp,
 		style = MeridianType.bodySmall,
 	)

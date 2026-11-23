@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.ui.text.input.OffsetMapping
@@ -27,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -54,7 +54,12 @@ import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.features.conversation.R
 import com.nmichail.meridian.features.conversation.presentation.ConversationIntent
-import com.nmichail.meridian.features.conversation.presentation.ConversationIntent.DraftFile
+import com.nmichail.meridian.features.conversation.presentation.compose.attach.AttachSheet
+import com.nmichail.meridian.features.conversation.presentation.compose.attach.PhotoPreviews
+import com.nmichail.meridian.features.conversation.presentation.compose.poll.LocalComposePoll
+import com.nmichail.meridian.features.conversation.presentation.compose.voice.RecordBar
+import com.nmichail.meridian.features.conversation.presentation.compose.voice.VoiceButton
+import com.nmichail.meridian.features.conversation.presentation.DraftFile
 import java.util.Locale
 
 @Composable
@@ -91,6 +96,7 @@ internal fun MessageBar(
 
 		BarRow(
 			draft = draft,
+			fileName = fileName,
 			placeholder = placeholder,
 			focus = focus,
 			picking = picking,
@@ -102,8 +108,8 @@ internal fun MessageBar(
 
 		if (open) {
 			EmojiPanel(
-				onEmoji = { glyph ->
-					onIntent(ConversationIntent.ChangeDraft(draft = draft + glyph))
+				onEmoji = { emoji ->
+					onIntent(ConversationIntent.ChangeDraft(draft = draft + emoji))
 				},
 			)
 		}
@@ -113,6 +119,7 @@ internal fun MessageBar(
 @Composable
 private fun BarRow(
 	draft: String,
+	fileName: String,
 	placeholder: Int,
 	focus: FocusRequester,
 	picking: Boolean,
@@ -122,6 +129,8 @@ private fun BarRow(
 	onPicking: (Boolean) -> Unit,
 ) {
 	val border = palette.borderDefault
+	var recording by remember { mutableStateOf(false) }
+	var level by remember { mutableFloatStateOf(0f) }
 
 	Row(
 		modifier = Modifier
@@ -139,33 +148,39 @@ private fun BarRow(
 		verticalAlignment = Alignment.CenterVertically,
 		horizontalArrangement = Arrangement.spacedBy(10.dp),
 	) {
-		AttachButton(onIntent = onIntent, onPicking = onPicking)
-
-		MessageField(
-			draft = draft,
-			placeholder = placeholder,
-			focus = focus,
-			picking = picking,
-			onIntent = onIntent,
-			onToggleEmoji = onToggleEmoji,
-			onFieldFocus = onFieldFocus,
-			modifier = Modifier.weight(1f),
-		)
-
-		Box(
-			modifier = Modifier
-				.size(36.dp)
-				.clip(CircleShape)
-				.background(palette.accentButton)
-				.clickable { onIntent(ConversationIntent.Send) },
-			contentAlignment = Alignment.Center,
-		) {
-			Image(
-				painter = painterResource(R.drawable.ic_send),
-				contentDescription = null,
-				modifier = Modifier.size(width = 16.dp, height = 14.dp),
+		if (recording) {
+			RecordBar(level = level, modifier = Modifier.weight(1f))
+		} else {
+			AttachButton(onIntent = onIntent, onPicking = onPicking)
+			MessageField(
+				draft = draft,
+				placeholder = placeholder,
+				focus = focus,
+				picking = picking,
+				onIntent = onIntent,
+				onToggleEmoji = onToggleEmoji,
+				onFieldFocus = onFieldFocus,
+				modifier = Modifier.weight(1f),
 			)
 		}
+		VoiceButton(
+			voice = draft.isEmpty() && fileName.isEmpty(),
+			recording = recording,
+			onRecording = { recording = it },
+			onLevel = { level = it },
+			onVoice = { bytes, length ->
+				onIntent(
+					ConversationIntent.AttachFile(
+						name = "voice-$length.m4a",
+						type = "audio/mp4",
+						bytes = bytes,
+						document = true,
+					),
+				)
+				onIntent(ConversationIntent.Send)
+			},
+			onSend = { onIntent(ConversationIntent.Send) },
+		)
 	}
 }
 
@@ -217,7 +232,7 @@ private fun MessageField(
 						onFieldFocus()
 					}
 				},
-			decorationBox = { inner ->
+			decorationBox = { textField ->
 				Box {
 					if (draft.isEmpty()) {
 						Text(
@@ -227,7 +242,7 @@ private fun MessageField(
 						)
 					}
 
-					inner()
+					textField()
 				}
 			},
 		)
@@ -269,6 +284,7 @@ private fun AttachButton(onIntent: (ConversationIntent) -> Unit, onPicking: (Boo
 	var sheet by remember { mutableStateOf(false) }
 	val focusManager = LocalFocusManager.current
 	val keyboard = LocalSoftwareKeyboardController.current
+	val compose = LocalComposePoll.current
 
 	if (sheet) {
 		AttachSheet(
@@ -279,7 +295,14 @@ private fun AttachButton(onIntent: (ConversationIntent) -> Unit, onPicking: (Boo
 			onFile = { picked ->
 				sheet = false
 				onPicking(false)
-				onIntent(ConversationIntent.AttachFile(name = picked.name, type = picked.type, bytes = picked.bytes, document = picked.document))
+				onIntent(
+					ConversationIntent.AttachFile(
+						name = picked.name,
+						type = picked.type,
+						bytes = picked.bytes,
+						document = picked.document,
+					),
+				)
 			},
 			onPhotos = { picked, caption ->
 				sheet = false
@@ -287,23 +310,22 @@ private fun AttachButton(onIntent: (ConversationIntent) -> Unit, onPicking: (Boo
 				onIntent(ConversationIntent.ChangeDraft(draft = caption))
 				onIntent(
 					ConversationIntent.AttachPhotos(
-						files = picked.map { file -> DraftFile(name = file.name, type = file.type, bytes = file.bytes) },
+						files = picked.map { file ->
+							DraftFile(
+								name = file.name,
+								type = file.type,
+								bytes = file.bytes,
+								document = false,
+							)
+						},
 					),
 				)
 				onIntent(ConversationIntent.Send)
 			},
-			onPoll = { question, description, options, correct, solution ->
+			onPoll = {
 				sheet = false
 				onPicking(false)
-				onIntent(
-					ConversationIntent.SendPoll(
-						question = question,
-						description = description,
-						options = options,
-						correct = correct,
-						solution = solution,
-					),
-				)
+				compose()
 			},
 		)
 	}
