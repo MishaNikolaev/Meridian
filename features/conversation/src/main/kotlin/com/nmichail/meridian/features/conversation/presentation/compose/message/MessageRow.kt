@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.conversation.presentation.compose.component
+package com.nmichail.meridian.features.conversation.presentation.compose.message
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -34,6 +34,7 @@ import com.nmichail.meridian.component.ui.R as UiR
 import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.component.ui.theme.select
 import com.nmichail.meridian.features.conversation.R
+import com.nmichail.meridian.features.conversation.presentation.compose.component.messageClock
 import com.nmichail.meridian.features.conversation.presentation.ConversationIntent
 import com.nmichail.meridian.shared.chat.domain.entity.ChatLine
 import com.nmichail.meridian.shared.chat.domain.entity.ChatReaction
@@ -83,7 +84,7 @@ internal fun MessageRow(
 	val quoted = if (line.id == "hello") {
 		stringResource(R.string.conversation_greeting)
 	} else {
-		line.text.toPoll()?.question ?: line.text
+		line.poll?.question ?: line.text
 	}
 
 	MUiSwipeReply(
@@ -198,7 +199,7 @@ private fun Incoming(
 		Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
 			val author = line.author
 
-			if (!author.isNullOrBlank()) {
+			if (!author.isNullOrBlank() && !photoOnly && !photoWithText) {
 				MessageAuthor(author = author, corporate = corporate)
 			}
 
@@ -206,7 +207,7 @@ private fun Incoming(
 
 			MessageText(
 				line = line,
-				glyph = palette.textPrimary,
+				color = palette.textPrimary,
 				meta = palette.textSecondary,
 				checked = false,
 				mine = false,
@@ -276,7 +277,7 @@ private fun Outgoing(
 
 			MessageText(
 				line = line,
-				glyph = palette.chatOutgoingText,
+				color = palette.chatOutgoingText,
 				meta = palette.chatOutgoingText,
 				checked = true,
 				mine = true,
@@ -330,7 +331,7 @@ private fun ReactionsAndComments(
 @Composable
 private fun MessageText(
 	line: ChatLine,
-	glyph: Color,
+	color: Color,
 	meta: Color,
 	checked: Boolean,
 	mine: Boolean,
@@ -357,7 +358,7 @@ private fun MessageText(
 			spoken = spoken,
 			photo = photo,
 			withText = withText,
-			glyph = glyph,
+			color = color,
 			reserve = reserve,
 			mine = mine,
 			continued = continued,
@@ -378,7 +379,7 @@ private fun MessageText(
 						photo && !withText -> Modifier
 							.padding(end = 8.dp, bottom = 8.dp)
 							.clip(RoundedCornerShape(10.dp))
-							.background(Color(color = 0x8C000000))
+							.background(palette.captionScrim)
 							.padding(horizontal = 6.dp, vertical = 2.dp)
 						photo -> Modifier.padding(end = 12.dp, bottom = 8.dp)
 						else -> Modifier

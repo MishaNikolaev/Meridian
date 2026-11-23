@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.conversation.presentation.compose.component
+package com.nmichail.meridian.features.conversation.presentation.compose.attach
 
 import androidx.compose.runtime.Composable
 import com.nmichail.meridian.component.photo.MediaItem

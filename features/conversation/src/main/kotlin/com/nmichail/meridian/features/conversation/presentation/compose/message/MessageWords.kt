@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.conversation.presentation.compose.component
+package com.nmichail.meridian.features.conversation.presentation.compose.message
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -14,8 +14,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.features.conversation.presentation.ConversationIntent
-import com.nmichail.meridian.features.conversation.presentation.asFile
-import com.nmichail.meridian.features.conversation.presentation.mediaType
+import com.nmichail.meridian.features.conversation.presentation.compose.poll.LocalTallies
+import com.nmichail.meridian.features.conversation.presentation.compose.poll.PollCard
+import com.nmichail.meridian.features.conversation.presentation.compose.voice.VoiceNote
+import com.nmichail.meridian.shared.chat.data.mapper.asFile
+import com.nmichail.meridian.shared.chat.data.mapper.mediaType
 import com.nmichail.meridian.shared.chat.domain.entity.ChatLine
 
 @Composable
@@ -24,14 +27,14 @@ internal fun MessageWords(
 	spoken: String,
 	photo: Boolean,
 	withText: Boolean,
-	glyph: Color,
+	color: Color,
 	reserve: Dp,
 	mine: Boolean,
 	continued: Boolean,
 	onOpen: () -> Unit,
 	onIntent: (ConversationIntent) -> Unit,
 ) {
-	val poll = if (line.deleted) null else spoken.toPoll()
+	val poll = if (line.deleted) null else line.poll
 	val tally = LocalTallies.current[line.id]
 	val caption = photo && withText
 
@@ -48,12 +51,15 @@ internal fun MessageWords(
 				correct = poll.correct,
 				solution = poll.solution,
 				voters = tally?.voters.orEmpty(),
+				anonymous = poll.anonymous,
 				onPick = { index ->
 					onIntent(ConversationIntent.Vote(pollId = line.id, option = index, question = poll.question))
 				},
 			)
 		} else if (photo) {
 			MessagePicture(fileId = line.fileId, onOpen = onOpen)
+		} else if (line.fileName.startsWith("voice") && line.fileType.mediaType().startsWith("audio/")) {
+			VoiceNote(name = line.fileName, fileId = line.fileId, onPlay = onOpen)
 		} else if (line.fileName.isNotEmpty()) {
 			FileCard(line = line, onOpen = onOpen)
 		}
@@ -61,11 +67,12 @@ internal fun MessageWords(
 		if (poll == null && withText) {
 			Spoken(
 				spoken = spoken,
-				glyph = glyph,
+				color = color,
 				caption = caption,
 				mine = mine,
 				continued = continued,
 				reserve = reserve,
+				onIntent = onIntent,
 			)
 		}
 	}
@@ -74,11 +81,12 @@ internal fun MessageWords(
 @Composable
 private fun Spoken(
 	spoken: String,
-	glyph: Color,
+	color: Color,
 	caption: Boolean,
 	mine: Boolean,
 	continued: Boolean,
 	reserve: Dp,
+	onIntent: (ConversationIntent) -> Unit,
 ) {
 	val bubble = when {
 		!caption -> Modifier
@@ -93,7 +101,11 @@ private fun Spoken(
 			.then(bubble)
 			.padding(end = if (caption) reserve else 0.dp),
 	) {
-		MessageGlyphs(text = spoken, color = glyph)
+		SpokenText(
+			text = spoken,
+			color = color,
+			onLink = { url -> onIntent(ConversationIntent.OpenLink(url)) },
+		)
 	}
 }
 

@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.conversation.presentation.compose.component
+package com.nmichail.meridian.features.conversation.presentation.compose.attach
 
 import android.Manifest
 import android.os.Build
@@ -60,6 +60,7 @@ import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
 import androidx.core.content.FileProvider
 import com.nmichail.meridian.features.conversation.R
+import com.nmichail.meridian.features.conversation.presentation.compose.poll.rememberSheetHeight
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -70,7 +71,7 @@ internal fun AttachSheet(
 	onDismiss: () -> Unit,
 	onFile: (PickedFile) -> Unit,
 	onPhotos: (List<PickedFile>, String) -> Unit,
-	onPoll: (String, String, List<String>, Int, String) -> Unit,
+	onPoll: () -> Unit,
 ) {
 	val context = LocalContext.current
 	val view = LocalView.current
@@ -125,9 +126,9 @@ internal fun AttachSheet(
 			onImages = actions.images,
 			onAllow = actions.ask,
 			onSend = { text -> actions.send(chosen, text) },
-			onPoll = { question, description, options, correct, solution ->
+			onPoll = {
 				onDismiss()
-				onPoll(question, description, options, correct, solution)
+				onPoll()
 			},
 		)
 	}
@@ -147,13 +148,12 @@ private fun AttachPanel(
 	onImages: () -> Unit,
 	onAllow: () -> Unit,
 	onSend: (String) -> Unit,
-	onPoll: (String, String, List<String>, Int, String) -> Unit,
+	onPoll: () -> Unit,
 ) {
 	var tab by remember { mutableStateOf(AttachTab.Gallery) }
-	val sheet = rememberSheetHeight(open = tab == AttachTab.Poll)
+	val sheet = rememberSheetHeight()
 	val scrim = remember { MutableInteractionSource() }
 	val captioning = tab == AttachTab.Gallery && chosen.isNotEmpty()
-	val polling = tab == AttachTab.Poll
 
 	Box(
 		modifier = Modifier.fillMaxSize(),
@@ -168,7 +168,7 @@ private fun AttachPanel(
 			modifier = Modifier
 				.fillMaxWidth()
 				.fillMaxHeight(sheet.fraction)
-				.then(if (captioning || polling) Modifier.imePadding() else Modifier)
+				.then(if (captioning) Modifier.imePadding() else Modifier)
 				.clip(RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp))
 				.background(palette.page)
 				.focusProperties { canFocus = false }
@@ -177,13 +177,7 @@ private fun AttachPanel(
 			when (tab) {
 				AttachTab.Gallery -> GalleryGrid(photos, chosen, onToggle, onCamera, onAllow, Modifier.fillMaxSize())
 				AttachTab.Files -> FilePlaces(docs, onBrowse, onImages, onPhoto, onAllow, sheet, Modifier.fillMaxSize())
-				AttachTab.Poll -> PollForm(
-					onSend = onPoll,
-					fraction = sheet.fraction,
-					onFraction = sheet.approach,
-					onSlide = sheet.slide,
-					modifier = Modifier.fillMaxSize(),
-				)
+				AttachTab.Poll -> Unit
 			}
 			if (captioning) {
 				CaptionBar(
@@ -194,6 +188,7 @@ private fun AttachPanel(
 				SheetTabs(
 					tab = tab,
 					onTab = { tab = it },
+					onPoll = onPoll,
 					shown = sheet.fraction < 1f,
 					modifier = Modifier.align(Alignment.BottomCenter),
 				)
@@ -270,6 +265,7 @@ private fun AllowLine(onAllow: () -> Unit, modifier: Modifier = Modifier) {
 private fun SheetTabs(
 	tab: AttachTab,
 	onTab: (AttachTab) -> Unit,
+	onPoll: () -> Unit,
 	shown: Boolean,
 	modifier: Modifier = Modifier,
 ) {
@@ -303,7 +299,7 @@ private fun SheetTabs(
 			icon = R.drawable.ic_poll,
 			text = stringResource(R.string.conversation_attach_poll),
 			selected = tab == AttachTab.Poll,
-			onClick = { onTab(AttachTab.Poll) },
+			onClick = onPoll,
 		)
 	}
 }

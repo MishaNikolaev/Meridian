@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.conversation.presentation.compose.component
+package com.nmichail.meridian.features.conversation.presentation.compose.message
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -214,13 +214,13 @@ private fun reactionGroups(
 	viewers: List<ChatReaction>,
 	reactions: Set<String>,
 ): List<Pair<String, Int>> {
-	val grouped = viewers.groupBy { viewer -> reactionGlyph(viewer.reaction) }
-		.filter { (glyph, _) -> glyph.isNotBlank() }
-		.map { (glyph, people) -> glyph to people.size }
+	val grouped = viewers.groupBy { viewer -> reactionEmoji(viewer.reaction) }
+		.filter { (emoji, _) -> emoji.isNotBlank() }
+		.map { (emoji, people) -> emoji to people.size }
 
 	if (grouped.isNotEmpty()) {
 		return grouped
 	}
 
-	return reactions.map { glyph -> glyph to 1 }
+	return reactions.map { emoji -> emoji to 1 }
 }
