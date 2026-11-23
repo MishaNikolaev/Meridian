@@ -3,6 +3,8 @@ package com.nmichail.meridian.shared.chat.data.realtime
 import com.nmichail.meridian.core.network.config.NetworkConfig
 import com.nmichail.meridian.core.network.session.SessionRefresher
 import com.nmichail.meridian.core.network.session.accessTokenExpired
+import com.nmichail.meridian.shared.chat.domain.entity.RingNotice
+import com.nmichail.meridian.shared.chat.domain.realtime.ChatRealtime
 import com.nmichail.meridian.shared.session.domain.usecase.GetAccessTokenUseCase
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
@@ -23,11 +25,11 @@ import kotlinx.coroutines.isActive
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
-class ChatRealtime internal constructor(
+class ChatRealtimeImpl internal constructor(
 	private val config: NetworkConfig,
 	private val getAccessTokenUseCase: GetAccessTokenUseCase,
 	private val refresher: SessionRefresher,
-) {
+) : ChatRealtime {
 
 	private val json = Json { ignoreUnknownKeys = true }
 	private val client = HttpClient(OkHttp) { install(WebSockets) }
@@ -37,10 +39,16 @@ class ChatRealtime internal constructor(
 		extraBufferCapacity = 16,
 		onBufferOverflow = BufferOverflow.DROP_OLDEST,
 	)
+	private val rings = MutableSharedFlow<RingNotice>(
+		extraBufferCapacity = 8,
+		onBufferOverflow = BufferOverflow.DROP_OLDEST,
+	)
 
-	val chatIds: SharedFlow<String> = updates.asSharedFlow()
+	override val chatIds: SharedFlow<String> = updates.asSharedFlow()
 
-	fun ensureStarted() {
+	override val calls: SharedFlow<RingNotice> = rings.asSharedFlow()
+
+	override fun ensureStarted() {
 		if (restartingJob?.isActive == true) {
 			return
 		}
@@ -51,7 +59,7 @@ class ChatRealtime internal constructor(
 		}
 	}
 
-	fun disconnect() {
+	override fun disconnect() {
 		restartingJob?.cancel()
 
 		restartingJob = null
@@ -103,17 +111,44 @@ class ChatRealtime internal constructor(
 			port = config.port,
 			token = token,
 		) { text ->
+			val ring = ring(text)
+			if (ring != null) {
+				rings.emit(ring)
+			}
 			val chatId = chatId(text) ?: return@texts
 			updates.emit(chatId)
 		}
 	}
 
 	private fun chatId(text: String): String? {
-		val sync = try {
-			json.decodeFromString(ChatSync.serializer(), text)
-		} catch (_: SerializationException) {
+		val sync = frame(text) ?: return null
+		if (sync.event.type == "call.state" || sync.event.type == "call.signal") {
 			return null
 		}
 		return sync.event.payload.chatId?.takeIf { it.isNotBlank() }
+	}
+
+	private fun ring(text: String): RingNotice? {
+		val sync = frame(text) ?: return null
+		if (sync.event.type != "call.state") {
+			return null
+		}
+		val payload = sync.event.payload
+		val callId = payload.callId?.takeIf { it.isNotBlank() } ?: return null
+		val chatId = payload.chatId?.takeIf { it.isNotBlank() } ?: return null
+		val state = payload.state?.takeIf { it.isNotBlank() } ?: return null
+		return RingNotice(
+			callId = callId,
+			chatId = chatId,
+			state = state,
+			actorUserId = payload.actorUserId.orEmpty(),
+			media = payload.media.orEmpty(),
+		)
+	}
+
+	private fun frame(text: String): ChatSync? = try {
+		json.decodeFromString(ChatSync.serializer(), text)
+	} catch (_: SerializationException) {
+		null
 	}
 }

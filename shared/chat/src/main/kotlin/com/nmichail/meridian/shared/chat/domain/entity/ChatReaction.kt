@@ -1,6 +1,7 @@
 package com.nmichail.meridian.shared.chat.domain.entity
 
 data class ChatReaction(
+	val userId: String,
 	val name: String,
 	val reaction: String,
 	val sentAt: String?,

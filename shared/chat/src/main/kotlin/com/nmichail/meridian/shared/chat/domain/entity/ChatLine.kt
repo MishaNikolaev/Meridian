@@ -16,4 +16,6 @@ data class ChatLine(
 	val fileId: String,
 	val fileName: String,
 	val fileType: String,
+	val poll: Poll?,
+	val vote: Vote?,
 )

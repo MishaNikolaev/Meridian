@@ -1,5 +1,6 @@
 package com.nmichail.meridian.shared.chat.data.chat
 
+import com.nmichail.meridian.component.photopicker.PhotoLocalDataSource
 import com.nmichail.meridian.shared.chat.data.api.ChatApi
 import com.nmichail.meridian.shared.chat.data.dto.ChatPageDto
 import com.nmichail.meridian.shared.chat.data.dto.ChatTypeDto
@@ -15,6 +16,10 @@ internal suspend fun ChatPageDto.toChats(api: ChatApi, self: String?): List<Chat
 			self = null,
 			author = null,
 		)?.text.orEmpty()
+		val photo = item.photoId.orEmpty()
+		if (photo.isNotEmpty()) {
+			PhotoLocalDataSource.keepChatPhoto(chatId = item.chatId, photoId = photo)
+		}
 		val chat = item.toEntity(
 			mentioned = item.type != ChatTypeDto.DIRECT &&
 				item.unreadCount > 0 &&

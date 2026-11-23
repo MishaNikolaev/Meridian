@@ -46,6 +46,7 @@ internal fun ChatDto.toProfile(
 	owner = owner,
 	members = members,
 	selfId = selfId,
+	photoId = photoId.orEmpty(),
 )
 
 internal fun Chat.toRecord(): ChatRecord = ChatRecord(
