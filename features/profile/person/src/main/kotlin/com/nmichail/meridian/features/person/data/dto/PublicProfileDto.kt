@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.person.data.model
+package com.nmichail.meridian.features.person.data.dto
 
 import kotlinx.serialization.Serializable
 

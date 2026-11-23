@@ -1,6 +1,9 @@
-package com.nmichail.meridian.features.person.data.model
+package com.nmichail.meridian.features.person.data.dto
 
-data class PersonEntry(
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class PersonDto(
 	val name: String,
 	val position: String,
 	val department: String,
