@@ -12,4 +12,11 @@ interface PersonRouter {
 	)
 
 	fun navigateBack()
+
+	fun navigateToCall(
+		chatId: String,
+		title: String,
+		personId: String,
+		video: Boolean
+	)
 }

@@ -1,6 +1,7 @@
 package com.nmichail.meridian.features.person.presentation
 
 import com.nmichail.meridian.core.network.R
+import com.nmichail.meridian.core.validation.capitalize.CapitalizeUseCase
 import com.nmichail.meridian.core.network.device.DeviceIdentityRepository
 import com.nmichail.meridian.core.network.error.presentation.DefaultErrorEventConverter
 import com.nmichail.meridian.core.network.error.presentation.DefaultErrorReactionConverter
@@ -17,6 +18,8 @@ import com.nmichail.meridian.features.person.domain.usecase.ReadPersonUseCase
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType
 import com.nmichail.meridian.shared.chat.domain.entity.CreatedChat
 import com.nmichail.meridian.shared.chat.domain.usecase.CreateChatUseCase
+import com.nmichail.meridian.shared.chat.domain.usecase.ReadChatsUseCase
+import com.nmichail.meridian.shared.session.domain.usecase.GetUserIdUseCase
 import java.io.IOException
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -35,12 +38,16 @@ class PersonViewModelTest {
 	private val readPersonUseCase: ReadPersonUseCase = mock()
 	private val keepPersonPhotoUseCase: KeepPersonPhotoUseCase = mock()
 	private val createChatUseCase: CreateChatUseCase = mock()
+	private val readChatsUseCase: ReadChatsUseCase = mock()
 	private val router: PersonRouter = mock()
+	private val getUserIdUseCase: GetUserIdUseCase = mock()
+	private val capitalizeUseCase = CapitalizeUseCase()
 	private val viewModel = PersonViewModel(
 		loadPersonUseCase,
 		readPersonUseCase,
 		keepPersonPhotoUseCase,
 		createChatUseCase,
+		readChatsUseCase,
 		ErrorDelegate(
 			errorLogger = ErrorLogger(),
 			defaultErrorReactionConverter = DefaultErrorReactionConverter(),
@@ -50,12 +57,14 @@ class PersonViewModelTest {
 			deviceIdentityRepository = mock<DeviceIdentityRepository>(),
 		),
 		router,
+		getUserIdUseCase,
+		capitalizeUseCase,
 	)
 	private val card = PersonProfile(
 		name = "Волков Сергей Андреевич",
 		position = "ведущий инженер-программист мобильных приложений",
 		department = "Мобильная разработка",
-		office = "Новосибирск, М. Джалиля 11",
+		office = "Новосибирск, М. Малкова 54",
 		server = "meridian.name.ru",
 		status = "в сети",
 		manager = "Новикова Анна Павловна",
@@ -78,8 +87,9 @@ class PersonViewModelTest {
 
 		assertEquals(
 			PersonState.Content(
+				userId = "chief",
 				name = card.name,
-				position = card.position,
+				position = capitalizeUseCase(card.position),
 				department = card.department,
 				office = card.office,
 				server = card.server,
@@ -109,8 +119,9 @@ class PersonViewModelTest {
 
 		assertEquals(
 			PersonState.Content(
+				userId = "chief",
 				name = card.name,
-				position = card.position,
+				position = capitalizeUseCase(card.position),
 				department = card.department,
 				office = card.office,
 				server = card.server,
@@ -183,8 +194,9 @@ class PersonViewModelTest {
 
 		assertEquals(
 			PersonState.Content(
+				userId = "chief",
 				name = card.name,
-				position = card.position,
+				position = capitalizeUseCase(card.position),
 				department = card.department,
 				office = card.office,
 				server = card.server,
@@ -222,13 +234,63 @@ class PersonViewModelTest {
 			),
 		)
 
-		viewModel.applyIntent(PersonIntent.Write)
+		viewModel.applyIntent(PersonIntent.Write(userId = "chief"))
 
 		verify(router).navigateToConversation(
 			chatId = "chat-1",
 			title = "Волков Сергей Андреевич",
 			corporate = true,
 			personId = "chief",
+		)
+	}
+
+	@Test
+	fun `call EXPECT router navigates to audio call`() = runTest {
+		whenever(loadPersonUseCase.invoke("chief")) doReturn card
+		whenever(createChatUseCase.invoke(ChatType.DIRECT, "", listOf("chief"))) doReturn CreatedChat(
+			id = "chat-1",
+			title = "Волков Сергей Андреевич",
+			corporate = true,
+		)
+		viewModel.applyIntent(
+			PersonIntent.Load(
+				userId = "chief",
+				corporate = true,
+			),
+		)
+
+		viewModel.applyIntent(PersonIntent.Call(userId = "chief"))
+
+		verify(router).navigateToCall(
+			chatId = "chat-1",
+			title = "Волков Сергей Андреевич",
+			personId = "chief",
+			video = false,
+		)
+	}
+
+	@Test
+	fun `video EXPECT router navigates to video call`() = runTest {
+		whenever(loadPersonUseCase.invoke("chief")) doReturn card
+		whenever(createChatUseCase.invoke(ChatType.DIRECT, "", listOf("chief"))) doReturn CreatedChat(
+			id = "chat-1",
+			title = "Волков Сергей Андреевич",
+			corporate = true,
+		)
+		viewModel.applyIntent(
+			PersonIntent.Load(
+				userId = "chief",
+				corporate = true,
+			),
+		)
+
+		viewModel.applyIntent(PersonIntent.Video(userId = "chief"))
+
+		verify(router).navigateToCall(
+			chatId = "chat-1",
+			title = "Волков Сергей Андреевич",
+			personId = "chief",
+			video = true,
 		)
 	}
 

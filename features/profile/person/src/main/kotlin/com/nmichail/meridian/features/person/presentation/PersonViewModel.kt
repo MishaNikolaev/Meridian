@@ -1,6 +1,7 @@
 package com.nmichail.meridian.features.person.presentation
 
 import com.nmichail.meridian.component.photopicker.domain.usecase.KeepPersonPhotoUseCase
+import com.nmichail.meridian.core.validation.capitalize.CapitalizeUseCase
 import com.nmichail.meridian.core.network.error.presentation.BlockingErrorProcessResult
 import com.nmichail.meridian.core.network.error.presentation.ErrorDelegate
 import com.nmichail.meridian.core.network.error.userMessage
@@ -9,6 +10,8 @@ import com.nmichail.meridian.features.person.domain.usecase.LoadPersonUseCase
 import com.nmichail.meridian.features.person.domain.usecase.ReadPersonUseCase
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType
 import com.nmichail.meridian.shared.chat.domain.usecase.CreateChatUseCase
+import com.nmichail.meridian.shared.chat.domain.usecase.ReadChatsUseCase
+import com.nmichail.meridian.shared.session.domain.usecase.GetUserIdUseCase
 import javax.inject.Inject
 
 class PersonViewModel @Inject constructor(
@@ -16,20 +19,28 @@ class PersonViewModel @Inject constructor(
 	private val readPersonUseCase: ReadPersonUseCase,
 	private val keepPersonPhotoUseCase: KeepPersonPhotoUseCase,
 	private val createChatUseCase: CreateChatUseCase,
+	private val readChatsUseCase: ReadChatsUseCase,
 	private val errorDelegate: ErrorDelegate,
 	private val router: PersonRouter,
-) : BaseViewModel<PersonState, PersonIntent, Nothing>() {
-	private var openedId = ""
+	private val getUserIdUseCase: GetUserIdUseCase,
+	private val capitalizeUseCase: CapitalizeUseCase,
+) : BaseViewModel<PersonState, PersonIntent, PersonEvent>() {
 
 	override fun initState(): PersonState = PersonState.Initial
 
 	override fun applyIntent(intent: PersonIntent) {
 		when (intent) {
 			is PersonIntent.Load        -> handleLoad(intent)
-			is PersonIntent.Back        -> router.navigateBack()
-			is PersonIntent.Write       -> handleWrite()
+			is PersonIntent.Back        -> handleBack()
+			is PersonIntent.Write       -> handleOpen(intent.userId, video = null)
+			is PersonIntent.Call        -> handleOpen(intent.userId, video = false)
+			is PersonIntent.Video       -> handleOpen(intent.userId, video = true)
 			is PersonIntent.OpenManager -> handleOpenManager()
 		}
+	}
+
+	private fun handleBack() {
+		router.navigateBack()
 	}
 
 	private fun handleOpenManager() {
@@ -45,35 +56,69 @@ class PersonViewModel @Inject constructor(
 		)
 	}
 
-	private fun handleWrite() {
+	private fun handleOpen(userId: String, video: Boolean?) {
 		val current = state.value as? PersonState.Content ?: return
 
-		if (openedId.isEmpty()) {
+		if (userId.isEmpty()) {
+			return
+		}
+
+		val currentUserId = getUserIdUseCase().orEmpty()
+		if (video != null && currentUserId.isNotEmpty() && userId == currentUserId) {
+			setEvent(PersonEvent.CannotCallSelf)
 			return
 		}
 
 		launchTry {
-			val chat = createChatUseCase(ChatType.DIRECT, "", listOf(openedId))
+			val directChat = readChatsUseCase()?.firstOrNull { chat ->
+				chat.personId == userId && chat.type == ChatType.DIRECT
+			}
 
-			router.navigateToConversation(
-				chatId = chat.id,
-				title = chat.title.ifBlank { current.name },
-				corporate = chat.corporate,
-				personId = openedId,
-			)
+			if (directChat != null) {
+				navigateToPersonalChat(
+					directChat.id,
+					directChat.title.ifBlank { current.name },
+					directChat.corporate, userId, video
+				)
+
+				return@launchTry
+			}
+
+			val chat = createChatUseCase(ChatType.DIRECT, "", listOf(userId))
+
+			navigateToPersonalChat(chat.id, chat.title.ifBlank { current.name }, chat.corporate, userId, video)
 		} catch ::handleOpenFailure
 	}
 
+	private fun navigateToPersonalChat(chatId: String, title: String, corporate: Boolean, userId: String, video: Boolean?) {
+		if (video == null) {
+			router.navigateToConversation(
+				chatId = chatId,
+				title = title,
+				corporate = corporate,
+				personId = userId,
+			)
+			return
+		}
+
+		router.navigateToCall(
+			chatId = chatId,
+			title = title,
+			personId = userId,
+			video = video,
+		)
+	}
+
 	private fun handleLoad(intent: PersonIntent.Load) {
-		if (state.value is PersonState.Loading) {
+		val current = state.value
+
+		if (current is PersonState.Loading) {
 			return
 		}
 
-		if (intent.userId == openedId && state.value is PersonState.Content) {
+		if (current is PersonState.Content && current.userId == intent.userId) {
 			return
 		}
-
-		openedId = intent.userId
 
 		launchTry {
 			val person = readPersonUseCase(intent.userId)
@@ -85,8 +130,9 @@ class PersonViewModel @Inject constructor(
 
 				setState(
 					PersonState.Content(
+						userId = intent.userId,
 						name = person.name,
-						position = person.position,
+						position = capitalizeUseCase(person.position),
 						department = person.department,
 						office = person.office,
 						server = person.server,
@@ -102,13 +148,13 @@ class PersonViewModel @Inject constructor(
 			}
 
 			val card = loadPersonUseCase(intent.userId)
-
 			keepPersonPhotoUseCase(intent.userId, card.photo)
 
 			setState(
 				PersonState.Content(
+					userId = intent.userId,
 					name = card.name,
-					position = card.position,
+					position = capitalizeUseCase(card.position),
 					department = card.department,
 					office = card.office,
 					server = card.server,

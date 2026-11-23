@@ -41,6 +41,7 @@ class PersonFragment : FullScreenFragment() {
 						userId = arguments.getString("userId").orEmpty(),
 						corporate = arguments.getBoolean("corporate"),
 						state = viewModel.state,
+						event = viewModel.event,
 						onIntent = viewModel::applyIntent,
 					)
 				}

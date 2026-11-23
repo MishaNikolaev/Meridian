@@ -7,6 +7,7 @@ sealed interface PersonState {
 	data object Loading : PersonState
 
 	data class Content(
+		val userId: String,
 		val name: String,
 		val position: String,
 		val department: String,

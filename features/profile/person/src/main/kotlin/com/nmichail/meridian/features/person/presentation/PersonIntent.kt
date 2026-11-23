@@ -9,7 +9,11 @@ sealed interface PersonIntent {
 
 	data object Back : PersonIntent
 
-	data object Write : PersonIntent
+	data class Write(val userId: String) : PersonIntent
+
+	data class Call(val userId: String) : PersonIntent
+
+	data class Video(val userId: String) : PersonIntent
 
 	data object OpenManager : PersonIntent
 }

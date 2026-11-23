@@ -1,5 +1,6 @@
 package com.nmichail.meridian.features.person.presentation.compose
 
+import android.content.ClipData
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,31 +16,38 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nmichail.meridian.component.photo.PhotoFace
 import com.nmichail.meridian.component.ui.R as UiR
+import com.nmichail.meridian.component.ui.effect.LiveDataEffect
 import com.nmichail.meridian.component.ui.error.MUiErrorInPlace
+import com.nmichail.meridian.component.ui.snackbar.MUiSnackbarHost
+import com.nmichail.meridian.component.ui.snackbar.showErrorSnackBar
 import com.nmichail.meridian.component.ui.text.MUiLinkedText
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.component.ui.theme.select
 import com.nmichail.meridian.features.person.R
+import com.nmichail.meridian.features.person.presentation.PersonEvent
 import com.nmichail.meridian.features.person.presentation.PersonIntent
 import com.nmichail.meridian.features.person.presentation.PersonState
 import kotlinx.coroutines.flow.StateFlow
@@ -49,9 +57,12 @@ fun PersonScreen(
 	userId: String,
 	corporate: Boolean,
 	state: StateFlow<PersonState>,
+	event: LiveData<PersonEvent>,
 	onIntent: (PersonIntent) -> Unit,
 ) {
 	val uiState by state.collectAsStateWithLifecycle()
+	val snackBarHostState = remember { SnackbarHostState() }
+	val context = LocalContext.current
 
 	LaunchedEffect(Unit) {
 		onIntent(
@@ -60,6 +71,15 @@ fun PersonScreen(
 				corporate = corporate,
 			),
 		)
+	}
+
+	LiveDataEffect(event) { value ->
+		if (value is PersonEvent.CannotCallSelf) {
+			showErrorSnackBar(
+				snackBarHostState = snackBarHostState,
+				message = context.getString(R.string.person_call_self),
+			)
+		}
 	}
 
 	Box(
@@ -94,6 +114,10 @@ fun PersonScreen(
 				onIntent = onIntent,
 			)
 		}
+		MUiSnackbarHost(
+			snackBarHostState = snackBarHostState,
+			modifier = Modifier.align(Alignment.BottomCenter),
+		)
 	}
 }
 
@@ -119,7 +143,7 @@ private fun PersonContent(
 		) {
 			PersonIdentity(userId = userId, card = card)
 
-			PersonActions(onIntent)
+			PersonActions(userId, onIntent)
 
 			val filled = listOf(
 				card.department,
@@ -272,7 +296,7 @@ private fun PersonStatus(status: String, corporate: Boolean) {
 }
 
 @Composable
-private fun PersonActions(onIntent: (PersonIntent) -> Unit) {
+private fun PersonActions(userId: String, onIntent: (PersonIntent) -> Unit) {
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -283,7 +307,7 @@ private fun PersonActions(onIntent: (PersonIntent) -> Unit) {
 			icon = R.drawable.ic_person_forum,
 			label = R.string.person_write,
 			filled = true,
-			onClick = { onIntent(PersonIntent.Write) },
+			onClick = { onIntent(PersonIntent.Write(userId)) },
 			modifier = Modifier.weight(1f),
 		)
 
@@ -291,7 +315,7 @@ private fun PersonActions(onIntent: (PersonIntent) -> Unit) {
 			icon = R.drawable.ic_person_phone,
 			label = R.string.person_call,
 			filled = false,
-			onClick = null,
+			onClick = { onIntent(PersonIntent.Call(userId)) },
 			modifier = Modifier.weight(1f),
 		)
 
@@ -299,7 +323,7 @@ private fun PersonActions(onIntent: (PersonIntent) -> Unit) {
 			icon = R.drawable.ic_person_video,
 			label = R.string.person_video,
 			filled = false,
-			onClick = null,
+			onClick = { onIntent(PersonIntent.Video(userId)) },
 			modifier = Modifier.weight(1f),
 		)
 	}
@@ -376,15 +400,33 @@ private fun PersonFacts(card: PersonState.Content, onIntent: (PersonIntent) -> U
 				.background(palette.surface),
 		) {
 			if (card.corporate && card.server.isNotEmpty()) {
-				PersonRow(R.drawable.ic_person_server, R.string.person_server, card.server, link = false, copy = false, onClick = null)
+				PersonRow(
+					R.drawable.ic_person_server, R.string.person_server,
+					card.server,
+					link = false,
+					copy = false,
+					onClick = null
+				)
 			}
 
 			if (card.department.isNotEmpty()) {
-				PersonRow(UiR.drawable.ic_building, R.string.person_department, card.department, link = false, copy = false, onClick = null)
+				PersonRow(
+					UiR.drawable.ic_building, R.string.person_department,
+					card.department,
+					link = false,
+					copy = false,
+					onClick = null
+				)
 			}
 
 			if (card.office.isNotEmpty()) {
-				PersonRow(R.drawable.ic_person_office, R.string.person_office, card.office, link = false, copy = false, onClick = null)
+				PersonRow(
+					R.drawable.ic_person_office, R.string.person_office,
+					card.office,
+					link = false,
+					copy = false,
+					onClick = null
+				)
 			}
 
 			if (card.manager.isNotEmpty()) {
@@ -403,15 +445,34 @@ private fun PersonFacts(card: PersonState.Content, onIntent: (PersonIntent) -> U
 			}
 
 			if (card.position.isNotEmpty()) {
-				PersonRow(R.drawable.ic_person_case, R.string.person_position, card.position, link = false, copy = false, onClick = null)
+				PersonRow(
+					R.drawable.ic_person_case, R.string.person_position,
+					card.position,
+					link = false,
+					copy = false,
+					onClick = null
+				)
 			}
 
 			if (card.email.isNotEmpty()) {
-				PersonRow(UiR.drawable.ic_mail, R.string.person_email, card.email, link = true, copy = false, mail = true, onClick = null)
+				PersonRow(
+					UiR.drawable.ic_mail, R.string.person_email,
+					card.email,
+					link = true,
+					copy = false,
+					mail = true,
+					onClick = null
+				)
 			}
 
 			if (card.phone.isNotEmpty()) {
-				PersonRow(R.drawable.ic_person_phone, R.string.person_phone, card.phone, link = false, copy = true, onClick = null)
+				PersonRow(
+					R.drawable.ic_person_phone, R.string.person_phone,
+					card.phone,
+					link = false,
+					copy = true,
+					onClick = null
+				)
 			}
 		}
 	}
@@ -427,13 +488,24 @@ private fun PersonRow(
 	onClick: (() -> Unit)?,
 	mail: Boolean = false,
 ) {
-	val clipboard = LocalClipboardManager.current
+	val clipboard = LocalClipboard.current
 
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
-			.then(if (onClick == null) Modifier else Modifier.clickable(onClick = onClick))
-			.padding(start = 16.dp, end = 14.dp, top = 12.dp, bottom = 12.dp),
+			.then(
+				if (onClick == null) {
+					Modifier
+				} else {
+					Modifier.clickable(onClick = onClick)
+				},
+			)
+			.padding(
+				start = 16.dp,
+				end = 14.dp,
+				top = 12.dp,
+				bottom = 12.dp,
+			),
 		horizontalArrangement = Arrangement.spacedBy(14.dp),
 		verticalAlignment = Alignment.CenterVertically,
 	) {
@@ -444,13 +516,19 @@ private fun PersonRow(
 			modifier = Modifier.size(22.dp),
 		)
 
-		Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+		Column(modifier = Modifier.weight(1f),
+			verticalArrangement = Arrangement.spacedBy(2.dp)
+		) {
 			if (mail) {
 				MUiLinkedText(
 					text = value,
 					style = MeridianType.bodyDefault,
 					textColor = palette.accentPrimary,
-					onLinkLongClick = { clipboard.setText(AnnotatedString(it)) },
+					onLinkLongClick = {
+						clipboard.nativeClipboard.setPrimaryClip(
+							ClipData.newPlainText("text", it),
+						)
+					},
 				)
 			} else {
 				Text(
@@ -478,7 +556,11 @@ private fun PersonRow(
 				colorFilter = ColorFilter.tint(palette.accentPrimary),
 				modifier = Modifier
 					.size(20.dp)
-					.clickable { clipboard.setText(AnnotatedString(value)) },
+					.clickable {
+						clipboard.nativeClipboard.setPrimaryClip(
+							ClipData.newPlainText("text", value),
+						)
+					},
 			)
 		}
 	}
