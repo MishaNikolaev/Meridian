@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="ring_incoming">Входящий звонок</string>
+	<string name="ring_heads_up">Meridian входящий звонок</string>
+	<string name="ring_channel">Входящие звонки</string>
+</resources>

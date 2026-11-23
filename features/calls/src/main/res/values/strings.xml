@@ -36,6 +36,7 @@
 	<string name="calls_no_calendar">Нет данных о занятости</string>
 	<string name="calls_pick">Выбрать %1$s</string>
 	<string name="calls_none">Нет свободного окна</string>
+	<string name="calls_failed">Не удалось загрузить</string>
 	<string name="calls_solo_name">Орлов Дмитрий Олегович</string>
 	<string name="calls_solo_short">Орлов Дмитрий</string>
 	<string name="calls_solo_time">03:24</string>
@@ -56,8 +57,26 @@
 	<string name="calls_history_missed">Пропущенный звонок</string>
 	<string name="calls_history_declined">Отклонённый звонок</string>
 	<string name="calls_history_live">Текущий звонок</string>
-	<string name="calls_history_duration">%1$s (%2$s)</string>
+	<string name="calls_history_clock">%1$02d:%2$02d</string>
+	<string name="calls_history_day">%1$d %2$s</string>
+	<string name="calls_history_span">%1$s (%2$d:%3$02d)</string>
+	<string name="calls_history_span_long">%1$s (%2$d:%3$02d:%4$02d)</string>
+	<string name="calls_history_unknown">—</string>
 	<string name="calls_history_yesterday">Вчера</string>
+	<string-array name="calls_history_months">
+		<item>января</item>
+		<item>февраля</item>
+		<item>марта</item>
+		<item>апреля</item>
+		<item>мая</item>
+		<item>июня</item>
+		<item>июля</item>
+		<item>августа</item>
+		<item>сентября</item>
+		<item>октября</item>
+		<item>ноября</item>
+		<item>декабря</item>
+	</string-array>
 	<string name="calls_slot_09_10">9:00–10:00</string>
 	<string name="calls_slot_10_11">10:00–11:00</string>
 	<string name="calls_slot_11_12">11:00–12:00</string>
