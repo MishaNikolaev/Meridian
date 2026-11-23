@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.groups.presentation
+package com.nmichail.meridian.features.groups.info.presentation
 
 sealed interface GroupInfoEvent {
 	data class Opened(
@@ -6,4 +6,6 @@ sealed interface GroupInfoEvent {
 		val type: String,
 		val bytes: ByteArray,
 	) : GroupInfoEvent
+
+	data class Link(val link: String) : GroupInfoEvent
 }

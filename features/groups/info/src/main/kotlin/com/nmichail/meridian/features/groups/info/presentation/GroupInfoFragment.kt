@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.groups.presentation
+package com.nmichail.meridian.features.groups.info.presentation
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -11,8 +11,8 @@ import androidx.fragment.app.viewModels
 import com.nmichail.meridian.component.ui.compose.Screen
 import com.nmichail.meridian.core.navigation.screen.FullScreen
 import com.nmichail.meridian.core.navigation.screen.FullScreenFragment
-import com.nmichail.meridian.features.groups.di.GroupComponentHolder
-import com.nmichail.meridian.features.groups.presentation.compose.GroupInfoScreen
+import com.nmichail.meridian.features.groups.info.di.GroupInfoComponentHolder
+import com.nmichail.meridian.features.groups.info.presentation.compose.GroupInfoScreen
 
 fun getGroupInfoScreen(
 	chatId: String,
@@ -26,19 +26,18 @@ fun getGroupInfoScreen(
 	override fun createFragment(factory: FragmentFactory): Fragment = GroupInfoFragment().apply {
 		arguments = Bundle().apply {
 			putString("chatId", chatId)
-
 			putString("title", title)
-
 			putStringArray("members", members.toTypedArray())
-
 			putBoolean("corporate", corporate)
 		}
 	}
 }
 
+private const val GROUP_EDIT = "group-edit"
+
 class GroupInfoFragment : FullScreenFragment() {
 	private val viewModel: GroupInfoViewModel by viewModels {
-		GroupComponentHolder.get().viewModelFactory()
+		GroupInfoComponentHolder.get().viewModelFactory()
 	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {

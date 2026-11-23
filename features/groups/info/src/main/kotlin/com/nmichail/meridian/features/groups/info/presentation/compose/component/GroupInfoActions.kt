@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.groups.presentation.compose
+package com.nmichail.meridian.features.groups.info.presentation.compose.component
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -26,8 +26,8 @@ import androidx.compose.ui.unit.dp
 import com.nmichail.meridian.component.ui.R as UiR
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
-import com.nmichail.meridian.features.groups.R
-import com.nmichail.meridian.features.groups.presentation.GroupInfoIntent
+import com.nmichail.meridian.features.groups.info.R
+import com.nmichail.meridian.features.groups.info.presentation.GroupInfoIntent
 
 @Composable
 internal fun GroupActions(
@@ -56,7 +56,7 @@ internal fun GroupActions(
 		ActionTile(
 			icon = R.drawable.ic_group_phone,
 			label = R.string.group_call,
-			onClick = null,
+			onClick = { onIntent(GroupInfoIntent.StartCall) },
 			menu = null,
 		)
 

@@ -1,9 +1,9 @@
-package com.nmichail.meridian.features.groups.presentation.compose
+package com.nmichail.meridian.features.groups.info.presentation.compose.component
 
 import androidx.compose.runtime.Composable
 import com.nmichail.meridian.component.photo.MediaItem
 import com.nmichail.meridian.component.photo.MediaPager
-import com.nmichail.meridian.features.groups.presentation.GroupFile
+import com.nmichail.meridian.features.groups.info.presentation.GroupFile
 
 @Composable
 internal fun GroupGallery(

@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.groups.presentation.compose
+package com.nmichail.meridian.features.groups.info.presentation.compose.component
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -29,9 +29,10 @@ import com.nmichail.meridian.component.ui.R as UiR
 import com.nmichail.meridian.component.photo.PhotoFace
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
-import com.nmichail.meridian.features.groups.R
-import com.nmichail.meridian.features.groups.presentation.GroupInfoIntent
-import com.nmichail.meridian.features.groups.presentation.GroupMate
+import com.nmichail.meridian.features.groups.info.R
+import com.nmichail.meridian.features.groups.info.presentation.GroupInfoIntent
+import com.nmichail.meridian.features.groups.info.presentation.GroupMate
+import com.nmichail.meridian.features.groups.info.presentation.canManageMembers
 
 @Composable
 internal fun DetailCard(onIntent: (GroupInfoIntent) -> Unit) {
@@ -150,7 +151,6 @@ internal fun MemberCard(
 	mates: List<GroupMate>,
 	menu: String?,
 	expanded: Boolean,
-	canEdit: Boolean,
 	corporate: Boolean,
 	onIntent: (GroupInfoIntent) -> Unit,
 ) {
@@ -163,6 +163,7 @@ internal fun MemberCard(
 	val known = mates.any { mate -> mate.owner }
 	val me = mates.find { mate -> mate.self }
 	val canTransfer = me != null && (me.owner || !known)
+	val canManage = mates.canManageMembers()
 
 	Column(
 		modifier = Modifier
@@ -183,6 +184,7 @@ internal fun MemberCard(
 				open = menu == mate.name && mate.name.isNotEmpty(),
 				known = known,
 				canTransfer = canTransfer && mate.userId.isNotEmpty(),
+				canManage = canManage,
 				corporate = corporate,
 				onIntent = onIntent,
 			)
@@ -192,7 +194,7 @@ internal fun MemberCard(
 			ShowAll(onIntent = onIntent)
 		}
 
-		if (canEdit) {
+		if (canManage) {
 			AddMember(onIntent = onIntent)
 		}
 	}
@@ -258,6 +260,7 @@ private fun MemberLine(
 	open: Boolean,
 	known: Boolean,
 	canTransfer: Boolean,
+	canManage: Boolean,
 	corporate: Boolean,
 	onIntent: (GroupInfoIntent) -> Unit,
 ) {
@@ -306,6 +309,7 @@ private fun MemberLine(
 				open = open,
 				admin = mate.admin,
 				canTransfer = canTransfer,
+				canManage = canManage,
 				profile = mate.userId.isNotEmpty(),
 				corporate = corporate,
 				onIntent = onIntent,
@@ -336,6 +340,7 @@ private fun MemberMenu(
 	open: Boolean,
 	admin: Boolean,
 	canTransfer: Boolean,
+	canManage: Boolean,
 	profile: Boolean,
 	corporate: Boolean,
 	name: String,
@@ -360,7 +365,7 @@ private fun MemberMenu(
 			)
 		}
 
-		if (!admin) {
+		if (canManage && !admin) {
 			DropdownMenuItem(
 				text = {
 					Text(
@@ -386,15 +391,17 @@ private fun MemberMenu(
 			)
 		}
 
-		DropdownMenuItem(
-			text = {
-				Text(
-					text = stringResource(R.string.group_remove),
-					style = MeridianType.bodyDefault,
-					color = palette.statusError,
-				)
-			},
-			onClick = { onIntent(GroupInfoIntent.Remove(name = name)) },
-		)
+		if (canManage) {
+			DropdownMenuItem(
+				text = {
+					Text(
+						text = stringResource(R.string.group_remove),
+						style = MeridianType.bodyDefault,
+						color = palette.statusError,
+					)
+				},
+				onClick = { onIntent(GroupInfoIntent.Remove(name = name)) },
+			)
+		}
 	}
 }

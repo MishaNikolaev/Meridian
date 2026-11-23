@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.groups.presentation.compose
+package com.nmichail.meridian.features.groups.info.presentation.compose
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -45,11 +45,19 @@ import com.nmichail.meridian.component.ui.snackbar.showErrorSnackBar
 import com.nmichail.meridian.component.ui.R as UiR
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
-import com.nmichail.meridian.features.groups.R
-import com.nmichail.meridian.features.groups.presentation.GroupInfoEvent
-import com.nmichail.meridian.features.groups.presentation.GroupInfoIntent
-import com.nmichail.meridian.features.groups.presentation.GroupInfoState
-import com.nmichail.meridian.features.groups.presentation.GroupMate
+import com.nmichail.meridian.features.groups.info.R
+import com.nmichail.meridian.features.groups.info.presentation.GroupInfoEvent
+import com.nmichail.meridian.features.groups.info.presentation.GroupInfoIntent
+import com.nmichail.meridian.features.groups.info.presentation.GroupInfoState
+import com.nmichail.meridian.features.groups.info.presentation.GroupMate
+import com.nmichail.meridian.features.groups.info.presentation.compose.component.AddMembers
+import com.nmichail.meridian.features.groups.info.presentation.compose.component.DetailCard
+import com.nmichail.meridian.features.groups.info.presentation.compose.component.GroupActions
+import com.nmichail.meridian.features.groups.info.presentation.compose.component.GroupGallery
+import com.nmichail.meridian.features.groups.info.presentation.compose.component.GroupMedia
+import com.nmichail.meridian.features.groups.info.presentation.compose.component.LeaveRow
+import com.nmichail.meridian.features.groups.info.presentation.compose.component.MemberCard
+import com.nmichail.meridian.features.groups.info.presentation.openSaved
 
 @Composable
 internal fun GroupInfoScreen(
@@ -66,7 +74,7 @@ internal fun GroupInfoScreen(
 
 	LiveDataEffect(event) { value ->
 		if (value is GroupInfoEvent.Opened) {
-			context.openStored(name = value.name, type = value.type, bytes = value.bytes)
+			context.openSaved(name = value.name, type = value.type, bytes = value.bytes)
 		}
 	}
 
@@ -117,7 +125,12 @@ private fun GroupInfoPages(
 				retry = stringResource(UiR.string.error_retry),
 				back = stringResource(UiR.string.error_back),
 				onRetry = {
-					onIntent(GroupInfoIntent.Load(chatId = chatId, title = title, members = members))
+					onIntent(GroupInfoIntent.Load(
+						chatId = chatId,
+						title = title,
+						members = members
+						)
+					)
 				},
 				onBack = { onIntent(GroupInfoIntent.Back) },
 				modifier = Modifier.align(Alignment.Center),
@@ -137,7 +150,6 @@ private fun GroupInfoLoaded(
 		if (current.adding) {
 			AddMembers(
 				candidates = current.candidates,
-				mates = current.mates,
 				query = current.query,
 				onIntent = onIntent,
 			)
@@ -175,7 +187,7 @@ private fun GroupInfoLoaded(
 				photoId = current.photo,
 				onClose = { onIntent(GroupInfoIntent.Back) },
 				onPlay = { file ->
-					onIntent(GroupInfoIntent.PlayStored(id = file.id, name = file.name, type = file.type))
+					onIntent(GroupInfoIntent.PlaySaved(id = file.id, name = file.name, type = file.type))
 				},
 			)
 		}
@@ -194,13 +206,13 @@ private fun GroupInfoBar(
 			.fillMaxWidth()
 			.background(palette.bar)
 			.drawBehind {
-				val stroke = 1.dp.toPx()
+				val width = 1.dp.toPx()
 
 				drawLine(
 					border,
 					Offset(0f, size.height),
 					Offset(size.width, size.height),
-					stroke,
+					width,
 				)
 			}
 			.padding(horizontal = 16.dp, vertical = 14.dp),
@@ -283,7 +295,6 @@ private fun GroupInfoBody(
 				mates = mates,
 				menu = menu,
 				expanded = expanded,
-				canEdit = canEdit,
 				corporate = corporate,
 				onIntent = onIntent,
 			)
@@ -329,28 +340,25 @@ private fun BoxScope.GroupAlerts(
 	val scope = rememberCoroutineScope()
 
 	val snackBarHostState = remember { SnackbarHostState() }
-
-	val leave = stringResource(R.string.group_leave_owner)
-
-	val transfer = stringResource(R.string.group_transfer_failed)
-
-	val owner = stringResource(R.string.group_remove_owner)
+	val leaveMessage = stringResource(R.string.group_leave_owner)
+	val transferMessage = stringResource(R.string.group_transfer_failed)
+	val removeMessage = stringResource(R.string.group_remove_owner)
 
 	LaunchedEffect(refused) {
 		if (refused) {
-			scope.showErrorSnackBar(snackBarHostState = snackBarHostState, message = leave)
+			scope.showErrorSnackBar(snackBarHostState = snackBarHostState, message = leaveMessage)
 		}
 	}
 
 	LaunchedEffect(failed) {
 		if (failed) {
-			scope.showErrorSnackBar(snackBarHostState = snackBarHostState, message = transfer)
+			scope.showErrorSnackBar(snackBarHostState = snackBarHostState, message = transferMessage)
 		}
 	}
 
 	LaunchedEffect(denied) {
 		if (denied > 0) {
-			scope.showErrorSnackBar(snackBarHostState = snackBarHostState, message = owner)
+			scope.showErrorSnackBar(snackBarHostState = snackBarHostState, message = removeMessage)
 		}
 	}
 

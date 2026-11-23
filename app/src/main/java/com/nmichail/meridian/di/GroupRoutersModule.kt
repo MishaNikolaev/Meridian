@@ -1,5 +1,6 @@
 package com.nmichail.meridian.di
 
+import com.nmichail.meridian.features.groups.info.presentation.GroupInfoRouter
 import com.nmichail.meridian.features.groups.presentation.GroupRouter
 import com.nmichail.meridian.navigation.router.group.GroupRouterImpl
 import dagger.Binds
@@ -10,4 +11,7 @@ abstract class GroupRoutersModule {
 
 	@Binds
 	abstract fun bindGroupRouter(impl: GroupRouterImpl): GroupRouter
+
+	@Binds
+	abstract fun bindGroupInfoRouter(impl: GroupRouterImpl): GroupInfoRouter
 }

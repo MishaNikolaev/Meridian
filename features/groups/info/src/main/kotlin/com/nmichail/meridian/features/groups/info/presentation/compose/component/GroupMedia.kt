@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.groups.presentation.compose
+package com.nmichail.meridian.features.groups.info.presentation.compose.component
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -36,10 +36,12 @@ import com.nmichail.meridian.component.photopicker.photoRequest
 import com.nmichail.meridian.component.ui.R as UiR
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
-import com.nmichail.meridian.features.groups.R
-import com.nmichail.meridian.features.groups.presentation.GroupFile
-import com.nmichail.meridian.features.groups.presentation.GroupInfoIntent
-import com.nmichail.meridian.features.groups.presentation.GroupTab
+import com.nmichail.meridian.features.groups.info.R
+import com.nmichail.meridian.features.groups.info.presentation.GroupFile
+import com.nmichail.meridian.features.groups.info.presentation.GroupInfoIntent
+import com.nmichail.meridian.features.groups.info.presentation.GroupTab
+import com.nmichail.meridian.features.groups.info.presentation.openSaved
+import com.nmichail.meridian.features.groups.info.presentation.tab
 
 @Composable
 internal fun GroupMedia(
@@ -48,7 +50,7 @@ internal fun GroupMedia(
 	tab: GroupTab,
 	onIntent: (GroupInfoIntent) -> Unit,
 ) {
-	val shown = files.filter { file -> file.tab() == tab }
+	val tabFiles = files.filter { file -> file.tab() == tab }
 
 	Column(
 		modifier = Modifier
@@ -79,7 +81,7 @@ internal fun GroupMedia(
 					overflow = TextOverflow.Ellipsis,
 				)
 				Text(
-					text = stringResource(R.string.group_media_count, shown.size),
+					text = stringResource(R.string.group_media_count, tabFiles.size),
 					style = MeridianType.bodySmall,
 					color = palette.textSecondary,
 				)
@@ -87,8 +89,7 @@ internal fun GroupMedia(
 		}
 
 		MediaTabs(tab = tab, onIntent = onIntent)
-
-		if (shown.isEmpty()) {
+		if (tabFiles.isEmpty()) {
 			Text(
 				text = stringResource(R.string.group_media_empty),
 				style = MeridianType.bodyDefault,
@@ -99,33 +100,38 @@ internal fun GroupMedia(
 					.padding(24.dp),
 			)
 		} else if (tab == GroupTab.Media) {
-			MediaGrid(files = shown, onIntent = onIntent, modifier = Modifier.weight(1f))
+			MediaGrid(files = tabFiles, onIntent = onIntent, modifier = Modifier.weight(1f))
 		} else {
-			FileGrid(files = shown, onIntent = onIntent, modifier = Modifier.weight(1f))
+			FileGrid(files = tabFiles, onIntent = onIntent, modifier = Modifier.weight(1f))
 		}
 	}
 }
 
 @Composable
 private fun MediaTabs(tab: GroupTab, onIntent: (GroupInfoIntent) -> Unit) {
-	Row(
+	Box(
 		modifier = Modifier
 			.fillMaxWidth()
-			.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
-			.clip(RoundedCornerShape(22.dp))
-			.background(palette.surface)
-			.padding(horizontal = 4.dp, vertical = 4.dp),
-		horizontalArrangement = Arrangement.spacedBy(space = 4.dp, alignment = Alignment.CenterHorizontally),
-		verticalAlignment = Alignment.CenterVertically,
+			.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+		contentAlignment = Alignment.Center,
 	) {
-		MediaTab(label = stringResource(R.string.group_media), selected = tab == GroupTab.Media) {
-			onIntent(GroupInfoIntent.ChooseTab(GroupTab.Media))
-		}
-		MediaTab(label = stringResource(R.string.group_media_files), selected = tab == GroupTab.Files) {
-			onIntent(GroupInfoIntent.ChooseTab(GroupTab.Files))
-		}
-		MediaTab(label = stringResource(R.string.group_media_voice), selected = tab == GroupTab.Voice) {
-			onIntent(GroupInfoIntent.ChooseTab(GroupTab.Voice))
+		Row(
+			modifier = Modifier
+				.clip(RoundedCornerShape(22.dp))
+				.background(palette.surface)
+				.padding(horizontal = 4.dp, vertical = 4.dp),
+			horizontalArrangement = Arrangement.spacedBy(4.dp),
+			verticalAlignment = Alignment.CenterVertically,
+		) {
+			MediaTab(label = stringResource(R.string.group_media), selected = tab == GroupTab.Media) {
+				onIntent(GroupInfoIntent.ChooseTab(GroupTab.Media))
+			}
+			MediaTab(label = stringResource(R.string.group_media_files), selected = tab == GroupTab.Files) {
+				onIntent(GroupInfoIntent.ChooseTab(GroupTab.Files))
+			}
+			MediaTab(label = stringResource(R.string.group_media_voice), selected = tab == GroupTab.Voice) {
+				onIntent(GroupInfoIntent.ChooseTab(GroupTab.Voice))
+			}
 		}
 	}
 }
@@ -168,10 +174,10 @@ private fun MediaGrid(
 					contentScale = ContentScale.Crop,
 					modifier = Modifier
 						.aspectRatio(1f)
-						.clickable { onIntent(file.open()) },
+						.clickable { onIntent(file.openSaved()) },
 				)
 			} else if (file.type.startsWith("video/")) {
-				VideoTile(onClick = { onIntent(file.open()) })
+				VideoTile(onClick = { onIntent(file.openSaved()) })
 			} else {
 				FileCell(file = file, onIntent = onIntent)
 			}
@@ -206,7 +212,12 @@ private fun VideoTile(onClick: () -> Unit) {
 			.clickable(onClick = onClick),
 		contentAlignment = Alignment.Center,
 	) {
-		Text(text = "▶", style = MeridianType.titleCard, color = palette.textPrimary)
+		Image(
+			painter = painterResource(R.drawable.ic_group_play),
+			contentDescription = null,
+			colorFilter = ColorFilter.tint(palette.textPrimary),
+			modifier = Modifier.size(22.dp),
+		)
 	}
 }
 
@@ -216,7 +227,7 @@ private fun FileCell(file: GroupFile, onIntent: (GroupInfoIntent) -> Unit) {
 		modifier = Modifier
 			.aspectRatio(1f)
 			.background(palette.surface)
-			.clickable { onIntent(file.open()) }
+			.clickable { onIntent(file.openSaved()) }
 			.padding(8.dp),
 		contentAlignment = Alignment.Center,
 	) {
@@ -230,15 +241,3 @@ private fun FileCell(file: GroupFile, onIntent: (GroupInfoIntent) -> Unit) {
 		)
 	}
 }
-
-private fun GroupFile.tab(): GroupTab = when {
-	type.startsWith("image/") || type.startsWith("video/") -> GroupTab.Media
-	type.startsWith("audio/") -> GroupTab.Voice
-	else -> GroupTab.Files
-}
-
-private fun GroupFile.open(): GroupInfoIntent.OpenStored = GroupInfoIntent.OpenStored(
-	id = id,
-	name = name,
-	type = type,
-)

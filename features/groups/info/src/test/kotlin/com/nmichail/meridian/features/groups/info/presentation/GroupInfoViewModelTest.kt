@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.groups.presentation
+package com.nmichail.meridian.features.groups.info.presentation
 
 import com.nmichail.meridian.component.photopicker.domain.usecase.DownloadPhotoUseCase
 import com.nmichail.meridian.component.photopicker.domain.usecase.LoadPhotoUseCase
@@ -15,6 +15,9 @@ import com.nmichail.meridian.shared.chat.domain.usecase.LoadMessagesUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.PromoteChatUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.ReadChatProfileUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.RemoveChatMemberUseCase
+import com.nmichail.meridian.shared.chat.domain.usecase.SearchPeopleUseCase
+import com.nmichail.meridian.shared.chat.domain.usecase.CreateChatInviteUseCase
+import com.nmichail.meridian.features.groups.info.domain.MatchGroupMembersUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.TransferChatUseCase
 import com.nmichail.meridian.testutils.TestCoroutineExtension
 import com.nmichail.meridian.testutils.doThrowSafe
@@ -40,9 +43,11 @@ class GroupInfoViewModelTest {
 	private val validateUsernameUseCase: ValidateUsernameUseCase = mock()
 	private val loadPhotoUseCase: LoadPhotoUseCase = mock()
 	private val readOrganizationMembersUseCase: ReadOrganizationMembersUseCase = mock()
+	private val searchPeopleUseCase: SearchPeopleUseCase = mock()
+	private val createChatInviteUseCase: CreateChatInviteUseCase = mock()
 	private val loadMessagesUseCase: LoadMessagesUseCase = mock()
 	private val downloadPhotoUseCase: DownloadPhotoUseCase = mock()
-	private val router: GroupRouter = mock()
+	private val router: GroupInfoRouter = mock()
 	private val viewModel = GroupInfoViewModel(
 		readChatProfileUseCase,
 		findPersonUseCase,
@@ -54,8 +59,11 @@ class GroupInfoViewModelTest {
 		validateUsernameUseCase,
 		loadPhotoUseCase,
 		readOrganizationMembersUseCase,
+		searchPeopleUseCase,
+		createChatInviteUseCase,
 		loadMessagesUseCase,
 		downloadPhotoUseCase,
+		MatchGroupMembersUseCase(),
 		router,
 	)
 
@@ -117,6 +125,7 @@ class GroupInfoViewModelTest {
 			owner = "Волков Сергей Андреевич",
 			members = emptyList(),
 			selfId = "",
+			photoId = "",
 		)
 
 		viewModel.applyIntent(
@@ -162,6 +171,7 @@ class GroupInfoViewModelTest {
 				ChatPerson(userId = "2", username = "volkov", displayName = "Волков Сергей", role = "MEMBER"),
 			),
 			selfId = "me",
+			photoId = "",
 		)
 		viewModel.applyIntent(
 			GroupInfoIntent.Load(
@@ -187,6 +197,7 @@ class GroupInfoViewModelTest {
 				ChatPerson(userId = "2", username = "volkov", displayName = "Волков Сергей", role = "MEMBER"),
 			),
 			selfId = "me",
+			photoId = "",
 		)
 		viewModel.applyIntent(
 			GroupInfoIntent.Load(
@@ -234,6 +245,7 @@ class GroupInfoViewModelTest {
 				ChatPerson(userId = "2", username = "volkov", displayName = "Волков Сергей", role = "MEMBER"),
 			),
 			selfId = "me",
+			photoId = "",
 		)
 		viewModel.applyIntent(
 			GroupInfoIntent.Load(
@@ -259,6 +271,7 @@ class GroupInfoViewModelTest {
 				ChatPerson(userId = "2", username = "volkov", displayName = "Волков Сергей", role = "MEMBER"),
 			),
 			selfId = "me",
+			photoId = "",
 		)
 		viewModel.applyIntent(
 			GroupInfoIntent.Load(
@@ -284,6 +297,7 @@ class GroupInfoViewModelTest {
 				ChatPerson(userId = "2", username = "volkov", displayName = "Волков Сергей", role = "MEMBER"),
 			),
 			selfId = "me",
+			photoId = "",
 		)
 		viewModel.applyIntent(
 			GroupInfoIntent.Load(
@@ -310,6 +324,7 @@ class GroupInfoViewModelTest {
 				ChatPerson(userId = "2", username = "volkov", displayName = "Волков Сергей", role = "MEMBER"),
 			),
 			selfId = "me",
+			photoId = "",
 		)
 		viewModel.applyIntent(
 			GroupInfoIntent.Load(
@@ -336,6 +351,7 @@ class GroupInfoViewModelTest {
 				ChatPerson(userId = "2", username = "volkov", displayName = "Волков Сергей", role = "MEMBER"),
 			),
 			selfId = "me",
+			photoId = "",
 		)
 		viewModel.applyIntent(
 			GroupInfoIntent.Load(
@@ -362,6 +378,7 @@ class GroupInfoViewModelTest {
 				ChatPerson(userId = "2", username = "volkov", displayName = "Волков Сергей", role = "OWNER"),
 			),
 			selfId = "me",
+			photoId = "",
 		)
 		viewModel.applyIntent(
 			GroupInfoIntent.Load(
@@ -387,6 +404,7 @@ class GroupInfoViewModelTest {
 				ChatPerson(userId = "2", username = "volkov", displayName = "Волков Сергей", role = "OWNER"),
 			),
 			selfId = "me",
+			photoId = "",
 		)
 		viewModel.applyIntent(
 			GroupInfoIntent.Load(
@@ -412,6 +430,7 @@ class GroupInfoViewModelTest {
 				ChatPerson(userId = "2", username = "volkov", displayName = "Волков Сергей", role = "OWNER"),
 			),
 			selfId = "me",
+			photoId = "",
 		)
 		viewModel.applyIntent(
 			GroupInfoIntent.Load(
@@ -425,6 +444,34 @@ class GroupInfoViewModelTest {
 		val shown = viewModel.state.value as GroupInfoState.Content
 
 		assertEquals(true, shown.mates.any { mate -> mate.userId == "2" })
+	}
+
+	@Test
+	fun `remove EXPECT member cannot`() = runTest {
+		whenever(readChatProfileUseCase.invoke("1")) doReturn ChatProfile(
+			title = "Платформа",
+			description = "",
+			owner = "Волков Сергей",
+			members = listOf(
+				ChatPerson(userId = "me", username = "me", displayName = "Я", role = "MEMBER"),
+				ChatPerson(userId = "2", username = "volkov", displayName = "Волков Сергей", role = "OWNER"),
+			),
+			selfId = "me",
+			photoId = "",
+		)
+		viewModel.applyIntent(
+			GroupInfoIntent.Load(
+				chatId = "1",
+				title = "Платформа",
+				members = emptyList(),
+			),
+		)
+
+		viewModel.applyIntent(GroupInfoIntent.Remove(name = "Волков Сергей"))
+		viewModel.applyIntent(GroupInfoIntent.StartAdd)
+
+		verify(removeChatMemberUseCase, never()).invoke("1", "2")
+		assertEquals(false, (viewModel.state.value as GroupInfoState.Content).adding)
 	}
 
 	@Test
@@ -454,7 +501,7 @@ class GroupInfoViewModelTest {
 
 		viewModel.applyIntent(GroupInfoIntent.Leave)
 
-		verify(router).closeChat()
+		verify(router).exitChat()
 	}
 
 	@Test
@@ -470,7 +517,7 @@ class GroupInfoViewModelTest {
 
 		viewModel.applyIntent(GroupInfoIntent.Leave)
 
-		verify(router, never()).closeChat()
+		verify(router, never()).exitChat()
 	}
 
 	@Test
@@ -483,6 +530,7 @@ class GroupInfoViewModelTest {
 				ChatPerson(userId = "me", username = "me", displayName = "Я", role = "OWNER"),
 			),
 			selfId = "me",
+			photoId = "",
 		)
 		whenever(leaveChatUseCase.invoke("1")) doThrowSafe ForbiddenException(httpStatus = 403)
 		viewModel.applyIntent(

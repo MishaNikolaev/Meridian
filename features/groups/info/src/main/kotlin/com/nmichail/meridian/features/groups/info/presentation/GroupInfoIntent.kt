@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.groups.presentation
+package com.nmichail.meridian.features.groups.info.presentation
 
 sealed interface GroupInfoIntent {
 	data class Load(
@@ -38,6 +38,8 @@ sealed interface GroupInfoIntent {
 
 	data object StartAdd : GroupInfoIntent
 
+	data object Invite : GroupInfoIntent
+
 	data class ChangeLogin(
 		val login: String,
 	) : GroupInfoIntent
@@ -48,17 +50,19 @@ sealed interface GroupInfoIntent {
 
 	data object OpenMedia : GroupInfoIntent
 
+	data object StartCall : GroupInfoIntent
+
 	data object CloseMedia : GroupInfoIntent
 
 	data class ChooseTab(val tab: GroupTab) : GroupInfoIntent
 
-	data class OpenStored(
+	data class OpenSaved(
 		val id: String,
 		val name: String,
 		val type: String,
 	) : GroupInfoIntent
 
-	data class PlayStored(
+	data class PlaySaved(
 		val id: String,
 		val name: String,
 		val type: String,

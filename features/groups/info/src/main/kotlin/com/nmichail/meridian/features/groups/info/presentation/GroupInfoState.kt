@@ -1,4 +1,4 @@
-package com.nmichail.meridian.features.groups.presentation
+package com.nmichail.meridian.features.groups.info.presentation
 
 import com.nmichail.meridian.core.validation.username.UsernameValidationItem
 import com.nmichail.meridian.shared.organization.domain.entity.OrganizationMember
@@ -33,3 +33,21 @@ sealed interface GroupInfoState {
 		val message: Int,
 	) : GroupInfoState
 }
+
+data class GroupFile(
+	val id: String,
+	val name: String,
+	val type: String,
+)
+
+fun GroupFile.tab(): GroupTab = when {
+	type.startsWith("image/") || type.startsWith("video/") -> GroupTab.Media
+	type.startsWith("audio/") -> GroupTab.Voice
+	else -> GroupTab.Files
+}
+
+fun GroupFile.openSaved(): GroupInfoIntent.OpenSaved = GroupInfoIntent.OpenSaved(
+	id = id,
+	name = name,
+	type = type,
+)

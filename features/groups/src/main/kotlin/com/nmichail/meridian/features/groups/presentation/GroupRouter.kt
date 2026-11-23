@@ -10,7 +10,7 @@ interface GroupRouter {
 
 	fun navigateBack()
 
-	fun closeChat()
+	fun exitChat()
 
 	fun navigateToEdit(
 		chatId: String,
