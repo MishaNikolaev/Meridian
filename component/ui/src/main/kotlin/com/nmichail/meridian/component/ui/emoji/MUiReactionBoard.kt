@@ -35,10 +35,10 @@ fun MUiReactionBoard(
 		reactions.chunked(size = 6).forEach { line ->
 			Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
 				line.forEach { reaction ->
-					val chosen = reaction.glyph in selected
+					val chosen = reaction.emoji in selected
 
 					Text(
-						text = reaction.glyph,
+						text = reaction.emoji,
 						style = MeridianType.reactionMenu,
 						modifier = Modifier
 							.clip(CircleShape)
@@ -49,7 +49,7 @@ fun MUiReactionBoard(
 									off = Color.Transparent,
 								),
 							)
-							.clickable { onPick(reaction.glyph) },
+							.clickable { onPick(reaction.emoji) },
 					)
 				}
 			}

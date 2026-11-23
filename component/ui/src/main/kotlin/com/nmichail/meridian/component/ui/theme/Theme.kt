@@ -3,7 +3,6 @@ package com.nmichail.meridian.component.ui.theme
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -11,8 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
@@ -29,9 +26,7 @@ fun MeridianTheme(
 	themeState: Boolean? = null,
 	content: @Composable () -> Unit,
 ) {
-	val selected by SelectedTheme.darkThemeFlow.collectAsState()
-	val preference = themeState ?: selected
-	val darkTheme = preference ?: isSystemInDarkTheme()
+	val darkTheme = themeState ?: SelectedTheme.isDarkTheme()
 
 	val colors = if (darkTheme) {
 		DarkPalette
