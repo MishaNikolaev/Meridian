@@ -18,7 +18,6 @@ import com.nmichail.meridian.shared.chat.data.dto.CreateChatDto
 import com.nmichail.meridian.shared.chat.data.dto.MessageDto
 import com.nmichail.meridian.shared.chat.data.dto.MessagePageDto
 import com.nmichail.meridian.shared.chat.data.dto.ReactionDto
-import com.nmichail.meridian.shared.chat.data.dto.ReactionRequestDto
 import com.nmichail.meridian.shared.chat.data.dto.ReadKindDto
 import com.nmichail.meridian.shared.chat.data.dto.ReadRequestDto
 import com.nmichail.meridian.shared.chat.data.dto.UserCardDto
@@ -288,40 +287,6 @@ class ChatRepositoryImplTest {
 		val actual = repository.loadMessages("1")
 
 		assertEquals(mapOf("message" to setOf("LIKE")), actual.reactions)
-	}
-
-	@Test
-	fun `save reaction EXPECT stored`() = runTest {
-		whenever(preferences.getString("message_reactions", null)) doReturn null
-
-		repository.saveReaction(
-			messageId = "message",
-			reactions = setOf("LIKE"),
-			saveUsed = false,
-		)
-
-		verify(editor).putString("message_reactions", """{"message":["LIKE"]}""")
-	}
-
-	@Test
-	fun `react EXPECT reaction request`() = runTest {
-		whenever(
-			api.setReaction(
-				"message",
-				ReactionRequestDto(reaction = "LIKE", active = true),
-			),
-		) doReturn mock()
-
-		repository.react(
-			messageId = "message",
-			reaction = "LIKE",
-			active = true,
-		)
-
-		verify(api).setReaction(
-			"message",
-			ReactionRequestDto(reaction = "LIKE", active = true),
-		)
 	}
 
 	@Test

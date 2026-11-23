@@ -12,7 +12,6 @@ import com.nmichail.meridian.shared.chat.data.datasource.MemberDataSource
 import com.nmichail.meridian.shared.chat.data.datasource.ReactionDataSource
 import com.nmichail.meridian.shared.chat.data.dto.CreateChatDto
 import com.nmichail.meridian.shared.chat.data.dto.UserCardDto
-import com.nmichail.meridian.shared.chat.data.dto.ReactionRequestDto
 import com.nmichail.meridian.shared.chat.data.dto.ReadKindDto
 import com.nmichail.meridian.shared.chat.data.dto.ReadRequestDto
 import com.nmichail.meridian.shared.chat.data.mapper.toDto
@@ -28,7 +27,6 @@ import com.nmichail.meridian.shared.chat.domain.entity.ChatPerson
 import com.nmichail.meridian.shared.chat.domain.entity.ChatThread
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType
 import com.nmichail.meridian.shared.chat.domain.entity.CreatedChat
-import com.nmichail.meridian.shared.chat.domain.entity.ReactionMemory
 import com.nmichail.meridian.shared.chat.domain.repository.ChatRepository
 import java.util.UUID
 import javax.inject.Inject
@@ -106,31 +104,6 @@ class ChatRepositoryImpl @Inject constructor(
 			reactions = reactionDataSource,
 			deletions = deletionDataSource,
 		)
-
-	override fun readReactions(): ReactionMemory = ReactionMemory(
-		chosen = reactionDataSource.getReactions(),
-		used = reactionDataSource.used(),
-	)
-
-	override fun saveReaction(messageId: String, reactions: Set<String>, saveUsed: Boolean) {
-		val previous = reactionDataSource.getReactions()[messageId].orEmpty()
-
-		reactionDataSource.saveReactions(messageId, reactions)
-
-		if (saveUsed) {
-			(reactions - previous).forEach(reactionDataSource::saveUsed)
-		}
-	}
-
-	override suspend fun react(messageId: String, reaction: String, active: Boolean) {
-		api.setReaction(
-			messageId,
-			ReactionRequestDto(
-				reaction = reaction,
-				active = active,
-			),
-		).execute()
-	}
 
 	override suspend fun delete(messageId: String) {
 		api.deleteMessages(messageId).execute()

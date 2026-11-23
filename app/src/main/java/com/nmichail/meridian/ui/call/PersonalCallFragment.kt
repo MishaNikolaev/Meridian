@@ -215,7 +215,7 @@ private fun CallSession(
 		signals = signals,
 		realtime = realtime,
 		current = { current },
-		onCurrent = { current = it },
+		onCurrent = { id -> onCurrent(id) },
 		onLive = goLive,
 		onDone = { finish(true) },
 		video = video,

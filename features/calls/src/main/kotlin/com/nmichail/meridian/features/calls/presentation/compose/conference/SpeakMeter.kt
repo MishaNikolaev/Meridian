@@ -34,7 +34,7 @@ internal class SpeakMeter(context: Context) {
 			return false
 		}
 		val size = AudioRecord.getMinBufferSize(
-			16_000,
+			SAMPLE_RATE,
 			AudioFormat.CHANNEL_IN_MONO,
 			AudioFormat.ENCODING_PCM_16BIT,
 		)
@@ -43,7 +43,7 @@ internal class SpeakMeter(context: Context) {
 		}
 		val next = AudioRecord(
 			MediaRecorder.AudioSource.VOICE_COMMUNICATION,
-			16_000,
+			SAMPLE_RATE,
 			AudioFormat.CHANNEL_IN_MONO,
 			AudioFormat.ENCODING_PCM_16BIT,
 			size * 2,
@@ -74,7 +74,7 @@ internal class SpeakMeter(context: Context) {
 			sum += sample * sample
 		}
 
-		return sqrt(sum / read) >= 1_200
+		return sqrt(sum / read) >= SPEAK_GATE
 	}
 
 	fun stop() {
@@ -115,3 +115,6 @@ internal fun rememberSpeaking(active: Boolean): Boolean {
 	}
 	return speaking
 }
+
+private const val SAMPLE_RATE = 16_000
+private const val SPEAK_GATE = 1_200

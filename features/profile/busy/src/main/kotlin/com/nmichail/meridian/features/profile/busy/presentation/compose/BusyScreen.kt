@@ -138,7 +138,7 @@ private fun BusyBar(onIntent: (BusyIntent) -> Unit) {
 			contentDescription = null,
 			modifier = Modifier
 				.size(18.dp)
-				.graphicsLayer { rotationZ = 180f }
+				.graphicsLayer(rotationZ = 180f)
 				.clickable { onIntent(BusyIntent.Back) },
 		)
 

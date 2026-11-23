@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.nmichail.meridian.component.ui.R as UiR
@@ -103,8 +104,6 @@ private fun SectionTitle(title: String) {
 
 @Composable
 private fun MeetingRow(meeting: Meeting, onJoin: () -> Unit = {}) {
-	val marks = palette.marks
-	val mark = marks[meeting.name.hashCode().mod(marks.size)]
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -113,17 +112,7 @@ private fun MeetingRow(meeting: Meeting, onJoin: () -> Unit = {}) {
 		verticalAlignment = Alignment.CenterVertically,
 		horizontalArrangement = Arrangement.spacedBy(12.dp),
 	) {
-		Text(
-			text = initials(meeting.initials),
-			style = MeridianType.bodyName,
-			color = palette.textOnAccent,
-			modifier = Modifier
-				.size(48.dp)
-				.clip(RoundedCornerShape(24.dp))
-				.background(mark)
-				.padding(top = 12.dp),
-			textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-		)
+		MeetingMark(meeting)
 		Column(
 			modifier = Modifier.weight(1f),
 			verticalArrangement = Arrangement.spacedBy(3.dp),
@@ -137,7 +126,6 @@ private fun MeetingRow(meeting: Meeting, onJoin: () -> Unit = {}) {
 					contentDescription = null,
 					modifier = Modifier.size(14.dp),
 				)
-
 				Text(
 					text = meeting.name,
 					style = MeridianType.bodyDefault,
@@ -146,7 +134,6 @@ private fun MeetingRow(meeting: Meeting, onJoin: () -> Unit = {}) {
 					overflow = TextOverflow.Ellipsis,
 				)
 			}
-
 			Text(
 				text = meeting.details,
 				style = MeridianType.captionDefault,
@@ -156,16 +143,38 @@ private fun MeetingRow(meeting: Meeting, onJoin: () -> Unit = {}) {
 			)
 		}
 		if (meeting.canJoin) {
-			Text(
-				text = stringResource(R.string.calls_join),
-				style = MeridianType.captionDefault,
-				color = palette.textOnAccent,
-				modifier = Modifier
-					.clip(RoundedCornerShape(14.dp))
-					.background(palette.accentPrimary)
-					.clickable(onClick = onJoin)
-					.padding(horizontal = 14.dp, vertical = 7.dp),
-			)
+			JoinMark(onJoin)
 		}
 	}
+}
+
+@Composable
+private fun MeetingMark(meeting: Meeting) {
+	val marks = palette.marks
+	val mark = marks[meeting.name.hashCode().mod(marks.size)]
+	Text(
+		text = initials(meeting.initials),
+		style = MeridianType.bodyName,
+		color = palette.textOnAccent,
+		modifier = Modifier
+			.size(48.dp)
+			.clip(RoundedCornerShape(24.dp))
+			.background(mark)
+			.padding(top = 12.dp),
+		textAlign = TextAlign.Center,
+	)
+}
+
+@Composable
+private fun JoinMark(onJoin: () -> Unit) {
+	Text(
+		text = stringResource(R.string.calls_join),
+		style = MeridianType.captionDefault,
+		color = palette.textOnAccent,
+		modifier = Modifier
+			.clip(RoundedCornerShape(14.dp))
+			.background(palette.accentPrimary)
+			.clickable(onClick = onJoin)
+			.padding(horizontal = 14.dp, vertical = 7.dp),
+	)
 }

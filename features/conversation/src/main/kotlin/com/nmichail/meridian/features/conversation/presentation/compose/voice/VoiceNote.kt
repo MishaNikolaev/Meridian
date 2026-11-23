@@ -133,7 +133,11 @@ private fun PlayMark(playing: Boolean, onPlay: () -> Unit) {
 
 private fun voiceLength(name: String): String {
 	val seconds = name.substringAfter("voice-", "").substringBefore('.').toIntOrNull() ?: 0
-	val minutes = seconds / 60
-	val rest = seconds % 60
+	return clock(seconds = seconds, minute = 60)
+}
+
+private fun clock(seconds: Int, minute: Int): String {
+	val minutes = seconds / minute
+	val rest = seconds % minute
 	return "$minutes:${rest.toString().padStart(length = 2, padChar = '0')}"
 }

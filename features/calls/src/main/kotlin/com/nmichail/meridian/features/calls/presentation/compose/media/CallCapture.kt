@@ -32,7 +32,7 @@ internal class CallCapture(context: Context) {
 			context,
 			source.capturerObserver,
 		)
-		capturer.startCapture(1280, 720, 30)
+		capturer.openPreview(width = 1280, height = 720, frames = 30)
 		track = factory.createVideoTrack("local", source)
 	}
 
@@ -48,7 +48,7 @@ internal class CallCapture(context: Context) {
 			return
 		}
 		if (on) {
-			capturer.startCapture(1280, 720, 30)
+			capturer.openPreview(width = 1280, height = 720, frames = 30)
 		} else {
 			capturer.stopCapture()
 		}
@@ -72,4 +72,8 @@ internal class CallCapture(context: Context) {
 		val name = cameras.deviceNames.firstOrNull { cameras.isFrontFacing(it) } ?: cameras.deviceNames.first()
 		return cameras.createCapturer(name, null)
 	}
+}
+
+internal fun org.webrtc.CameraVideoCapturer.openPreview(width: Int, height: Int, frames: Int) {
+	startCapture(width, height, frames)
 }

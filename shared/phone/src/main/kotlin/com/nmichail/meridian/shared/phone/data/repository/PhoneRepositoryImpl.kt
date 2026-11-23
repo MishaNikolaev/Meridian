@@ -27,7 +27,7 @@ class PhoneRepositoryImpl @Inject constructor(
 }
 
 private fun CallDto.placed(): PlacedCall {
-	val phase = state.toCallPhase() ?: throw IllegalStateException()
+	val phase = state.toCallPhase() ?: throw IllegalStateException("Unknown call state: $state")
 	return PlacedCall(
 		callId = callId,
 		chatId = chatId,

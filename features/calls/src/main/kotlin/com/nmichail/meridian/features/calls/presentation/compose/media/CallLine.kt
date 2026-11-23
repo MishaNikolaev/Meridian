@@ -12,6 +12,7 @@ import android.os.Looper
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import kotlin.jvm.JvmName
 import org.webrtc.AudioTrack
 import org.webrtc.Camera2Enumerator
 import org.webrtc.DefaultVideoDecoderFactory
@@ -48,6 +49,7 @@ class CallLine(context: Context, private val video: Boolean) {
 	private val queued = ArrayDeque<String>()
 	private val seen = HashSet<String>()
 	private var remoteReady = false
+	private val wire = Wire()
 	private val pc: PeerConnection
 	private var restoredMode: Int = AudioManager.MODE_NORMAL
 	private val focus: AudioFocusRequest
@@ -69,8 +71,10 @@ class CallLine(context: Context, private val video: Boolean) {
 		}
 	var remoteOn: Boolean by mutableStateOf(false)
 		private set
+	@set:JvmName("putMuted")
 	var muted: Boolean by mutableStateOf(false)
 		private set
+	@set:JvmName("putSpeaker")
 	var speaker: Boolean by mutableStateOf(video)
 		private set
 
@@ -113,7 +117,7 @@ class CallLine(context: Context, private val video: Boolean) {
 		localVideo = capturer?.let { camera ->
 			val source = factory.createVideoSource(false)
 			camera.initialize(SurfaceTextureHelper.create("meridian-call", egl.eglBaseContext), context, source.capturerObserver)
-			camera.startCapture(1280, 720, 30)
+			camera.openPreview(width = 1280, height = 720, frames = 30)
 			factory.createVideoTrack("local", source)
 		}
 		val config = PeerConnection.RTCConfiguration(
@@ -123,7 +127,7 @@ class CallLine(context: Context, private val video: Boolean) {
 		config.continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY
 		config.enableIceGatheringOnAnyAddressPorts = true
 		config.tcpCandidatePolicy = PeerConnection.TcpCandidatePolicy.DISABLED
-		pc = checkNotNull(factory.createPeerConnection(config, peer()))
+		pc = checkNotNull(factory.createPeerConnection(config, wire.peer()))
 		pc.setAudioPlayout(true)
 		pc.setAudioRecording(true)
 		pc.addTrack(localAudio, listOf("call"))
@@ -193,7 +197,7 @@ class CallLine(context: Context, private val video: Boolean) {
 	}
 
 	fun offer() {
-		pc.createOffer(created("offer"), constraints)
+		pc.createOffer(wire.created("offer"), constraints)
 	}
 
 	fun take(body: String) {
@@ -204,15 +208,15 @@ class CallLine(context: Context, private val video: Boolean) {
 		val rest = body.substringAfter('\n')
 		when (kind) {
 			"offer" -> pc.setRemoteDescription(
-				applied {
+				wire.applied {
 					remoteReady = true
 					flush()
-					pc.createAnswer(created("answer"), constraints)
+					pc.createAnswer(wire.created("answer"), constraints)
 				},
 				SessionDescription(SessionDescription.Type.OFFER, rest),
 			)
 			"answer" -> pc.setRemoteDescription(
-				applied {
+				wire.applied {
 					remoteReady = true
 					flush()
 				},
@@ -266,7 +270,8 @@ class CallLine(context: Context, private val video: Boolean) {
 		pending.clear()
 	}
 
-	private fun created(kind: String) = object : SdpObserver {
+	private inner class Wire {
+	fun created(kind: String) = object : SdpObserver {
 		override fun onCreateSuccess(description: SessionDescription) {
 			pc.setLocalDescription(
 				applied {
@@ -282,7 +287,7 @@ class CallLine(context: Context, private val video: Boolean) {
 		override fun onSetFailure(error: String) = Unit
 	}
 
-	private fun applied(onOk: () -> Unit) = object : SdpObserver {
+	fun applied(onOk: () -> Unit) = object : SdpObserver {
 		override fun onCreateSuccess(description: SessionDescription) = Unit
 		override fun onSetSuccess() {
 			onOk()
@@ -291,7 +296,7 @@ class CallLine(context: Context, private val video: Boolean) {
 		override fun onSetFailure(error: String) = Unit
 	}
 
-	private fun peer() = object : PeerConnection.Observer {
+	fun peer() = object : PeerConnection.Observer {
 		fun hand(body: String) {
 			val listener = sink
 			if (listener == null) synchronized(queued) { queued.add(body) } else listener(body)
@@ -336,5 +341,6 @@ class CallLine(context: Context, private val video: Boolean) {
 				}
 			}
 		}
+	}
 	}
 }

@@ -16,8 +16,10 @@ import com.nmichail.meridian.shared.chat.data.datasource.ReactionDataSource
 import com.nmichail.meridian.shared.chat.data.datasource.ReactionDataSourceImpl
 import com.nmichail.meridian.shared.chat.data.repository.ChatRepositoryImpl
 import com.nmichail.meridian.shared.chat.data.repository.GroupEditRepositoryImpl
+import com.nmichail.meridian.shared.chat.data.repository.ReactionRepositoryImpl
 import com.nmichail.meridian.shared.chat.domain.repository.ChatRepository
 import com.nmichail.meridian.shared.chat.domain.repository.GroupEditRepository
+import com.nmichail.meridian.shared.chat.domain.repository.ReactionRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -57,6 +59,10 @@ abstract class ChatModule {
 	@Binds
 	@ChatSessionScope
 	abstract fun bindChatRepository(impl: ChatRepositoryImpl): ChatRepository
+
+	@Binds
+	@ChatSessionScope
+	abstract fun bindReactionRepository(impl: ReactionRepositoryImpl): ReactionRepository
 
 	@Binds
 	@ChatSessionScope

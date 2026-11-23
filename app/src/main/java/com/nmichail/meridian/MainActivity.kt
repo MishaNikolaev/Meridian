@@ -58,13 +58,13 @@ class MainActivity : AppCompatActivity() {
 			}
 		}
 		watchRings()
-		ring.onIntent(intent)
+		ring().onIntent(intent)
 	}
 
 	override fun onNewIntent(intent: Intent) {
 		super.onNewIntent(intent)
 		setIntent(intent)
-		ring.onIntent(intent)
+		ring().onIntent(intent)
 	}
 
 	private fun watchRings() {
@@ -73,7 +73,7 @@ class MainActivity : AppCompatActivity() {
 		realtime.ensureStarted()
 		rings = lifecycleScope.launch {
 			realtime.calls.collect { notice ->
-				ring.onNotice(notice)
+				ring().onNotice(notice)
 			}
 		}
 	}

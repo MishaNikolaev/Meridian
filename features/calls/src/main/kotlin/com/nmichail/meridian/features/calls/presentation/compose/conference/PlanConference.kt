@@ -41,79 +41,103 @@ internal fun PlanConference(onBack: () -> Unit, onFind: () -> Unit) {
 			modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
 			verticalArrangement = Arrangement.spacedBy(10.dp),
 		) {
-			FormCard {
-				FormLine(
-					icon = R.drawable.ic_call_edit,
-					caption = stringResource(R.string.calls_name),
-					value = "",
-				)
-
-				FormLine(
-					icon = R.drawable.ic_call_calendar,
-					caption = stringResource(R.string.calls_date),
-					value = stringResource(R.string.calls_plan_date),
-					trailing = UiR.drawable.ic_chevron_right,
-					onClick = onFind,
-				)
-
-				FormLine(
-					icon = R.drawable.ic_call_clock,
-					caption = stringResource(R.string.calls_span),
-					value = stringResource(R.string.calls_plan_span),
-					trailing = UiR.drawable.ic_chevron_right,
-				)
-			}
-
-			Text(
-				text = stringResource(R.string.calls_people),
-				style = MeridianType.captionSmall,
-				color = palette.textSecondary,
+			PlanSchedule(onFind)
+			PlanPeople()
+			PlanOptions(
+				lobby = lobby,
+				record = record,
+				repeat = repeat,
+				onLobby = { lobby = !lobby },
+				onRecord = { record = !record },
+				onRepeat = { repeat = !repeat },
 			)
-
-			FormCard {
-				FormLine(
-					icon = R.drawable.ic_call_person_add,
-					caption = stringResource(R.string.calls_people_line),
-					value = stringResource(R.string.calls_people_count),
-					trailing = UiR.drawable.ic_chevron_right,
-				)
-
-				FormLine(
-					icon = R.drawable.ic_call_person_add,
-					caption = stringResource(R.string.calls_add_people),
-					value = stringResource(R.string.calls_invite_hint),
-					trailing = UiR.drawable.ic_chevron_right,
-				)
-			}
-
-			Text(
-				text = stringResource(R.string.calls_settings),
-				style = MeridianType.captionSmall,
-				color = palette.textSecondary,
-			)
-
-			FormCard {
-				SwitchLine(
-					title = stringResource(R.string.calls_lobby),
-					hint = stringResource(R.string.calls_lobby_hint),
-					checked = lobby,
-				) { lobby = !lobby }
-				SwitchLine(
-					title = stringResource(R.string.calls_record),
-					hint = "",
-					checked = record,
-				) { record = !record }
-				SwitchLine(
-					title = stringResource(R.string.calls_repeat),
-					hint = "",
-					checked = repeat,
-				) { repeat = !repeat }
-			}
 		}
-
 		FormButton(
 			label = stringResource(R.string.calls_plan),
 			onClick = onBack,
+		)
+	}
+}
+
+@Composable
+private fun PlanSchedule(onFind: () -> Unit) {
+	FormCard {
+		FormLine(
+			icon = R.drawable.ic_call_edit,
+			caption = stringResource(R.string.calls_name),
+			value = "",
+		)
+		FormLine(
+			icon = R.drawable.ic_call_calendar,
+			caption = stringResource(R.string.calls_date),
+			value = stringResource(R.string.calls_plan_date),
+			trailing = UiR.drawable.ic_chevron_right,
+			onClick = onFind,
+		)
+		FormLine(
+			icon = R.drawable.ic_call_clock,
+			caption = stringResource(R.string.calls_span),
+			value = stringResource(R.string.calls_plan_span),
+			trailing = UiR.drawable.ic_chevron_right,
+		)
+	}
+}
+
+@Composable
+private fun PlanPeople() {
+	Text(
+		text = stringResource(R.string.calls_people),
+		style = MeridianType.captionSmall,
+		color = palette.textSecondary,
+	)
+	FormCard {
+		FormLine(
+			icon = R.drawable.ic_call_person_add,
+			caption = stringResource(R.string.calls_people_line),
+			value = stringResource(R.string.calls_people_count),
+			trailing = UiR.drawable.ic_chevron_right,
+		)
+		FormLine(
+			icon = R.drawable.ic_call_person_add,
+			caption = stringResource(R.string.calls_add_people),
+			value = stringResource(R.string.calls_invite_hint),
+			trailing = UiR.drawable.ic_chevron_right,
+		)
+	}
+}
+
+@Composable
+private fun PlanOptions(
+	lobby: Boolean,
+	record: Boolean,
+	repeat: Boolean,
+	onLobby: () -> Unit,
+	onRecord: () -> Unit,
+	onRepeat: () -> Unit,
+) {
+	Text(
+		text = stringResource(R.string.calls_settings),
+		style = MeridianType.captionSmall,
+		color = palette.textSecondary,
+	)
+	FormCard {
+		SwitchLine(
+			title = stringResource(R.string.calls_lobby),
+			hint = stringResource(R.string.calls_lobby_hint),
+			checked = lobby,
+			onClick = onLobby,
+		)
+		SwitchLine(
+			title = stringResource(R.string.calls_record),
+			hint = "",
+			checked = record,
+			onClick = onRecord,
+		)
+		SwitchLine(
+			title = stringResource(R.string.calls_repeat),
+			hint = "",
+			checked = repeat,
+			onClick = onRepeat,
 		)
 	}
 }

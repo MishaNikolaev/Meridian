@@ -174,7 +174,13 @@ private fun PersonRow(
 			modifier = Modifier.size(22.dp),
 		)
 
-		PersonValue(label = label, value = value, link = link, mail = mail)
+		PersonValue(
+			label = label,
+			value = value,
+			link = link,
+			mail = mail,
+			modifier = Modifier.weight(1f),
+		)
 
 		if (copy) {
 			CopyValue(value)
@@ -183,11 +189,17 @@ private fun PersonRow(
 }
 
 @Composable
-private fun PersonValue(label: Int, value: String, link: Boolean, mail: Boolean) {
+private fun PersonValue(
+	label: Int,
+	value: String,
+	link: Boolean,
+	mail: Boolean,
+	modifier: Modifier,
+) {
 	val clipboard = LocalClipboard.current
 
 	Column(
-		modifier = Modifier.weight(1f),
+		modifier = modifier,
 		verticalArrangement = Arrangement.spacedBy(2.dp),
 	) {
 		if (mail) {

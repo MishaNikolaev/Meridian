@@ -22,7 +22,6 @@ import com.nmichail.meridian.shared.chat.domain.entity.ChatNote
 import com.nmichail.meridian.shared.chat.domain.entity.Poll
 import com.nmichail.meridian.shared.chat.domain.entity.Vote
 import com.nmichail.meridian.features.conversation.presentation.compose.component.keepingEdits
-import com.nmichail.meridian.features.conversation.presentation.compose.component.markDeleted
 import com.nmichail.meridian.features.conversation.presentation.compose.message.mergeViewers
 import com.nmichail.meridian.features.conversation.presentation.compose.message.mineReaction
 import com.nmichail.meridian.features.conversation.presentation.compose.message.reactionEmoji
@@ -181,37 +180,7 @@ class ConversationViewModel @Inject constructor(
 	private fun handleOpenBot() {
 		val current = state.value as? ConversationState.Content ?: return
 
-		handlePublish(
-			ChatThread(
-				lines = listOf(
-					ChatLine(
-						id = "hello",
-						mine = false,
-						text = "",
-						sentAt = Instant.now().toString(),
-						author = current.title,
-						authorId = "",
-						replyAuthor = null,
-						replyText = null,
-						threadRoot = null,
-						deleted = false,
-						edited = false,
-						service = false,
-						fileId = "",
-						fileName = "",
-						fileType = "",
-						poll = null,
-						vote = null,
-					),
-				),
-				members = 0,
-				readUpTo = null,
-				reactions = emptyMap(),
-				reactionViewers = emptyMap(),
-				people = emptyList(),
-				selfName = "",
-			),
-		)
+		handlePublish(helloThread(current.title))
 	}
 
 	private fun handleOpenChat() {
@@ -486,36 +455,8 @@ class ConversationViewModel @Inject constructor(
 
 	private fun handleSendBot(text: String, replyAuthor: String, replyText: String) {
 		val currentState = state.value as? ConversationState.Content ?: return
-		val lines = currentState.lines + ChatLine(
-			id = "${currentState.lines.size}",
-			mine = true,
-			text = text,
-			sentAt = Instant.now().toString(),
-			author = null,
-			authorId = "",
-			replyAuthor = replyAuthor.ifEmpty { null },
-			replyText = replyText.ifEmpty { null },
-			threadRoot = currentState.rootId,
-			deleted = false,
-			edited = false,
-			service = false,
-			fileId = "",
-			fileName = "",
-			fileType = "",
-			poll = null,
-			vote = null,
-		)
 
-		setState(
-			currentState.copy(
-				replyAuthor = "",
-				replyName = "",
-				replyText = "",
-				lines = lines,
-				days = lines.days(),
-			),
-		)
-
+		setState(currentState.withBotMessage(text, replyAuthor, replyText))
 		handleDraft("")
 	}
 
@@ -669,32 +610,9 @@ class ConversationViewModel @Inject constructor(
 
 	private fun handleDeleteSelection() {
 		val currentState = state.value as? ConversationState.Content ?: return
-
 		val ids = currentState.selectedIds
 
-		val lines = currentState.lines.map { line ->
-			if (line.id in ids) {
-				line.markDeleted()
-			} else {
-				line
-			}
-		}
-
-		setState(
-			currentState.copy(
-				lines = lines,
-				days = lines.days(),
-				selectedIds = emptySet(),
-				menuLineId = null,
-				pinnedId = if (currentState.pinnedId in ids) {
-					null
-				} else {
-					currentState.pinnedId
-				},
-				reactions = currentState.reactions.filterKeys { it !in ids },
-				reactionViewers = currentState.reactionViewers.filterKeys { it !in ids },
-			)
-		)
+		setState(currentState.without(ids))
 
 		if (currentState.bot) {
 			return

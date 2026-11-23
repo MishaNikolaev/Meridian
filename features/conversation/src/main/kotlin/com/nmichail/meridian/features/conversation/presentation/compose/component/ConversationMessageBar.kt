@@ -54,12 +54,10 @@ import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.features.conversation.R
 import com.nmichail.meridian.features.conversation.presentation.ConversationIntent
-import com.nmichail.meridian.features.conversation.presentation.compose.attach.AttachSheet
 import com.nmichail.meridian.features.conversation.presentation.compose.attach.PhotoPreviews
 import com.nmichail.meridian.features.conversation.presentation.compose.poll.LocalComposePoll
 import com.nmichail.meridian.features.conversation.presentation.compose.voice.RecordBar
 import com.nmichail.meridian.features.conversation.presentation.compose.voice.VoiceButton
-import com.nmichail.meridian.features.conversation.presentation.DraftFile
 import java.util.Locale
 
 @Composable
@@ -287,46 +285,13 @@ private fun AttachButton(onIntent: (ConversationIntent) -> Unit, onPicking: (Boo
 	val compose = LocalComposePoll.current
 
 	if (sheet) {
-		AttachSheet(
-			onDismiss = {
+		AttachMenu(
+			onIntent = onIntent,
+			onClose = {
 				sheet = false
 				onPicking(false)
 			},
-			onFile = { picked ->
-				sheet = false
-				onPicking(false)
-				onIntent(
-					ConversationIntent.AttachFile(
-						name = picked.name,
-						type = picked.type,
-						bytes = picked.bytes,
-						document = picked.document,
-					),
-				)
-			},
-			onPhotos = { picked, caption ->
-				sheet = false
-				onPicking(false)
-				onIntent(ConversationIntent.ChangeDraft(draft = caption))
-				onIntent(
-					ConversationIntent.AttachPhotos(
-						files = picked.map { file ->
-							DraftFile(
-								name = file.name,
-								type = file.type,
-								bytes = file.bytes,
-								document = false,
-							)
-						},
-					),
-				)
-				onIntent(ConversationIntent.Send)
-			},
-			onPoll = {
-				sheet = false
-				onPicking(false)
-				compose()
-			},
+			onPoll = compose,
 		)
 	}
 

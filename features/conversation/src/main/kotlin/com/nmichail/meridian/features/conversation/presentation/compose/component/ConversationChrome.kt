@@ -76,34 +76,15 @@ internal fun ConversationBar(
 				onIntent(ConversationIntent.NavigateBack)
 			}
 
-			Row(
-				modifier = Modifier
-					.weight(1f)
-					.clickable(enabled = personId.isNotEmpty() || !bot) { onIntent(ConversationIntent.OpenPerson) },
-				verticalAlignment = Alignment.CenterVertically,
-				horizontalArrangement = Arrangement.spacedBy(10.dp),
-			) {
-				PeerMark(title = title, bot = bot, personId = personId, chatId = chatId)
-
-				Column(modifier = Modifier.weight(1f)) {
-					Text(
-						text = title,
-						style = MeridianType.bodyName,
-						color = palette.textPrimary,
-						maxLines = 1,
-						overflow = TextOverflow.Ellipsis,
-					)
-
-					if (note.isNotEmpty()) {
-						Text(
-							text = note,
-							style = MeridianType.captionSmall,
-							color = palette.textSecondary,
-							maxLines = 1
-						)
-					}
-				}
-			}
+			PeerHeading(
+				title = title,
+				note = note,
+				bot = bot,
+				personId = personId,
+				chatId = chatId,
+				onIntent = onIntent,
+				modifier = Modifier.weight(1f),
+			)
 
 			BarIcon(
 				R.drawable.ic_phone,
@@ -116,6 +97,43 @@ internal fun ConversationBar(
 
 		if (!pinned.isNullOrBlank()) {
 			PinnedLine(text = pinned)
+		}
+	}
+}
+
+@Composable
+private fun PeerHeading(
+	title: String,
+	note: String,
+	bot: Boolean,
+	personId: String,
+	chatId: String,
+	onIntent: (ConversationIntent) -> Unit,
+	modifier: Modifier,
+) {
+	Row(
+		modifier = modifier
+			.clickable(enabled = personId.isNotEmpty() || !bot) { onIntent(ConversationIntent.OpenPerson) },
+		verticalAlignment = Alignment.CenterVertically,
+		horizontalArrangement = Arrangement.spacedBy(10.dp),
+	) {
+		PeerMark(title = title, bot = bot, personId = personId, chatId = chatId)
+		Column(modifier = Modifier.weight(1f)) {
+			Text(
+				text = title,
+				style = MeridianType.bodyName,
+				color = palette.textPrimary,
+				maxLines = 1,
+				overflow = TextOverflow.Ellipsis,
+			)
+			if (note.isNotEmpty()) {
+				Text(
+					text = note,
+					style = MeridianType.captionSmall,
+					color = palette.textSecondary,
+					maxLines = 1,
+				)
+			}
 		}
 	}
 }
