@@ -6,6 +6,10 @@ plugins {
 	id("org.jetbrains.kotlin.kapt")
 }
 
+android {
+	namespace = "com.nmichail.meridian.features.person"
+}
+
 dependencies {
 	implementation(libs.bundles.coroutines)
 	implementation(libs.dagger)
@@ -24,7 +28,9 @@ dependencies {
 	implementation(projects.core.presentation)
 	implementation(projects.core.navigation)
 	implementation(projects.core.network)
+	implementation(projects.core.validation)
 	implementation(projects.shared.chat)
+	implementation(projects.shared.session)
 
 	testImplementation(projects.testutils)
 	testImplementation(libs.bundles.test.junit5)
