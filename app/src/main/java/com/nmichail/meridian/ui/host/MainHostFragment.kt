@@ -5,6 +5,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.viewModels
@@ -12,6 +14,11 @@ import com.nmichail.meridian.component.ui.bar.model.MUiBottomDestination
 import com.nmichail.meridian.component.ui.theme.MeridianTheme
 import com.nmichail.meridian.core.navigation.screen.FullScreen
 import com.nmichail.meridian.core.navigation.screen.FullScreenFragment
+import com.nmichail.meridian.features.calls.di.CallsComponentHolder
+import com.nmichail.meridian.features.calls.presentation.CallsDestination
+import com.nmichail.meridian.features.calls.presentation.CallsState
+import com.nmichail.meridian.features.calls.presentation.CallsIntent
+import com.nmichail.meridian.features.calls.presentation.CallsViewModel
 import com.nmichail.meridian.features.chat.di.ChatComponentHolder
 import com.nmichail.meridian.features.chat.presentation.ChatViewModel
 import com.nmichail.meridian.features.profile.di.ProfileComponentHolder
@@ -43,6 +50,10 @@ class MainHostFragment : FullScreenFragment() {
 		ChatComponentHolder.get().viewModelFactory()
 	}
 
+	private val callsViewModel: CallsViewModel by viewModels {
+		CallsComponentHolder.get().viewModelFactory()
+	}
+
 	override fun onAttach(context: Context) {
 		super.onAttach(context)
 		router = MainHostRouterHolder.get()
@@ -63,6 +74,7 @@ class MainHostFragment : FullScreenFragment() {
 		ComposeView(requireContext()).apply {
 			setContent {
 				MeridianTheme {
+					val callsState by callsViewModel.state.collectAsState()
 					MainHostScreen(
 						selected = selected.value,
 						onSelect = { selected.value = it },
@@ -71,13 +83,21 @@ class MainHostFragment : FullScreenFragment() {
 						chatEvent = chatViewModel.event,
 						profileState = viewModel.state,
 						onProfileIntent = viewModel::applyIntent,
+						callsState = callsState,
+						onCallsIntent = callsViewModel::applyIntent,
 					)
 				}
 			}
 		}
 
 	override fun navigateBack() {
-		if (selected.value == MUiBottomDestination.HOME) {
+		val content = callsViewModel.state.value as? CallsState.Content
+		val conference = selected.value == MUiBottomDestination.CALLS &&
+			content != null &&
+			content.screen != CallsDestination.List
+		if (conference) {
+			callsViewModel.applyIntent(CallsIntent.Back)
+		} else if (selected.value == MUiBottomDestination.HOME) {
 			router.navigateBack()
 		} else {
 			selected.value = MUiBottomDestination.HOME

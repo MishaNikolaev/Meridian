@@ -1,19 +1,21 @@
 package com.nmichail.meridian
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.lifecycleScope
 import com.github.terrakok.cicerone.NavigatorHolder
-import com.nmichail.meridian.component.ui.theme.SelectedTheme
 import com.nmichail.meridian.core.navigation.di.FullScreen
 import com.nmichail.meridian.core.navigation.navigator.ScreenNavigator
 import com.nmichail.meridian.core.network.session.SessionEvents
 import com.nmichail.meridian.di.ActivityComponent
 import com.nmichail.meridian.di.ChatSessionHolder
 import com.nmichail.meridian.navigation.router.main.MainRouter
+import com.nmichail.meridian.shared.chat.di.ChatRealtimeHolder
+import com.nmichail.meridian.features.calls.ring.IncomingRing
 import javax.inject.Inject
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -25,6 +27,9 @@ class MainActivity : AppCompatActivity() {
 	lateinit var sessionEvents: SessionEvents
 
 	@Inject
+	lateinit var incomingRing: IncomingRing
+
+	@Inject
 	@FullScreen
 	lateinit var navigatorHolder: NavigatorHolder
 
@@ -32,11 +37,14 @@ class MainActivity : AppCompatActivity() {
 
 	private lateinit var activityComponent: ActivityComponent
 
+	private var rings: Job? = null
+
+	fun ring(): IncomingRing = incomingRing
+
 	override fun onCreate(savedInstanceState: Bundle?) {
 		val appComponent = (application as MeridianApplication).component
-		activityComponent = appComponent.activityComponent().create()
+		activityComponent = appComponent.activityComponent().create(activity = this, owner = this)
 		activityComponent.inject(this)
-		setThemeListener()
 		val sessionOpen = ChatSessionHolder.current() != null
 		super.onCreate(if (sessionOpen) savedInstanceState else null)
 		enableEdgeToEdge()
@@ -49,18 +57,23 @@ class MainActivity : AppCompatActivity() {
 				router.navigateToSignIn()
 			}
 		}
+		watchRings()
+		ring.onIntent(intent)
 	}
 
-	private fun setThemeListener() {
-		lifecycleScope.launch {
-			SelectedTheme.darkThemeFlow.collect { darkTheme ->
-				AppCompatDelegate.setDefaultNightMode(
-					when (darkTheme) {
-						true -> AppCompatDelegate.MODE_NIGHT_YES
-						false -> AppCompatDelegate.MODE_NIGHT_NO
-						null -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
-					},
-				)
+	override fun onNewIntent(intent: Intent) {
+		super.onNewIntent(intent)
+		setIntent(intent)
+		ring.onIntent(intent)
+	}
+
+	private fun watchRings() {
+		val app = application as MeridianApplication
+		val realtime = ChatRealtimeHolder.get(app.component).chatRealtime()
+		realtime.ensureStarted()
+		rings = lifecycleScope.launch {
+			realtime.calls.collect { notice ->
+				ring.onNotice(notice)
 			}
 		}
 	}
