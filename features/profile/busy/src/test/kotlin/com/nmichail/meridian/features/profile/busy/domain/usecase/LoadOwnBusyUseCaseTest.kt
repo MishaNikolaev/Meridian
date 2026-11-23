@@ -1,6 +1,7 @@
 package com.nmichail.meridian.features.profile.busy.domain.usecase
 
-import com.nmichail.meridian.features.profile.busy.domain.repository.BusyRepository
+import com.nmichail.meridian.shared.busy.domain.repository.BusyRepository
+import com.nmichail.meridian.shared.busy.domain.usecase.LoadOwnBusyUseCase
 import com.nmichail.meridian.testutils.TestCoroutineExtension
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
