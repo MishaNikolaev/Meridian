@@ -82,15 +82,15 @@ class RingSound(context: Context) {
 		}
 		tone?.release()
 		tone = null
-		vibrator()?.cancel()
+		vibration()?.cancel()
 	}
 
 	private fun pulse() {
 		val effect = VibrationEffect.createWaveform(PATTERN, 0)
-		vibrator()?.vibrate(effect)
+		vibration()?.vibrate(effect)
 	}
 
-	private fun vibrator(): Vibrator? =
+	private fun vibration(): Vibrator? =
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
 			app.getSystemService(VibratorManager::class.java)?.defaultVibrator
 		} else {

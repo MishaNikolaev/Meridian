@@ -1,29 +1,18 @@
 package com.nmichail.meridian.features.calls.signal.presentation
 
 import com.nmichail.meridian.core.network.error.presentation.ErrorDelegate
+import com.nmichail.meridian.core.network.error.userMessage
 import com.nmichail.meridian.core.presentation.BaseViewModel
-import com.nmichail.meridian.shared.phone.domain.entity.CallPhase
+import com.nmichail.meridian.features.calls.signal.domain.entity.SignalCall
 import com.nmichail.meridian.features.calls.signal.domain.usecase.LoadSignalsUseCase
 import com.nmichail.meridian.features.calls.signal.domain.usecase.SendSignalUseCase
 import com.nmichail.meridian.shared.phone.domain.usecase.StartCallUseCase
 import com.nmichail.meridian.shared.phone.domain.usecase.UpdateCallUseCase
 import javax.inject.Inject
 import kotlin.coroutines.coroutineContext
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Semaphore
-
-private const val SIGNAL_GAP = 100L
-private const val INBOUND_BUFFER = 64
-private const val SIGNAL_SEND = 6
 
 class CallSignalViewModel @Inject constructor(
 	private val startCallUseCase: StartCallUseCase,
@@ -33,77 +22,82 @@ class CallSignalViewModel @Inject constructor(
 	private val errorDelegate: ErrorDelegate,
 ) : BaseViewModel<CallSignalState, CallSignalIntent, CallSignalEvent>() {
 
-	private val outgoing = Channel<String>(capacity = Channel.UNLIMITED)
-	private val _inbound = MutableSharedFlow<String>(extraBufferCapacity = INBOUND_BUFFER)
-	val inbound: SharedFlow<String> = _inbound.asSharedFlow()
-	private var job: Job? = null
-	private var pending: CallPhase? = null
-	private var placeFailed = false
-	private var pollError: String? = null
+	private companion object {
+		const val SIGNAL_GAP = 100L
+	}
 
-	override fun initState(): CallSignalState = CallSignalState.Idle
+	private var job: Job? = null
+	private var update: CallSignalIntent.Update? = null
+
+	override fun initState(): CallSignalState = CallSignalState.Initial
 
 	override fun applyIntent(intent: CallSignalIntent) {
 		when (intent) {
 			is CallSignalIntent.Place -> handlePlace(intent)
 			is CallSignalIntent.Update -> handleUpdate(intent)
 			is CallSignalIntent.Start -> handleStart(intent)
-			CallSignalIntent.Stop -> handleStop()
-			is CallSignalIntent.Outgoing -> outgoing.trySend(intent.body)
+			is CallSignalIntent.Stop -> handleStop()
+			is CallSignalIntent.Outgoing -> handleOutgoing(intent)
 		}
 	}
 
-	override fun onCleared() {
-		handleStop()
-		super.onCleared()
+	private fun handlePlace(intent: CallSignalIntent.Place) {
+		if (state.value is CallSignalState.Loading) {
+			return
+		}
+		setState(CallSignalState.Loading)
+		launchTry {
+			handleStartCall(intent)
+		} catch ::handlePlaceFailure
 	}
 
-	private fun handlePlace(intent: CallSignalIntent.Place) {
-		launchTry {
-			val placed = startCallUseCase(intent.chatId, intent.media)
-			setEvent(CallSignalEvent.Placed(placed.callId))
-			val waiting = pending
-			pending = null
-			if (waiting != null) {
-				publish(placed.callId, waiting)
-			}
-		} catch { error ->
-			placeFailed = true
-			val waiting = pending
-			pending = null
-			errorDelegate.processNonBlockingError(error)
-			if (waiting != null) {
-				setEvent(CallSignalEvent.Updated(waiting))
-			}
+	private suspend fun handleStartCall(intent: CallSignalIntent.Place) {
+		val call = startCallUseCase(intent.chatId, intent.media)
+		setEvent(CallSignalEvent.Placed(call.callId))
+		val current = update
+		update = null
+		if (current != null) {
+			handleUpdateCall(current.copy(callId = call.callId))
+		}
+	}
+
+	private fun handlePlaceFailure(error: Exception) {
+		val current = update
+		update = null
+		setState(CallSignalState.Error(message = error.userMessage()))
+		errorDelegate.processNonBlockingError(error)
+		if (current != null) {
+			setEvent(CallSignalEvent.Updated(current.phase))
 		}
 	}
 
 	private fun handleUpdate(intent: CallSignalIntent.Update) {
 		if (intent.callId.isEmpty()) {
-			if (placeFailed) {
+			if (state.value is CallSignalState.Error) {
 				setEvent(CallSignalEvent.Updated(intent.phase))
 			} else {
-				pending = intent.phase
+				update = intent
 			}
 			return
 		}
+
 		launchTry {
-			publish(intent.callId, intent.phase)
+			handleUpdateCall(intent)
 		} catch { error ->
 			errorDelegate.processNonBlockingError(error)
 		}
 	}
 
-	private suspend fun publish(callId: String, phase: CallPhase) {
-		updateCallUseCase(callId, phase)
-		setEvent(CallSignalEvent.Updated(phase))
+	private suspend fun handleUpdateCall(intent: CallSignalIntent.Update) {
+		updateCallUseCase(intent.callId, intent.phase)
+		setEvent(CallSignalEvent.Updated(intent.phase))
 	}
 
 	private fun handleStart(intent: CallSignalIntent.Start) {
 		if (intent.callId.isEmpty() || intent.chatId.isEmpty()) {
 			return
 		}
-		val next = CallSignalState.Live(
+		val next = CallSignalState.Content(
 			callId = intent.callId,
 			chatId = intent.chatId,
 			incoming = intent.incoming,
@@ -111,70 +105,45 @@ class CallSignalViewModel @Inject constructor(
 		if (state.value == next) {
 			return
 		}
+
 		handleStop()
 		setState(next)
+
 		job = launchTry {
-			coroutineScope {
-				launch { send(callId = intent.callId, chatId = intent.chatId) }
-				launch { read(callId = intent.callId, chatId = intent.chatId) }
-			}
-		} catch { error ->
+			handleRead(intent)
+		} catch ::handleReadFailure
+	}
+
+	private fun handleReadFailure(error: Exception) {
+		if (state.value is CallSignalState.Content) {
 			errorDelegate.processNonBlockingError(error)
+			return
 		}
+		setState(CallSignalState.Error(message = error.userMessage()))
 	}
 
 	private fun handleStop() {
 		job?.cancel()
 		job = null
-		pollError = null
-		if (state.value is CallSignalState.Live) {
-			setState(CallSignalState.Idle)
+		if (state.value is CallSignalState.Content) {
+			setState(CallSignalState.Initial)
 		}
 	}
 
-	private suspend fun send(callId: String, chatId: String) {
-		val gate = Semaphore(permits = SIGNAL_SEND)
-		coroutineScope {
-			for (body in outgoing) {
-				gate.acquire()
-				launch {
-					try {
-						sendSignalUseCase(callId, chatId, body)
-					} catch (error: CancellationException) {
-						throw error
-					} catch (error: Exception) {
-						errorDelegate.processNonBlockingError(error)
-					} finally {
-						gate.release()
-					}
-				}
-			}
+	private fun handleOutgoing(intent: CallSignalIntent.Outgoing) {
+		val content = state.value as? CallSignalState.Content ?: return
+		launchTry {
+			sendSignalUseCase(SignalCall(content.callId, content.chatId), intent.body)
+		} catch { error ->
+			errorDelegate.processNonBlockingError(error)
 		}
 	}
 
-	private suspend fun read(callId: String, chatId: String) {
+	private suspend fun handleRead(intent: CallSignalIntent.Start) {
 		while (coroutineContext.isActive) {
-			val signals = try {
-				val loaded = loadSignalsUseCase(callId, chatId)
-				pollError = null
-				loaded
-			} catch (error: CancellationException) {
-				throw error
-			} catch (error: Exception) {
-				reportPoll(error)
-				emptyList()
-			}
-			signals.forEach { body -> _inbound.tryEmit(body) }
+			val signals = loadSignalsUseCase(SignalCall(intent.callId, intent.chatId))
+			signals.forEach { body -> setEvent(CallSignalEvent.Signal(body)) }
 			delay(timeMillis = SIGNAL_GAP)
 		}
-	}
-
-	private fun reportPoll(error: Exception) {
-		val key = error::class.java.name + error.message
-		if (pollError == key) {
-			return
-		}
-		pollError = key
-		errorDelegate.processNonBlockingError(error)
 	}
 }

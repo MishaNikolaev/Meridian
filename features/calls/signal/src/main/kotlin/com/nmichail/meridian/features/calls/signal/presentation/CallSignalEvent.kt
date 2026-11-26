@@ -8,5 +8,5 @@ sealed interface CallSignalEvent {
 
 	data class Updated(val phase: CallPhase) : CallSignalEvent
 
-	data object Offer : CallSignalEvent
+	data class Signal(val body: String) : CallSignalEvent
 }
