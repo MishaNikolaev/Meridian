@@ -52,7 +52,7 @@ class SignalRepositoryImpl @Inject constructor(
 	}
 
 	private suspend fun readDevices(chatId: String): List<String> {
-		val user = sessionRepository.getUserId() ?: throw IllegalStateException()
+		val user = sessionRepository.getUserId() ?: throw IllegalStateException("Session user is missing")
 		val next = mutableListOf<String>()
 		for (member in chats.getChat(chatId).members) {
 			if (member.userId == user) {
@@ -64,7 +64,7 @@ class SignalRepositoryImpl @Inject constructor(
 		}
 		val distinct = next.distinct()
 		if (distinct.isEmpty()) {
-			throw IllegalStateException()
+			throw IllegalStateException("Chat devices are missing")
 		}
 		return distinct
 	}

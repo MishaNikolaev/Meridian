@@ -13,6 +13,7 @@ object GroupComponentHolder : ComponentHolder<GroupFeatureApi, GroupFeatureDepen
 		DaggerGroupComponent.factory().create(
 			dependencies.core(),
 			dependencies.session(),
+			dependencies.groups(),
 			dependencies.router(),
 		)
 	}

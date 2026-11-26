@@ -12,7 +12,7 @@ class LoadMessagesUseCase @Inject constructor(
 
 	suspend operator fun invoke(chatId: String): ChatThread {
 		val thread = repository.loadMessages(chatId)
-		messageDataSource.save(chatId = chatId, thread = thread)
+		messageDataSource.saveThread(chatId = chatId, thread = thread)
 		return thread
 	}
 }

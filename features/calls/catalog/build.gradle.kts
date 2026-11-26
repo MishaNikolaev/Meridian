@@ -25,7 +25,7 @@ dependencies {
 	implementation(projects.core.presentation)
 	implementation(projects.core.network)
 	implementation(projects.shared.chat)
-	implementation(projects.shared.phone)
+	implementation(projects.shared.calls)
 	implementation(projects.shared.session)
 	implementation(projects.features.calls.signal)
 	implementation(projects.shared.busy)

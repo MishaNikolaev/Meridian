@@ -10,12 +10,14 @@ import com.nmichail.meridian.shared.chat.domain.entity.Chat
 import com.nmichail.meridian.shared.chat.domain.entity.ChatDiscussion
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType
 import com.nmichail.meridian.shared.chat.domain.usecase.LoadChatsUseCase
+import com.nmichail.meridian.shared.chat.domain.usecase.MarkChatMentionsUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.ReadChatsUseCase
 import javax.inject.Inject
 import kotlinx.coroutines.Job
 
 class ChatViewModel @Inject constructor(
 	private val loadChatsUseCase: LoadChatsUseCase,
+	private val markChatMentionsUseCase: MarkChatMentionsUseCase,
 	private val readChatsUseCase: ReadChatsUseCase,
 	private val chatRealtime: ChatRealtime,
 	private val errorDelegate: ErrorDelegate,
@@ -233,7 +235,7 @@ class ChatViewModel @Inject constructor(
 	}
 
 	private suspend fun handleReload() {
-		val chats = loadChatsUseCase()
+		val chats = markChatMentionsUseCase(loadChatsUseCase())
 
 		handlePublish(
 			chats = chats,

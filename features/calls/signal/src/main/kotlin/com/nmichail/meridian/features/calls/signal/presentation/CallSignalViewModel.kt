@@ -6,8 +6,8 @@ import com.nmichail.meridian.core.presentation.BaseViewModel
 import com.nmichail.meridian.features.calls.signal.domain.entity.SignalCall
 import com.nmichail.meridian.features.calls.signal.domain.usecase.LoadSignalsUseCase
 import com.nmichail.meridian.features.calls.signal.domain.usecase.SendSignalUseCase
-import com.nmichail.meridian.shared.phone.domain.usecase.StartCallUseCase
-import com.nmichail.meridian.shared.phone.domain.usecase.UpdateCallUseCase
+import com.nmichail.meridian.shared.calls.domain.usecase.StartCallUseCase
+import com.nmichail.meridian.shared.calls.domain.usecase.UpdateCallUseCase
 import javax.inject.Inject
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.Job

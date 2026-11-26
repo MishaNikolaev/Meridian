@@ -102,16 +102,20 @@ class FeatureComponents @Inject constructor(
 			)
 		}
 		GroupComponentHolder.dependencyProvider = {
+			val session = checkNotNull(ChatSessionHolder.current())
 			groupFeatureDependencies(
 				core,
-				checkNotNull(ChatSessionHolder.current()),
+				session,
+				session,
 				groupRouter,
 			)
 		}
 		GroupInfoComponentHolder.dependencyProvider = {
+			val session = checkNotNull(ChatSessionHolder.current())
 			groupInfoFeatureDependencies(
 				core,
-				checkNotNull(ChatSessionHolder.current()),
+				session,
+				session,
 				groupInfoRouter,
 			)
 		}

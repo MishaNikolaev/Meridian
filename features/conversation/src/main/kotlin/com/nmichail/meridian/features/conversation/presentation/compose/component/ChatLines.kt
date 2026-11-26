@@ -13,11 +13,3 @@ internal fun List<ChatLine>.keepingEdits(edited: List<ChatLine>): List<ChatLine>
 		}
 	}
 }
-
-internal fun ChatLine.markDeleted(): ChatLine = copy(
-	text = "Сообщение удалено",
-	deleted = true,
-	edited = false,
-	replyAuthor = null,
-	replyText = null,
-)

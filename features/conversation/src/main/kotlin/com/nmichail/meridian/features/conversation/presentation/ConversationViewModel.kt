@@ -13,8 +13,8 @@ import com.nmichail.meridian.core.validation.mention.ApplyMentionUseCase
 import com.nmichail.meridian.core.validation.mention.EveryoneMentionUseCase
 import com.nmichail.meridian.core.validation.mention.MatchMentionUseCase
 import com.nmichail.meridian.core.validation.mention.MentionQueryUseCase
-import com.nmichail.meridian.shared.chat.data.mapper.markedFile
-import com.nmichail.meridian.shared.chat.data.mapper.mediaType
+import com.nmichail.meridian.features.conversation.presentation.file.markedFile
+import com.nmichail.meridian.features.conversation.presentation.file.mediaType
 import com.nmichail.meridian.features.conversation.presentation.compose.component.days
 import com.nmichail.meridian.features.conversation.presentation.compose.message.faceIds
 import com.nmichail.meridian.features.conversation.presentation.compose.poll.note

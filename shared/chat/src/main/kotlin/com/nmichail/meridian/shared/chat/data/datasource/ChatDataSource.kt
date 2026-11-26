@@ -4,17 +4,17 @@ import android.content.Context
 import androidx.core.content.edit
 import com.nmichail.meridian.core.di.ApplicationContext
 import com.nmichail.meridian.core.network.session.SessionRepository
-import com.nmichail.meridian.shared.chat.data.mapper.toRecord
 import com.nmichail.meridian.shared.chat.data.mapper.toChat
+import com.nmichail.meridian.shared.chat.data.mapper.toRecord
 import com.nmichail.meridian.shared.chat.domain.entity.Chat
 import javax.inject.Inject
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
 interface ChatDataSource {
-	suspend fun read(): List<Chat>?
+	suspend fun loadChats(): List<Chat>?
 
-	suspend fun save(chats: List<Chat>)
+	suspend fun saveChats(chats: List<Chat>)
 }
 
 class ChatDataSourceImpl @Inject constructor(
@@ -26,12 +26,11 @@ class ChatDataSourceImpl @Inject constructor(
 	}
 
 	private val preferences = context.getSharedPreferences(CHAT_STORE, Context.MODE_PRIVATE)
-
 	private val json = Json { ignoreUnknownKeys = true }
 
-	override suspend fun read(): List<Chat>? {
-		val raw = preferences.getString(key(userId()), null) ?: return null
-
+	override suspend fun loadChats(): List<Chat>? {
+		val userId = sessionRepository.getUserId().orEmpty()
+		val raw = preferences.getString("chats_$userId", null) ?: return null
 		val page = try {
 			json.decodeFromString<ChatRecords>(raw)
 		} catch (_: SerializationException) {
@@ -41,13 +40,10 @@ class ChatDataSourceImpl @Inject constructor(
 		return page.items.map { item -> item.toChat() ?: return null }
 	}
 
-	override suspend fun save(chats: List<Chat>) {
+	override suspend fun saveChats(chats: List<Chat>) {
+		val userId = sessionRepository.getUserId().orEmpty()
 		val raw = json.encodeToString(ChatRecords(items = chats.map { chat -> chat.toRecord() }))
 
-		preferences.edit { putString(key(userId()), raw) }
+		preferences.edit { putString("chats_$userId", raw) }
 	}
-
-	private fun userId(): String = sessionRepository.getUserId().orEmpty()
-
-	private fun key(userId: String): String = "chats_$userId"
 }

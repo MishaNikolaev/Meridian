@@ -13,6 +13,7 @@ object GroupInfoComponentHolder : ComponentHolder<GroupInfoFeatureApi, GroupInfo
 		DaggerGroupInfoComponent.factory().create(
 			dependencies.core(),
 			dependencies.session(),
+			dependencies.groups(),
 			dependencies.router(),
 		)
 	}

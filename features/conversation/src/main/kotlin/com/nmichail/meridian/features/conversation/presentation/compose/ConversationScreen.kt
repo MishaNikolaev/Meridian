@@ -38,7 +38,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.features.conversation.presentation.ConversationEvent
-import com.nmichail.meridian.shared.chat.data.mapper.mediaType
+import com.nmichail.meridian.features.conversation.presentation.file.mediaType
 import com.nmichail.meridian.features.conversation.presentation.ConversationIntent
 import com.nmichail.meridian.features.conversation.presentation.ConversationState
 import com.nmichail.meridian.component.ui.emoji.MessageReaction

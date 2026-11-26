@@ -1,6 +1,6 @@
 package com.nmichail.meridian.shared.chat.data.cipher
 
-import kotlinx.serialization.Serializable
+import com.nmichail.meridian.shared.chat.data.model.SavedOpenedMessage
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
@@ -31,23 +31,23 @@ internal fun encodeOpenedMessage(
 }
 
 internal fun decodeOpenedMessage(decrypted: String): OpenedMessage {
-	val stored = try {
-		openedJson.decodeFromString<StoredOpenedMessage>(decrypted)
+	val saved = try {
+		openedJson.decodeFromString<SavedOpenedMessage>(decrypted)
 	} catch (_: SerializationException) {
 		return openedText(decrypted)
 	}
 
-	if (stored.text == null) {
+	if (saved.text == null) {
 		return openedText(decrypted)
 	}
 
 	return OpenedMessage(
-		text = stored.text,
-		replyAuthor = stored.replyAuthor,
-		replyText = stored.replyText,
-		fileId = stored.fileId,
-		fileName = stored.fileName,
-		fileType = stored.fileType,
+		text = saved.text,
+		replyAuthor = saved.replyAuthor.orEmpty(),
+		replyText = saved.replyText.orEmpty(),
+		fileId = saved.fileId.orEmpty(),
+		fileName = saved.fileName.orEmpty(),
+		fileType = saved.fileType.orEmpty(),
 	)
 }
 
@@ -58,14 +58,4 @@ private fun openedText(value: String) = OpenedMessage(
 	fileId = "",
 	fileName = "",
 	fileType = "",
-)
-
-@Serializable
-private data class StoredOpenedMessage(
-	val text: String? = null,
-	val replyAuthor: String = "",
-	val replyText: String = "",
-	val fileId: String = "",
-	val fileName: String = "",
-	val fileType: String = "",
 )

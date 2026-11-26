@@ -14,16 +14,16 @@ import com.nmichail.meridian.shared.chat.domain.entity.ChatLine
 import com.nmichail.meridian.shared.chat.domain.entity.ChatPerson
 import com.nmichail.meridian.shared.organization.domain.entity.OrganizationMember
 import com.nmichail.meridian.shared.organization.domain.usecase.ReadOrganizationMembersUseCase
-import com.nmichail.meridian.shared.chat.domain.usecase.AddChatMemberUseCase
-import com.nmichail.meridian.shared.chat.domain.usecase.CreateChatInviteUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.FindPersonUseCase
-import com.nmichail.meridian.shared.chat.domain.usecase.LeaveChatUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.LoadMessagesUseCase
-import com.nmichail.meridian.shared.chat.domain.usecase.PromoteChatUseCase
-import com.nmichail.meridian.shared.chat.domain.usecase.ReadChatProfileUseCase
-import com.nmichail.meridian.shared.chat.domain.usecase.RemoveChatMemberUseCase
-import com.nmichail.meridian.shared.chat.domain.usecase.SearchPeopleUseCase
-import com.nmichail.meridian.shared.chat.domain.usecase.TransferChatUseCase
+import com.nmichail.meridian.shared.group.domain.usecase.AddChatMemberUseCase
+import com.nmichail.meridian.shared.group.domain.usecase.CreateChatInviteUseCase
+import com.nmichail.meridian.shared.group.domain.usecase.LeaveChatUseCase
+import com.nmichail.meridian.shared.group.domain.usecase.PromoteChatUseCase
+import com.nmichail.meridian.shared.group.domain.usecase.ReadChatProfileUseCase
+import com.nmichail.meridian.shared.group.domain.usecase.RemoveChatMemberUseCase
+import com.nmichail.meridian.shared.group.domain.usecase.SearchPeopleUseCase
+import com.nmichail.meridian.shared.group.domain.usecase.TransferChatUseCase
 import javax.inject.Inject
 
 class GroupInfoViewModel @Inject constructor(

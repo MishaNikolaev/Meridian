@@ -6,11 +6,11 @@ import com.nmichail.meridian.core.network.error.presentation.ErrorDelegate
 import com.nmichail.meridian.features.calls.signal.domain.entity.SignalCall
 import com.nmichail.meridian.features.calls.signal.domain.usecase.LoadSignalsUseCase
 import com.nmichail.meridian.features.calls.signal.domain.usecase.SendSignalUseCase
-import com.nmichail.meridian.shared.phone.domain.entity.CallMedia
-import com.nmichail.meridian.shared.phone.domain.entity.CallPhase
-import com.nmichail.meridian.shared.phone.domain.entity.PlacedCall
-import com.nmichail.meridian.shared.phone.domain.usecase.StartCallUseCase
-import com.nmichail.meridian.shared.phone.domain.usecase.UpdateCallUseCase
+import com.nmichail.meridian.shared.calls.domain.entity.CallMedia
+import com.nmichail.meridian.shared.calls.domain.entity.CallPhase
+import com.nmichail.meridian.shared.calls.domain.entity.PlacedCall
+import com.nmichail.meridian.shared.calls.domain.usecase.StartCallUseCase
+import com.nmichail.meridian.shared.calls.domain.usecase.UpdateCallUseCase
 import com.nmichail.meridian.testutils.InstantExecutorExtension
 import com.nmichail.meridian.testutils.TestCoroutineExtension
 import com.nmichail.meridian.testutils.doThrowSafe

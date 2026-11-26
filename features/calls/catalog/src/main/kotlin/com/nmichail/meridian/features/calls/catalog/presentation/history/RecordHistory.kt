@@ -3,7 +3,7 @@ package com.nmichail.meridian.features.calls.catalog.presentation.history
 import com.nmichail.meridian.features.calls.catalog.domain.entity.CallDirection
 import com.nmichail.meridian.features.calls.catalog.domain.entity.CallRecord
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType
-import com.nmichail.meridian.shared.phone.domain.entity.CallPhase
+import com.nmichail.meridian.shared.calls.domain.entity.CallPhase
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate

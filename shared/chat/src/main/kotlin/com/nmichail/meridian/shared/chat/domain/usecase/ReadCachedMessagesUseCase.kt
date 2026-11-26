@@ -8,5 +8,5 @@ class ReadCachedMessagesUseCase @Inject constructor(
 	private val messageDataSource: MessageDataSource,
 ) {
 
-	operator fun invoke(chatId: String): ChatThread? = messageDataSource.read(chatId)
+	operator fun invoke(chatId: String): ChatThread? = messageDataSource.loadThread(chatId)
 }

@@ -6,8 +6,8 @@ import com.nmichail.meridian.core.network.error.GatewayException
 import com.nmichail.meridian.core.network.session.SessionRepository
 import com.nmichail.meridian.shared.chat.data.api.ChatApi
 import com.nmichail.meridian.shared.chat.data.datasource.ChatDataSource
-import com.nmichail.meridian.shared.chat.data.datasource.DeletionDataSourceImpl
 import com.nmichail.meridian.shared.chat.data.datasource.MemberDataSourceImpl
+import com.nmichail.meridian.shared.chat.data.datasource.MessageDataSourceImpl
 import com.nmichail.meridian.shared.chat.data.datasource.ReactionDataSourceImpl
 import com.nmichail.meridian.shared.chat.data.dto.ChatDetailsDto
 import com.nmichail.meridian.shared.chat.data.dto.ChatMemberDto
@@ -59,7 +59,7 @@ class ChatRepositoryImplTest {
 			sessionRepository,
 			MemberDataSourceImpl(api),
 			ReactionDataSourceImpl(context),
-			DeletionDataSourceImpl(context),
+			MessageDataSourceImpl(context),
 			chatDataSource,
 		)
 	}

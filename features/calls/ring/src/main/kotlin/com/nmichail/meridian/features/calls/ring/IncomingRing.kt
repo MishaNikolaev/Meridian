@@ -8,10 +8,10 @@ import androidx.lifecycle.lifecycleScope
 import com.nmichail.meridian.component.photopicker.loadPersonFace
 import com.nmichail.meridian.core.network.error.presentation.ErrorDelegate
 import com.nmichail.meridian.shared.chat.domain.entity.RingNotice
-import com.nmichail.meridian.shared.phone.data.mapper.toCallMedia
-import com.nmichail.meridian.shared.phone.data.mapper.toCallPhase
-import com.nmichail.meridian.shared.phone.domain.entity.CallMedia
-import com.nmichail.meridian.shared.phone.domain.entity.CallPhase
+import com.nmichail.meridian.shared.calls.data.mapper.toCallMedia
+import com.nmichail.meridian.shared.calls.data.mapper.toCallPhase
+import com.nmichail.meridian.shared.calls.domain.entity.CallMedia
+import com.nmichail.meridian.shared.calls.domain.entity.CallPhase
 import com.nmichail.meridian.shared.session.domain.usecase.GetUserIdUseCase
 import de.jensklingenberg.ktorfit.Ktorfit
 import javax.inject.Inject

@@ -17,6 +17,6 @@ dependencies {
 	implementation(projects.component.photopicker)
 	implementation(projects.core.network)
 	implementation(projects.shared.chat)
-	implementation(projects.shared.phone)
+	implementation(projects.shared.calls)
 	implementation(projects.shared.session)
 }

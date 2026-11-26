@@ -4,8 +4,8 @@ import com.nmichail.meridian.di.ChatSessionHolder
 import com.nmichail.meridian.features.calls.ring.RingSession
 import com.nmichail.meridian.shared.chat.domain.entity.Chat
 import com.nmichail.meridian.shared.chat.domain.usecase.ReadChatUseCase
-import com.nmichail.meridian.shared.phone.domain.entity.CallPhase
-import com.nmichail.meridian.shared.phone.domain.usecase.UpdateCallUseCase
+import com.nmichail.meridian.shared.calls.domain.entity.CallPhase
+import com.nmichail.meridian.shared.calls.domain.usecase.UpdateCallUseCase
 import javax.inject.Inject
 
 class CallSessionClosedException : IllegalStateException()

@@ -35,7 +35,8 @@ include(
 
 	":shared:session",
 	":shared:chat",
-	":shared:phone",
+	":shared:groups",
+	":shared:calls",
 	":shared:busy",
 	":shared:organization",
 )

@@ -6,4 +6,4 @@ import javax.inject.Inject
 
 class ReadChatsUseCase @Inject constructor(
 	private val chatDataSource: ChatDataSource,
-) : suspend () -> List<Chat>? by chatDataSource::read
+) : suspend () -> List<Chat>? by chatDataSource::loadChats

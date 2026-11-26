@@ -17,7 +17,7 @@ class ReactionDataSourceImplTest {
 	fun `get empty EXPECT no reactions`() {
 		whenever(preferences.getString("message_reactions", null)) doReturn null
 
-		assertEquals(emptyMap<String, Set<String>>(), source.getReactions())
+		assertEquals(emptyMap<String, Set<String>>(), source.loadReactions())
 	}
 
 	@Test
@@ -36,6 +36,6 @@ class ReactionDataSourceImplTest {
 	fun `legacy string EXPECT set`() {
 		whenever(preferences.getString("message_reactions", null)) doReturn """{"message":"LIKE"}"""
 
-		assertEquals(mapOf("message" to setOf("LIKE")), source.getReactions())
+		assertEquals(mapOf("message" to setOf("LIKE")), source.loadReactions())
 	}
 }

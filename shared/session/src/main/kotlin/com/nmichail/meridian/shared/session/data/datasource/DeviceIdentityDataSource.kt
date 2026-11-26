@@ -13,15 +13,15 @@ import javax.inject.Inject
 
 interface DeviceIdentityDataSource {
 
-	fun read(): DeviceIdentity?
+	fun loadIdentity(): DeviceIdentity?
 
-	fun write(identity: DeviceIdentity)
+	fun saveIdentity(identity: DeviceIdentity)
 
-	fun readPreKeys(): DevicePreKeys?
+	fun loadPreKeys(): DevicePreKeys?
 
-	fun writePreKeys(preKeys: DevicePreKeys)
+	fun savePreKeys(preKeys: DevicePreKeys)
 
-	fun clear()
+	fun clearIdentity()
 }
 
 class DeviceIdentityDataSourceImpl @Inject constructor(
@@ -46,14 +46,14 @@ class DeviceIdentityDataSourceImpl @Inject constructor(
 
 	private val preferences = context.getSharedPreferences(DEVICE_PREF, Context.MODE_PRIVATE)
 
-	override fun read(): DeviceIdentity? {
+	override fun loadIdentity(): DeviceIdentity? {
 		val deviceId = preferences.getString(DEVICE_ID, null) ?: return null
 		val publicKey = preferences.getString(PUBLIC_KEY, null) ?: return null
 		val privateKey = preferences.openSecret(secrets, PRIVATE_KEY) ?: return null
 		return DeviceIdentity.restore(deviceId, publicKey, privateKey)
 	}
 
-	override fun write(identity: DeviceIdentity) {
+	override fun saveIdentity(identity: DeviceIdentity) {
 		preferences.edit {
 			putString(DEVICE_ID, identity.deviceId)
 			putString(PUBLIC_KEY, identity.publicKey)
@@ -61,10 +61,21 @@ class DeviceIdentityDataSourceImpl @Inject constructor(
 		}
 	}
 
-	override fun readPreKeys(): DevicePreKeys? {
-		val signedPreKey = readPreKey(SIGNED_PREKEY_ID, SIGNED_PREKEY_PUBLIC, SIGNED_PREKEY_PRIVATE) ?: return null
+	override fun loadPreKeys(): DevicePreKeys? {
+		val signedPreKey = loadPreKey(
+			SIGNED_PREKEY_ID,
+			SIGNED_PREKEY_PUBLIC,
+			SIGNED_PREKEY_PRIVATE,
+		) ?: return null
+
 		val signedPreKeySignature = preferences.getString(SIGNED_PREKEY_SIGNATURE, null) ?: return null
-		val oneTimePreKey = readPreKey(ONE_TIME_PREKEY_ID, ONE_TIME_PREKEY_PUBLIC, ONE_TIME_PREKEY_PRIVATE) ?: return null
+
+		val oneTimePreKey = loadPreKey(
+			ONE_TIME_PREKEY_ID,
+			ONE_TIME_PREKEY_PUBLIC,
+			ONE_TIME_PREKEY_PRIVATE,
+		) ?: return null
+
 		return DeviceIdentity.restorePreKeys(
 			DevicePreKeys(
 				signedPreKey = signedPreKey,
@@ -74,14 +85,14 @@ class DeviceIdentityDataSourceImpl @Inject constructor(
 		)
 	}
 
-	private fun readPreKey(idKey: String, publicKey: String, privateKey: String): DevicePreKey? {
+	private fun loadPreKey(idKey: String, publicKey: String, privateKey: String): DevicePreKey? {
 		val id = preferences.getString(idKey, null)?.toIntOrNull() ?: return null
 		val public = preferences.getString(publicKey, null) ?: return null
 		val private = preferences.openSecret(secrets, privateKey) ?: return null
 		return DevicePreKey(id, public, private)
 	}
 
-	override fun writePreKeys(preKeys: DevicePreKeys) {
+	override fun savePreKeys(preKeys: DevicePreKeys) {
 		preferences.edit {
 			putString(SIGNED_PREKEY_ID, preKeys.signedPreKey.id.toString())
 			putString(SIGNED_PREKEY_PUBLIC, preKeys.signedPreKey.publicKey)
@@ -93,7 +104,7 @@ class DeviceIdentityDataSourceImpl @Inject constructor(
 		}
 	}
 
-	override fun clear() {
+	override fun clearIdentity() {
 		preferences.edit {
 			remove(DEVICE_ID)
 			remove(PUBLIC_KEY)

@@ -5,7 +5,7 @@ import com.nmichail.meridian.core.di.DependencyHolder0
 import com.nmichail.meridian.core.di.FeatureDependencies
 import com.nmichail.meridian.core.network.di.CoreApi
 import com.nmichail.meridian.shared.chat.di.ChatSessionApi
-import com.nmichail.meridian.shared.phone.di.PhoneSessionApi
+import com.nmichail.meridian.shared.calls.di.PhoneSessionApi
 import com.nmichail.meridian.features.calls.signal.di.SignalSessionApi
 
 interface CallsFeatureDependencies : FeatureDependencies {

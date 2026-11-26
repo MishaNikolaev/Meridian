@@ -48,7 +48,7 @@ class SessionLocalDataSourceImplTest {
 		whenever(preferences.getString("session_expires_at", null)) doReturn (System.currentTimeMillis() + 120_000).toString()
 		whenever(preferences.getString("session_access_token", null)) doReturn "access"
 
-		val actual = dataSource.isSignedIn()
+		val actual = dataSource.checkSignIn()
 
 		assertEquals(true, actual)
 	}
@@ -57,7 +57,7 @@ class SessionLocalDataSourceImplTest {
 	fun `missing expiry EXPECT signed out`() {
 		whenever(preferences.getString("session_expires_at", null)) doReturn null
 
-		val actual = dataSource.isSignedIn()
+		val actual = dataSource.checkSignIn()
 
 		assertEquals(false, actual)
 	}
@@ -66,7 +66,7 @@ class SessionLocalDataSourceImplTest {
 	fun `unreadable expiry EXPECT signed out`() {
 		whenever(preferences.getString("session_expires_at", null)) doReturn "soon"
 
-		val actual = dataSource.isSignedIn()
+		val actual = dataSource.checkSignIn()
 
 		assertEquals(false, actual)
 	}
@@ -76,7 +76,7 @@ class SessionLocalDataSourceImplTest {
 		whenever(preferences.getString("session_expires_at", null)) doReturn "0"
 		whenever(preferences.getString("session_access_token", null)) doReturn "access"
 
-		val actual = dataSource.isSignedIn()
+		val actual = dataSource.checkSignIn()
 
 		assertEquals(false, actual)
 	}
@@ -86,7 +86,7 @@ class SessionLocalDataSourceImplTest {
 		whenever(preferences.getString("session_expires_at", null)) doReturn (System.currentTimeMillis() + 29_000).toString()
 		whenever(preferences.getString("session_access_token", null)) doReturn "access"
 
-		val actual = dataSource.isSignedIn()
+		val actual = dataSource.checkSignIn()
 
 		assertEquals(false, actual)
 	}
@@ -96,7 +96,7 @@ class SessionLocalDataSourceImplTest {
 		whenever(preferences.getString("session_expires_at", null)) doReturn (System.currentTimeMillis() + 120_000).toString()
 		whenever(preferences.getString("session_access_token", null)) doReturn " "
 
-		val actual = dataSource.isSignedIn()
+		val actual = dataSource.checkSignIn()
 
 		assertEquals(false, actual)
 	}
@@ -106,7 +106,7 @@ class SessionLocalDataSourceImplTest {
 		whenever(preferences.getString("session_expires_at", null)) doReturn (System.currentTimeMillis() + 120_000).toString()
 		whenever(preferences.getString("session_access_token", null)) doReturn null
 
-		val actual = dataSource.isSignedIn()
+		val actual = dataSource.checkSignIn()
 
 		assertEquals(false, actual)
 	}
@@ -115,7 +115,7 @@ class SessionLocalDataSourceImplTest {
 	fun `stored access token EXPECT token`() {
 		whenever(preferences.getString("session_access_token", null)) doReturn "access"
 
-		val actual = dataSource.getAccessToken()
+		val actual = dataSource.loadAccessToken()
 
 		assertEquals("access", actual)
 	}
@@ -124,7 +124,7 @@ class SessionLocalDataSourceImplTest {
 	fun `blank access token EXPECT no token`() {
 		whenever(preferences.getString("session_access_token", null)) doReturn " "
 
-		val actual = dataSource.getAccessToken()
+		val actual = dataSource.loadAccessToken()
 
 		assertEquals(null, actual)
 	}
@@ -133,7 +133,7 @@ class SessionLocalDataSourceImplTest {
 	fun `missing access token EXPECT no token`() {
 		whenever(preferences.getString("session_access_token", null)) doReturn null
 
-		val actual = dataSource.getAccessToken()
+		val actual = dataSource.loadAccessToken()
 
 		assertEquals(null, actual)
 	}
@@ -142,7 +142,7 @@ class SessionLocalDataSourceImplTest {
 	fun `stored refresh token EXPECT token`() {
 		whenever(preferences.getString("session_refresh_token", null)) doReturn "refresh"
 
-		val actual = dataSource.getRefreshToken()
+		val actual = dataSource.loadRefreshToken()
 
 		assertEquals("refresh", actual)
 	}
@@ -151,7 +151,7 @@ class SessionLocalDataSourceImplTest {
 	fun `blank refresh token EXPECT no token`() {
 		whenever(preferences.getString("session_refresh_token", null)) doReturn " "
 
-		val actual = dataSource.getRefreshToken()
+		val actual = dataSource.loadRefreshToken()
 
 		assertEquals(null, actual)
 	}
@@ -160,7 +160,7 @@ class SessionLocalDataSourceImplTest {
 	fun `missing refresh token EXPECT no token`() {
 		whenever(preferences.getString("session_refresh_token", null)) doReturn null
 
-		val actual = dataSource.getRefreshToken()
+		val actual = dataSource.loadRefreshToken()
 
 		assertEquals(null, actual)
 	}
@@ -169,7 +169,7 @@ class SessionLocalDataSourceImplTest {
 	fun `stored user id EXPECT id`() {
 		whenever(preferences.getString("session_user_id", null)) doReturn "user"
 
-		val actual = dataSource.getUserId()
+		val actual = dataSource.loadUserId()
 
 		assertEquals("user", actual)
 	}
@@ -178,7 +178,7 @@ class SessionLocalDataSourceImplTest {
 	fun `blank user id EXPECT no id`() {
 		whenever(preferences.getString("session_user_id", null)) doReturn " "
 
-		val actual = dataSource.getUserId()
+		val actual = dataSource.loadUserId()
 
 		assertEquals(null, actual)
 	}
@@ -187,7 +187,7 @@ class SessionLocalDataSourceImplTest {
 	fun `missing user id EXPECT no id`() {
 		whenever(preferences.getString("session_user_id", null)) doReturn null
 
-		val actual = dataSource.getUserId()
+		val actual = dataSource.loadUserId()
 
 		assertEquals(null, actual)
 	}
@@ -196,7 +196,7 @@ class SessionLocalDataSourceImplTest {
 	fun `stored device id EXPECT id`() {
 		whenever(preferences.getString("session_device_id", null)) doReturn "device"
 
-		val actual = dataSource.getDeviceId()
+		val actual = dataSource.loadDeviceId()
 
 		assertEquals("device", actual)
 	}
@@ -205,7 +205,7 @@ class SessionLocalDataSourceImplTest {
 	fun `blank device id EXPECT no id`() {
 		whenever(preferences.getString("session_device_id", null)) doReturn " "
 
-		val actual = dataSource.getDeviceId()
+		val actual = dataSource.loadDeviceId()
 
 		assertEquals(null, actual)
 	}
@@ -214,35 +214,35 @@ class SessionLocalDataSourceImplTest {
 	fun `missing device id EXPECT no id`() {
 		whenever(preferences.getString("session_device_id", null)) doReturn null
 
-		val actual = dataSource.getDeviceId()
+		val actual = dataSource.loadDeviceId()
 
 		assertEquals(null, actual)
 	}
 
 	@Test
 	fun `save EXPECT user id`() {
-		dataSource.save(session)
+		dataSource.saveSession(session)
 
 		verify(editor).putString("session_user_id", "user")
 	}
 
 	@Test
 	fun `save EXPECT device id`() {
-		dataSource.save(session)
+		dataSource.saveSession(session)
 
 		verify(editor).putString("session_device_id", "device")
 	}
 
 	@Test
 	fun `save EXPECT access token`() {
-		dataSource.save(session)
+		dataSource.saveSession(session)
 
 		verify(editor).putString("session_access_token", "access")
 	}
 
 	@Test
 	fun `save EXPECT refresh token`() {
-		dataSource.save(session)
+		dataSource.saveSession(session)
 
 		verify(editor).putString("session_refresh_token", "refresh")
 	}
@@ -251,7 +251,7 @@ class SessionLocalDataSourceImplTest {
 	fun `save EXPECT expiry`() {
 		val started = System.currentTimeMillis()
 
-		dataSource.save(session)
+		dataSource.saveSession(session)
 
 		verify(editor).putString(
 			eq("session_expires_at"),
@@ -264,57 +264,43 @@ class SessionLocalDataSourceImplTest {
 	}
 
 	@Test
-	fun `save host EXPECT stored host`() {
-		dataSource.saveHost(" meridian.name.ru ")
-
-		verify(editor).putString("session_host", "meridian.name.ru")
-	}
-
-	@Test
-	fun `clear EXPECT removed host`() {
-		dataSource.clear()
-
-		verify(editor).remove("session_host")
-	}
-
-	@Test
 	fun `clear EXPECT removed user id`() {
-		dataSource.clear()
+		dataSource.clearSession()
 
 		verify(editor).remove("session_user_id")
 	}
 
 	@Test
 	fun `clear EXPECT removed device id`() {
-		dataSource.clear()
+		dataSource.clearSession()
 
 		verify(editor).remove("session_device_id")
 	}
 
 	@Test
 	fun `clear EXPECT removed access token`() {
-		dataSource.clear()
+		dataSource.clearSession()
 
 		verify(editor).remove("session_access_token")
 	}
 
 	@Test
 	fun `clear EXPECT removed refresh token`() {
-		dataSource.clear()
+		dataSource.clearSession()
 
 		verify(editor).remove("session_refresh_token")
 	}
 
 	@Test
 	fun `clear EXPECT removed expiry`() {
-		dataSource.clear()
+		dataSource.clearSession()
 
 		verify(editor).remove("session_expires_at")
 	}
 
 	@Test
 	fun `clear EXPECT removed expiry seconds`() {
-		dataSource.clear()
+		dataSource.clearSession()
 
 		verify(editor).remove("session_expires_in")
 	}

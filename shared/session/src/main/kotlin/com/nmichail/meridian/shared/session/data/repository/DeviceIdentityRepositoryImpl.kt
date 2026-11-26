@@ -18,16 +18,16 @@ class DeviceIdentityRepositoryImpl @Inject constructor(
 	}
 
 	override fun getIdentity(): DeviceIdentity = synchronized(this) {
-		dataSource.read() ?: DeviceIdentity.generate().also(dataSource::write)
+		dataSource.loadIdentity() ?: DeviceIdentity.generate().also(dataSource::saveIdentity)
 	}
 
 	override fun getPreKeys(): DevicePreKeys = synchronized(this) {
 		val identity = getIdentity()
-		dataSource.readPreKeys() ?: identity.createPreKeys().also(dataSource::writePreKeys)
+		dataSource.loadPreKeys() ?: identity.createPreKeys().also(dataSource::savePreKeys)
 	}
 
 	override fun reset() = synchronized(this) {
-		dataSource.clear()
+		dataSource.clearIdentity()
 	}
 
 	override fun getDeviceName(): String {

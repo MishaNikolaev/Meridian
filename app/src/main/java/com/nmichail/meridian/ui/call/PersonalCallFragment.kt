@@ -40,9 +40,9 @@ import com.nmichail.meridian.features.calls.signal.presentation.CallSignalIntent
 import com.nmichail.meridian.features.calls.signal.presentation.CallSignalViewModel
 import com.nmichail.meridian.shared.chat.di.ChatRealtimeHolder
 import com.nmichail.meridian.shared.chat.domain.realtime.ChatRealtime
-import com.nmichail.meridian.shared.phone.data.mapper.toCallPhase
-import com.nmichail.meridian.shared.phone.domain.entity.CallMedia
-import com.nmichail.meridian.shared.phone.domain.entity.CallPhase
+import com.nmichail.meridian.shared.calls.data.mapper.toCallPhase
+import com.nmichail.meridian.shared.calls.domain.entity.CallMedia
+import com.nmichail.meridian.shared.calls.domain.entity.CallPhase
 
 fun getCallScreen(
 	chatId: String,
