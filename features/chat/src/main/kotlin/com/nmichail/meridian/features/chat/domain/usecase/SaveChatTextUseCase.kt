@@ -5,4 +5,4 @@ import javax.inject.Inject
 
 class SaveChatTextUseCase @Inject constructor(
 	private val repository: ChatRepository,
-) : (String) -> Unit by repository::save
+) : (String) -> Unit by repository::saveText

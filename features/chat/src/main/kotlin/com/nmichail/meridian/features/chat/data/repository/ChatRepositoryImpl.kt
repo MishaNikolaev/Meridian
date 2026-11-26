@@ -10,7 +10,7 @@ class ChatRepositoryImpl @Inject constructor(
 
 	override fun getText(): String = dataSource.getText()
 
-	override fun save(text: String) {
-		dataSource.save(text)
+	override fun saveText(text: String) {
+		dataSource.saveText(text)
 	}
 }

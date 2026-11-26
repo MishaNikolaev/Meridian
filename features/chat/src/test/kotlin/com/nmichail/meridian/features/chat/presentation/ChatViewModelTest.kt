@@ -150,6 +150,7 @@ class ChatViewModelTest {
 
 		viewModel.applyIntent(ChatIntent.SyncTitles)
 		val content = viewModel.state.value as ChatState.Content
+
 		assertEquals("Платформа", content.corporateDiscussions.single().title)
 	}
 

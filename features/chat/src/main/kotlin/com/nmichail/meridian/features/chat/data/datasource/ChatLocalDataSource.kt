@@ -9,7 +9,7 @@ interface ChatLocalDataSource {
 
 	fun getText(): String
 
-	fun save(text: String)
+	fun saveText(text: String)
 }
 
 class ChatLocalDataSourceImpl @Inject constructor(
@@ -26,7 +26,7 @@ class ChatLocalDataSourceImpl @Inject constructor(
 
 	override fun getText(): String = preferences.getString(KEY, null).orEmpty()
 
-	override fun save(text: String) {
+	override fun saveText(text: String) {
 		preferences.edit { putString(KEY, text) }
 	}
 }
