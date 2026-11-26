@@ -21,7 +21,7 @@ include(
 	":features:search",
 	":features:conversation",
 	":features:contacts",
-	":features:calls",
+	":features:calls:catalog",
 	":features:calls:signal",
 	":features:calls:ring",
 	":features:profile:account",
@@ -35,7 +35,8 @@ include(
 
 	":shared:session",
 	":shared:chat",
-	":shared:phone",
+	":shared:groups",
+	":shared:calls",
 	":shared:busy",
 	":shared:organization",
 )

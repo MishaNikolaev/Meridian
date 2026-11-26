@@ -8,9 +8,9 @@ internal data class ChatRecord(
 	val type: String,
 	val title: String,
 	val preview: String,
-	val fileId: String = "",
-	val fileName: String = "",
-	val fileType: String = "",
+	val fileId: String,
+	val fileName: String,
+	val fileType: String,
 	val sentAt: String?,
 	val unread: Int,
 	val corporate: Boolean,
@@ -18,11 +18,6 @@ internal data class ChatRecord(
 	val personId: String?,
 	val discussionRoot: String?,
 	val discussionText: String?,
-	val discussionComment: String? = null,
-	val discussionSentAt: String? = null,
-)
-
-@Serializable
-internal data class ChatRecords(
-	val items: List<ChatRecord>,
+	val discussionComment: String?,
+	val discussionSentAt: String?,
 )

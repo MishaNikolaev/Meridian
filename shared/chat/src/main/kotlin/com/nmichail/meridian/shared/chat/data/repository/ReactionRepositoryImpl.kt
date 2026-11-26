@@ -12,17 +12,17 @@ class ReactionRepositoryImpl @Inject constructor(
 	private val reactionDataSource: ReactionDataSource,
 ) : ReactionRepository {
 	override fun readReactions(): ReactionMemory = ReactionMemory(
-		chosen = reactionDataSource.getReactions(),
-		used = reactionDataSource.used(),
+		chosen = reactionDataSource.loadReactions(),
+		used = reactionDataSource.loadUsed(),
 	)
 
 	override fun saveReaction(messageId: String, reactions: Set<String>, saveUsed: Boolean) {
-		val previous = reactionDataSource.getReactions()[messageId].orEmpty()
+		val stored = reactionDataSource.loadReactions()[messageId].orEmpty()
 
 		reactionDataSource.saveReactions(messageId, reactions)
 
 		if (saveUsed) {
-			(reactions - previous).forEach(reactionDataSource::saveUsed)
+			(reactions - stored).forEach(reactionDataSource::saveUsed)
 		}
 	}
 

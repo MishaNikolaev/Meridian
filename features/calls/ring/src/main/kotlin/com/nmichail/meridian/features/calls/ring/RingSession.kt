@@ -1,7 +1,7 @@
 package com.nmichail.meridian.features.calls.ring
 
 import com.nmichail.meridian.shared.chat.domain.entity.Chat
-import com.nmichail.meridian.shared.phone.domain.entity.CallPhase
+import com.nmichail.meridian.shared.calls.domain.entity.CallPhase
 
 interface RingSession {
 

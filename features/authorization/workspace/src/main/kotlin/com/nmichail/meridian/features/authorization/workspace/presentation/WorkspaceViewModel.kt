@@ -117,19 +117,19 @@ class WorkspaceViewModel @Inject constructor(
 	private fun handleSubmit() {
 		when (val current = state.value) {
 			is WorkspaceState.Loading -> return
-			WorkspaceState.Initial    -> signIn(
+			WorkspaceState.Initial    -> handleSignIn(
 				hostData = "",
 				emailData = "",
 				passwordData = "",
 			)
 
-			is WorkspaceState.Content -> signIn(
+			is WorkspaceState.Content -> handleSignIn(
 				hostData = current.host,
 				emailData = current.email,
 				passwordData = current.password,
 			)
 
-			is WorkspaceState.Error   -> signIn(
+			is WorkspaceState.Error   -> handleSignIn(
 				hostData = current.host,
 				emailData = current.email,
 				passwordData = current.password,
@@ -137,9 +137,10 @@ class WorkspaceViewModel @Inject constructor(
 		}
 	}
 
-	private fun signIn(hostData: String, emailData: String, passwordData: String) {
+	private fun handleSignIn(hostData: String, emailData: String, passwordData: String) {
 		val host = hostData.trim()
 		val email = emailData.trim()
+
 		when {
 			!validateNotEmptyUseCase(host).isValid() || !validateEmailUseCase(email).isValid() -> {
 				setState(
@@ -149,6 +150,7 @@ class WorkspaceViewModel @Inject constructor(
 						password = passwordData,
 					),
 				)
+
 				setEvent(WorkspaceEvent.NotFound)
 				return
 			}
@@ -165,6 +167,7 @@ class WorkspaceViewModel @Inject constructor(
 				return
 			}
 		}
+
 		setState(
 			WorkspaceState.Loading(
 				host = host,

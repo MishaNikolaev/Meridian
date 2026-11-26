@@ -20,8 +20,8 @@ import com.nmichail.meridian.component.photopicker.photoLoader
 import com.nmichail.meridian.component.photopicker.photoRequest
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
-import com.nmichail.meridian.shared.chat.data.mapper.mediaType
-import com.nmichail.meridian.shared.chat.data.mapper.storedBytes
+import com.nmichail.meridian.features.conversation.presentation.file.mediaType
+import com.nmichail.meridian.features.conversation.presentation.file.storedBytes
 import com.nmichail.meridian.shared.chat.domain.entity.ChatLine
 
 @Composable

@@ -17,6 +17,7 @@ import com.nmichail.meridian.shared.chat.domain.realtime.ChatRealtime
 import com.nmichail.meridian.shared.chat.domain.entity.Chat
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType
 import com.nmichail.meridian.shared.chat.domain.usecase.LoadChatsUseCase
+import com.nmichail.meridian.shared.chat.domain.usecase.MarkChatMentionsUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.ReadChatsUseCase
 import java.io.IOException
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -24,6 +25,8 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
@@ -34,6 +37,11 @@ import org.mockito.kotlin.whenever
 class ChatViewModelTest {
 
 	private val loadChatsUseCase: LoadChatsUseCase = mock()
+	private val markChatMentionsUseCase: MarkChatMentionsUseCase = mock {
+		onBlocking { invoke(any()) } doAnswer { invocation ->
+			invocation.getArgument<List<Chat>>(0)
+		}
+	}
 	private val readChatsUseCase: ReadChatsUseCase = mock()
 	private val chatRealtime: ChatRealtime = mock { on { chatIds } doReturn MutableSharedFlow() }
 	private val errorDelegate = ErrorDelegate(
@@ -48,6 +56,7 @@ class ChatViewModelTest {
 	private val eventObserver: Observer<ChatEvent> = mock()
 	private val viewModel = ChatViewModel(
 		loadChatsUseCase,
+		markChatMentionsUseCase,
 		readChatsUseCase,
 		chatRealtime,
 		errorDelegate,
@@ -150,6 +159,7 @@ class ChatViewModelTest {
 
 		viewModel.applyIntent(ChatIntent.SyncTitles)
 		val content = viewModel.state.value as ChatState.Content
+
 		assertEquals("Платформа", content.corporateDiscussions.single().title)
 	}
 

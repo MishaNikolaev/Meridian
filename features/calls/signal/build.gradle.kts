@@ -17,7 +17,12 @@ dependencies {
 	implementation(projects.core.network)
 	implementation(projects.core.presentation)
 	implementation(projects.shared.chat)
-	implementation(projects.shared.phone)
+	implementation(projects.shared.calls)
+
+	testImplementation(projects.testutils)
+	testImplementation(libs.bundles.test.junit5)
+	testImplementation(libs.bundles.test.mockito)
+	testImplementation(libs.test.coroutines)
 }
 
 afterEvaluate {

@@ -7,8 +7,13 @@ import com.nmichail.meridian.shared.chat.domain.entity.ChatThread
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType
 import com.nmichail.meridian.shared.chat.domain.entity.CreatedChat
 
+@Suppress("TooManyFunctions")
 interface ChatRepository {
 	suspend fun loadChats(): List<Chat>
+
+	suspend fun selfUsername(chatId: String): String
+
+	suspend fun saveChats(chats: List<Chat>)
 
 	suspend fun readChat(chatId: String): Chat
 

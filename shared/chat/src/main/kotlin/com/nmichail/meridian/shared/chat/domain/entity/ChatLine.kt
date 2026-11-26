@@ -19,3 +19,11 @@ data class ChatLine(
 	val poll: Poll?,
 	val vote: Vote?,
 )
+
+fun ChatLine.markDeleted(): ChatLine = copy(
+	text = "Сообщение удалено",
+	deleted = true,
+	edited = false,
+	replyAuthor = null,
+	replyText = null,
+)

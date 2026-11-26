@@ -4,5 +4,5 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class SignalRequestDto(
-	val envelopes: List<SignalDeviceDto>,
+	val devices: List<SignalDeviceDto>,
 )

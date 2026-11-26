@@ -17,8 +17,8 @@ import com.nmichail.meridian.features.conversation.presentation.ConversationInte
 import com.nmichail.meridian.features.conversation.presentation.compose.poll.LocalTallies
 import com.nmichail.meridian.features.conversation.presentation.compose.poll.PollCard
 import com.nmichail.meridian.features.conversation.presentation.compose.voice.VoiceNote
-import com.nmichail.meridian.shared.chat.data.mapper.asFile
-import com.nmichail.meridian.shared.chat.data.mapper.mediaType
+import com.nmichail.meridian.features.conversation.presentation.file.asFile
+import com.nmichail.meridian.features.conversation.presentation.file.mediaType
 import com.nmichail.meridian.shared.chat.domain.entity.ChatLine
 
 @Composable

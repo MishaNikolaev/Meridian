@@ -11,7 +11,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.features.search.presentation.SearchIntent
 import com.nmichail.meridian.features.search.presentation.SearchState
-import com.nmichail.meridian.features.search.presentation.searchHits
 import kotlinx.coroutines.flow.StateFlow
 
 @Composable
@@ -63,20 +62,13 @@ private fun SearchBody(
 	modifier: Modifier = Modifier,
 ) {
 	val query = state.query.trim()
-	val hits = searchHits(query, state.section)
 	if (query.isEmpty()) {
 		SearchRecent(
 			state = state,
 			onIntent = onIntent,
 			modifier = modifier,
 		)
-	} else if (hits.isEmpty()) {
-		SearchEmpty(modifier = modifier.fillMaxSize())
 	} else {
-		SearchResults(
-			hits = hits,
-			query = query,
-			modifier = modifier,
-		)
+		SearchEmpty(modifier = modifier.fillMaxSize())
 	}
 }

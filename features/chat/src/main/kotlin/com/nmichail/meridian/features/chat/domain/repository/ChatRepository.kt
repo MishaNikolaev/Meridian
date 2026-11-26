@@ -4,5 +4,5 @@ interface ChatRepository {
 
 	fun getText(): String
 
-	fun save(text: String)
+	fun saveText(text: String)
 }

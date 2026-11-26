@@ -22,6 +22,7 @@ dependencies {
 	implementation(projects.core.network)
 	implementation(projects.core.validation)
 	implementation(projects.shared.chat)
+	implementation(projects.shared.groups)
 
 	testImplementation(projects.testutils)
 	testImplementation(libs.bundles.test.junit5)

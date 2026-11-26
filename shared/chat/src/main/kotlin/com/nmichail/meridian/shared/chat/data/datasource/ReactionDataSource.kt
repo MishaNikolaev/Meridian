@@ -14,13 +14,13 @@ import kotlinx.serialization.json.contentOrNull
 
 interface ReactionDataSource {
 
-	fun getReactions(): Map<String, Set<String>>
+	fun loadReactions(): Map<String, Set<String>>
 
 	fun saveReactions(messageId: String, reactions: Set<String>)
 
 	fun saveReactions(updates: Map<String, Set<String>>)
 
-	fun used(): List<String>
+	fun loadUsed(): List<String>
 
 	fun saveUsed(reaction: String)
 }
@@ -41,7 +41,7 @@ class ReactionDataSourceImpl internal constructor(
 		const val USED_LIMIT = 32
 	}
 
-	override fun getReactions(): Map<String, Set<String>> {
+	override fun loadReactions(): Map<String, Set<String>> {
 		val text = preferences.getString(REACTIONS, null).orEmpty()
 
 		if (text.isEmpty()) {
@@ -79,14 +79,12 @@ class ReactionDataSourceImpl internal constructor(
 			return
 		}
 
-		val saved = getReactions() + updates
-
+		val saved = loadReactions() + updates
 		val encoded = saved.mapValues { (_, emojis) -> emojis.toList() }
-
 		preferences.edit { putString(REACTIONS, Json.encodeToString(encoded)) }
 	}
 
-	override fun used(): List<String> {
+	override fun loadUsed(): List<String> {
 		val text = preferences.getString(USED, null).orEmpty()
 
 		if (text.isEmpty()) {
@@ -101,7 +99,7 @@ class ReactionDataSourceImpl internal constructor(
 	}
 
 	override fun saveUsed(reaction: String) {
-		val used = (used() + reaction).takeLast(USED_LIMIT)
+		val used = (loadUsed() + reaction).takeLast(USED_LIMIT)
 
 		preferences.edit { putString(USED, Json.encodeToString(used)) }
 	}

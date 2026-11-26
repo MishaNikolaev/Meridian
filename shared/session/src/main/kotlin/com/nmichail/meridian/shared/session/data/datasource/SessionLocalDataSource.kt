@@ -11,25 +11,19 @@ import javax.inject.Inject
 
 interface SessionLocalDataSource {
 
-	fun isSignedIn(): Boolean
+	fun checkSignIn(): Boolean
 
-	fun getAccessToken(): String?
+	fun loadAccessToken(): String?
 
-	fun getRefreshToken(): String?
+	fun loadRefreshToken(): String?
 
-	fun getUserId(): String?
+	fun loadUserId(): String?
 
-	fun getDeviceId(): String?
+	fun loadDeviceId(): String?
 
-	fun getHost(): String?
+	fun saveSession(session: AuthSession)
 
-	fun saveHost(host: String)
-
-	fun email(value: String? = null): String?
-
-	fun save(session: AuthSession)
-
-	fun clear()
+	fun clearSession()
 }
 
 class SessionLocalDataSourceImpl @Inject constructor(
@@ -46,52 +40,32 @@ class SessionLocalDataSourceImpl @Inject constructor(
 		const val REFRESH_TOKEN = "session_refresh_token"
 		const val EXPIRES_AT = "session_expires_at"
 		const val EXPIRES_IN = "session_expires_in"
-		const val HOST = "session_host"
-		const val EMAIL = "session_email"
 		const val MILLIS_IN_SECOND = 1000L
 		const val EXPIRY_SKEW_MILLIS = 30_000L
 	}
 
 	private val preferences = context.getSharedPreferences(SESSION_PREF, Context.MODE_PRIVATE)
 
-	override fun isSignedIn(): Boolean {
+	override fun checkSignIn(): Boolean {
 		val expiresAt = preferences.getString(EXPIRES_AT, null)?.toLongOrNull() ?: return false
-		return !getAccessToken().isNullOrBlank() && expiresAt > System.currentTimeMillis() + EXPIRY_SKEW_MILLIS
+		val accessToken = loadAccessToken()
+		val fresh = expiresAt > System.currentTimeMillis() + EXPIRY_SKEW_MILLIS
+		return !accessToken.isNullOrBlank() && fresh
 	}
 
-	override fun getAccessToken(): String? = preferences.openSecret(secrets, ACCESS_TOKEN)?.takeIf { it.isNotBlank() }
+	override fun loadAccessToken(): String? =
+		preferences.openSecret(secrets, ACCESS_TOKEN)?.takeIf { token -> token.isNotBlank() }
 
-	override fun getRefreshToken(): String? = preferences.openSecret(secrets, REFRESH_TOKEN)?.takeIf { it.isNotBlank() }
+	override fun loadRefreshToken(): String? =
+		preferences.openSecret(secrets, REFRESH_TOKEN)?.takeIf { token -> token.isNotBlank() }
 
-	override fun getUserId(): String? = preferences.getString(USER_ID, null)?.takeIf { it.isNotBlank() }
+	override fun loadUserId(): String? =
+		preferences.getString(USER_ID, null)?.takeIf { id -> id.isNotBlank() }
 
-	override fun getDeviceId(): String? = preferences.getString(DEVICE_ID, null)?.takeIf { it.isNotBlank() }
+	override fun loadDeviceId(): String? =
+		preferences.getString(DEVICE_ID, null)?.takeIf { id -> id.isNotBlank() }
 
-	override fun getHost(): String? = preferences.getString(HOST, null)?.takeIf { it.isNotBlank() }
-
-	override fun saveHost(host: String) {
-		val trimmed = host.trim()
-		if (trimmed.isEmpty()) {
-			preferences.edit { remove(HOST) }
-			return
-		}
-		preferences.edit { putString(HOST, trimmed) }
-	}
-
-	override fun email(value: String?): String? {
-		if (value == null) {
-			return preferences.getString(EMAIL, null)?.takeIf { it.isNotBlank() }
-		}
-		val trimmed = value.trim()
-		if (trimmed.isEmpty()) {
-			preferences.edit { remove(EMAIL) }
-			return null
-		}
-		preferences.edit { putString(EMAIL, trimmed) }
-		return trimmed
-	}
-
-	override fun save(session: AuthSession) {
+	override fun saveSession(session: AuthSession) {
 		val expiresAt = System.currentTimeMillis() + session.expiresIn * MILLIS_IN_SECOND
 		preferences.edit {
 			putString(USER_ID, session.userId)
@@ -102,7 +76,7 @@ class SessionLocalDataSourceImpl @Inject constructor(
 		}
 	}
 
-	override fun clear() {
+	override fun clearSession() {
 		preferences.edit {
 			remove(USER_ID)
 			remove(DEVICE_ID)
@@ -110,8 +84,6 @@ class SessionLocalDataSourceImpl @Inject constructor(
 			remove(REFRESH_TOKEN)
 			remove(EXPIRES_AT)
 			remove(EXPIRES_IN)
-			remove(HOST)
-			remove(EMAIL)
 		}
 	}
 }

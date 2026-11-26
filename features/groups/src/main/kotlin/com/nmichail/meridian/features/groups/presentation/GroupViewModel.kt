@@ -16,7 +16,7 @@ import com.nmichail.meridian.shared.chat.domain.entity.ChatPerson
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType
 import com.nmichail.meridian.shared.chat.domain.usecase.CreateChatUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.FindPersonUseCase
-import com.nmichail.meridian.shared.chat.domain.usecase.UpdateChatUseCase
+import com.nmichail.meridian.shared.group.domain.usecase.UpdateChatUseCase
 import javax.inject.Inject
 
 internal const val GROUP_EDIT = "group-edit"

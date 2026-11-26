@@ -23,7 +23,7 @@ import com.nmichail.meridian.shared.chat.domain.entity.CreatedChat
 import com.nmichail.meridian.shared.chat.domain.usecase.CreateChatUseCase
 import com.nmichail.meridian.shared.chat.domain.usecase.FindPersonUseCase
 import com.nmichail.meridian.component.photopicker.domain.usecase.UploadPhotoUseCase
-import com.nmichail.meridian.shared.chat.domain.usecase.UpdateChatUseCase
+import com.nmichail.meridian.shared.group.domain.usecase.UpdateChatUseCase
 import java.io.IOException
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals

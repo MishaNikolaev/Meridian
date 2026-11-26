@@ -26,7 +26,7 @@ class ChatLocalDataSourceImplTest {
 	}
 
 	@Test
-	fun `stored text EXPECT text`() {
+	fun `saved text EXPECT text saved`() {
 		whenever(preferences.getString("home_text", null)) doReturn "текст"
 
 		val actual = dataSource.getText()
@@ -44,8 +44,8 @@ class ChatLocalDataSourceImplTest {
 	}
 
 	@Test
-	fun `save EXPECT stored text`() {
-		dataSource.save("текст")
+	fun `save text EXPECT text saved`() {
+		dataSource.saveText("текст")
 
 		verify(editor).putString("home_text", "текст")
 	}

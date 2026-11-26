@@ -14,9 +14,9 @@ import androidx.lifecycle.LiveData
 import com.nmichail.meridian.component.ui.bar.MUiBottomBar
 import com.nmichail.meridian.component.ui.bar.model.MUiBottomDestination
 import com.nmichail.meridian.component.ui.theme.palette
-import com.nmichail.meridian.features.calls.presentation.CallsIntent
-import com.nmichail.meridian.features.calls.presentation.CallsState
-import com.nmichail.meridian.features.calls.presentation.compose.home.CallsScreen
+import com.nmichail.meridian.features.calls.catalog.presentation.CallsIntent
+import com.nmichail.meridian.features.calls.catalog.presentation.CallsState
+import com.nmichail.meridian.features.calls.catalog.presentation.compose.list.CallsScreen
 import com.nmichail.meridian.features.chat.presentation.ChatEvent
 import com.nmichail.meridian.features.chat.presentation.ChatIntent
 import com.nmichail.meridian.features.chat.presentation.ChatState

@@ -4,39 +4,47 @@ import com.nmichail.meridian.core.network.session.AuthSession
 import com.nmichail.meridian.core.network.session.SessionListener
 import com.nmichail.meridian.core.network.session.SessionRepository
 import com.nmichail.meridian.shared.session.data.datasource.SessionLocalDataSource
+import com.nmichail.meridian.shared.session.data.datasource.WorkspaceLocalDataSource
 import javax.inject.Inject
 
 class SessionRepositoryImpl @Inject constructor(
 	private val dataSource: SessionLocalDataSource,
+	private val workspace: WorkspaceLocalDataSource,
 	private val sessionListener: SessionListener,
 ) : SessionRepository {
 
-	override fun isSignedIn(): Boolean = dataSource.isSignedIn()
+	override fun isSignedIn(): Boolean = dataSource.checkSignIn()
 
-	override fun getAccessToken(): String? = dataSource.getAccessToken()
+	override fun getAccessToken(): String? = dataSource.loadAccessToken()
 
-	override fun getRefreshToken(): String? = dataSource.getRefreshToken()
+	override fun getRefreshToken(): String? = dataSource.loadRefreshToken()
 
-	override fun getUserId(): String? = dataSource.getUserId()
+	override fun getUserId(): String? = dataSource.loadUserId()
 
-	override fun getDeviceId(): String? = dataSource.getDeviceId()
+	override fun getDeviceId(): String? = dataSource.loadDeviceId()
 
-	override fun getHost(): String? = dataSource.getHost()
+	override fun getHost(): String? = workspace.loadHost()
 
 	override fun saveHost(host: String) {
-		dataSource.saveHost(host)
+		workspace.saveHost(host)
 	}
 
-	override fun email(value: String?): String? = dataSource.email(value)
+	override fun email(value: String?): String? {
+		if (value == null) {
+			return workspace.loadEmail()
+		}
+		return workspace.saveEmail(value)
+	}
 
 	override fun save(session: AuthSession) {
-		dataSource.save(session)
+		dataSource.saveSession(session)
 
 		sessionListener.opened()
 	}
 
 	override fun clear() {
-		dataSource.clear()
+		dataSource.clearSession()
+		workspace.clearWorkspace()
 
 		sessionListener.cleared()
 	}

@@ -6,6 +6,8 @@ import com.nmichail.meridian.shared.session.data.datasource.DeviceIdentityDataSo
 import com.nmichail.meridian.shared.session.data.datasource.DeviceIdentityDataSourceImpl
 import com.nmichail.meridian.shared.session.data.datasource.SessionLocalDataSource
 import com.nmichail.meridian.shared.session.data.datasource.SessionLocalDataSourceImpl
+import com.nmichail.meridian.shared.session.data.datasource.WorkspaceLocalDataSource
+import com.nmichail.meridian.shared.session.data.datasource.WorkspaceLocalDataSourceImpl
 import com.nmichail.meridian.shared.session.data.repository.DeviceIdentityRepositoryImpl
 import com.nmichail.meridian.shared.session.data.repository.SessionRepositoryImpl
 import dagger.Binds
@@ -18,6 +20,10 @@ interface SessionDataModule {
 	@Binds
 	@Singleton
 	fun bindSessionLocalDataSource(impl: SessionLocalDataSourceImpl): SessionLocalDataSource
+
+	@Binds
+	@Singleton
+	fun bindWorkspaceLocalDataSource(impl: WorkspaceLocalDataSourceImpl): WorkspaceLocalDataSource
 
 	@Binds
 	@Singleton

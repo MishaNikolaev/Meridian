@@ -112,7 +112,9 @@ private fun SignInForm(
 				secret = true,
 				outlined = true,
 			),
-			onValueChange = { onIntent(SignInIntent.ChangePassword(it)) },
+			onValueChange = {
+				onIntent(SignInIntent.ChangePassword(it))
+			},
 		)
 		if (message != null) {
 			MUiCaptionSmallText(
@@ -139,8 +141,13 @@ private fun SignInLinks(onIntent: (SignInIntent) -> Unit) {
 		verticalArrangement = Arrangement.spacedBy(8.dp),
 	) {
 		MUiButton(
-			model = MUiButtonModel(style = MUiButtonStyle.Text, label = stringResource(R.string.sign_in_create_account)),
-			onClick = { onIntent(SignInIntent.OpenRegistration) },
+			model = MUiButtonModel(
+				style = MUiButtonStyle.Text,
+				label = stringResource(R.string.sign_in_create_account)
+			),
+			onClick = {
+				onIntent(SignInIntent.OpenRegistration)
+			},
 		)
 		HorizontalDivider(color = palette.borderDefault)
 		MUiBodyDefaultText(
@@ -148,7 +155,9 @@ private fun SignInLinks(onIntent: (SignInIntent) -> Unit) {
 			color = palette.textPrimary,
 			textAlign = TextAlign.Center,
 			modifier = Modifier
-				.clickable { onIntent(SignInIntent.OpenWorkspace) }
+				.clickable {
+					onIntent(SignInIntent.OpenWorkspace)
+				}
 				.padding(8.dp),
 		)
 	}

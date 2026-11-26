@@ -135,7 +135,12 @@ private fun WorkspaceForm(
 
 				Spacer(modifier = Modifier.height(12.dp))
 
-				WorkspaceFields(host = host, email = email, password = password, onIntent = onIntent)
+				WorkspaceFields(
+					host = host,
+					email = email,
+					password = password,
+					onIntent = onIntent
+				)
 
 				Spacer(modifier = Modifier.weight(1f))
 
@@ -159,7 +164,9 @@ private fun WorkspaceFields(
 			value = host,
 			outlined = true,
 		),
-		onValueChange = { onIntent(WorkspaceIntent.ChangeHost(it)) },
+		onValueChange = {
+			onIntent(WorkspaceIntent.ChangeHost(it))
+		},
 	)
 
 	MUiTextField(
@@ -170,7 +177,9 @@ private fun WorkspaceFields(
 			email = true,
 			outlined = true,
 		),
-		onValueChange = { onIntent(WorkspaceIntent.ChangeEmail(it)) },
+		onValueChange = {
+			onIntent(WorkspaceIntent.ChangeEmail(it))
+		},
 	)
 
 	MUiTextField(
@@ -181,7 +190,9 @@ private fun WorkspaceFields(
 			secret = true,
 			outlined = true,
 		),
-		onValueChange = { onIntent(WorkspaceIntent.ChangePassword(it)) },
+		onValueChange = {
+			onIntent(WorkspaceIntent.ChangePassword(it))
+		},
 	)
 }
 
@@ -196,8 +207,13 @@ private fun WorkspaceActions(
 		verticalArrangement = Arrangement.spacedBy(16.dp),
 	) {
 		MUiButton(
-			model = MUiButtonModel(style = MUiButtonStyle.Primary, label = stringResource(R.string.workspace_submit)),
-			onClick = { onIntent(WorkspaceIntent.Submit) },
+			model = MUiButtonModel(
+				style = MUiButtonStyle.Primary,
+				label = stringResource(R.string.workspace_submit)
+			),
+			onClick = {
+				onIntent(WorkspaceIntent.Submit)
+			},
 		)
 
 		ExternalAccountLinks(onIntent = onIntent)
@@ -226,8 +242,13 @@ private fun ExternalAccountLinks(onIntent: (WorkspaceIntent) -> Unit) {
 		verticalArrangement = Arrangement.spacedBy(4.dp),
 	) {
 		MUiButton(
-			model = MUiButtonModel(style = MUiButtonStyle.Text, label = stringResource(R.string.workspace_external)),
-			onClick = { onIntent(WorkspaceIntent.OpenExternalSignIn) },
+			model = MUiButtonModel(
+				style = MUiButtonStyle.Text,
+				label = stringResource(R.string.workspace_external)
+			),
+			onClick = {
+				onIntent(WorkspaceIntent.OpenExternalSignIn)
+			},
 		)
 	}
 }
@@ -237,7 +258,9 @@ private fun WorkspaceHeading() {
 	val secondary = palette.textSecondary
 
 	Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-		MUiDisplayAuthText(text = stringResource(R.string.workspace_title))
+		MUiDisplayAuthText(
+			text = stringResource(R.string.workspace_title)
+		)
 
 		MUiBodyRegularText(
 			text = stringResource(R.string.workspace_hint),

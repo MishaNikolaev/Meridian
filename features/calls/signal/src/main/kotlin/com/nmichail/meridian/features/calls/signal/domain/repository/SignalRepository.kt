@@ -1,8 +1,10 @@
 package com.nmichail.meridian.features.calls.signal.domain.repository
 
+import com.nmichail.meridian.features.calls.signal.domain.entity.SignalCall
+
 interface SignalRepository {
 
-	suspend fun send(callId: String, chatId: String, body: String)
+	suspend fun sendSignal(call: SignalCall, body: String)
 
-	suspend fun load(callId: String, chatId: String): List<String>
+	suspend fun loadSignals(call: SignalCall): List<String>
 }

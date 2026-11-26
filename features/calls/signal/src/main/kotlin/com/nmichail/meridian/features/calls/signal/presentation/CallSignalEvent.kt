@@ -1,6 +1,6 @@
 package com.nmichail.meridian.features.calls.signal.presentation
 
-import com.nmichail.meridian.shared.phone.domain.entity.CallPhase
+import com.nmichail.meridian.shared.calls.domain.entity.CallPhase
 
 sealed interface CallSignalEvent {
 
@@ -8,5 +8,5 @@ sealed interface CallSignalEvent {
 
 	data class Updated(val phase: CallPhase) : CallSignalEvent
 
-	data object Offer : CallSignalEvent
+	data class Signal(val body: String) : CallSignalEvent
 }

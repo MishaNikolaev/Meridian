@@ -1,7 +1,7 @@
 package com.nmichail.meridian.features.calls.signal.presentation
 
-import com.nmichail.meridian.shared.phone.domain.entity.CallMedia
-import com.nmichail.meridian.shared.phone.domain.entity.CallPhase
+import com.nmichail.meridian.shared.calls.domain.entity.CallMedia
+import com.nmichail.meridian.shared.calls.domain.entity.CallPhase
 
 sealed interface CallSignalIntent {
 

@@ -18,8 +18,8 @@ class DeviceIdentityRepositoryImplTest {
 	private val preKeys: DevicePreKeys = mock()
 
 	@Test
-	fun `stored identity EXPECT that identity`() {
-		whenever(dataSource.read()) doReturn identity
+	fun `saved identity EXPECT that identity`() {
+		whenever(dataSource.loadIdentity()) doReturn identity
 
 		val actual = repository.getIdentity()
 
@@ -27,9 +27,9 @@ class DeviceIdentityRepositoryImplTest {
 	}
 
 	@Test
-	fun `stored prekeys EXPECT those prekeys`() {
-		whenever(dataSource.read()) doReturn identity
-		whenever(dataSource.readPreKeys()) doReturn preKeys
+	fun `saved prekeys EXPECT those prekeys`() {
+		whenever(dataSource.loadIdentity()) doReturn identity
+		whenever(dataSource.loadPreKeys()) doReturn preKeys
 
 		val actual = repository.getPreKeys()
 
@@ -40,6 +40,6 @@ class DeviceIdentityRepositoryImplTest {
 	fun `reset EXPECT cleared storage`() {
 		repository.reset()
 
-		verify(dataSource).clear()
+		verify(dataSource).clearIdentity()
 	}
 }

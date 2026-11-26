@@ -1,8 +1,8 @@
 package com.nmichail.meridian.features.conversation.presentation
 
 import com.nmichail.meridian.features.conversation.presentation.compose.component.days
-import com.nmichail.meridian.features.conversation.presentation.compose.component.markDeleted
 import com.nmichail.meridian.shared.chat.domain.entity.ChatLine
+import com.nmichail.meridian.shared.chat.domain.entity.markDeleted
 import com.nmichail.meridian.shared.chat.domain.entity.ChatThread
 import java.time.Instant
 

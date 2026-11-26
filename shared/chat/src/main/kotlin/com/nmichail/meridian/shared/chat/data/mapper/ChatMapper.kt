@@ -1,11 +1,20 @@
 package com.nmichail.meridian.shared.chat.data.mapper
 
+import com.nmichail.meridian.shared.chat.data.cipher.opened
 import com.nmichail.meridian.shared.chat.data.datasource.ChatRecord
 import com.nmichail.meridian.shared.chat.data.dto.ChatDto
+import com.nmichail.meridian.shared.chat.data.dto.MessageDto
+import com.nmichail.meridian.shared.chat.data.dto.ReactionDto
 import com.nmichail.meridian.shared.chat.domain.entity.Chat
+import com.nmichail.meridian.shared.chat.domain.entity.ChatLine
 import com.nmichail.meridian.shared.chat.domain.entity.ChatPerson
 import com.nmichail.meridian.shared.chat.domain.entity.ChatProfile
+import com.nmichail.meridian.shared.chat.domain.entity.ChatReaction
 import com.nmichail.meridian.shared.chat.domain.entity.ChatType
+import com.nmichail.meridian.shared.chat.domain.entity.markDeleted
+import com.nmichail.meridian.shared.chat.domain.entity.noticeText
+import com.nmichail.meridian.shared.chat.domain.entity.toPoll
+import com.nmichail.meridian.shared.chat.domain.entity.toVote
 
 internal fun ChatDto.toEntity(mentioned: Boolean): Chat {
 	val latest = lastMessage?.toEntity(
@@ -36,7 +45,7 @@ internal fun ChatDto.toEntity(mentioned: Boolean): Chat {
 	)
 }
 
-internal fun ChatDto.toProfile(
+fun ChatDto.toProfile(
 	owner: String,
 	members: List<ChatPerson>,
 	selfId: String,
@@ -94,3 +103,43 @@ internal fun ChatRecord.toChat(): Chat? {
 		discussionSentAt = discussionSentAt,
 	)
 }
+
+internal fun MessageDto.toEntity(self: String?, author: String?): ChatLine {
+	val serviceText = notice?.let(::noticeText)
+	val opened = if (serviceText == null) opened() else null
+	val text = serviceText ?: opened?.text.orEmpty()
+	val line = ChatLine(
+		id = messageId,
+		mine = senderUserId == self && serviceText == null,
+		text = text,
+		sentAt = createdAt,
+		author = author?.takeIf { senderUserId != self && serviceText == null },
+		authorId = senderUserId,
+		replyAuthor = opened?.replyAuthor?.takeIf { reply -> reply.isNotEmpty() },
+		replyText = opened?.replyText?.takeIf { reply -> reply.isNotEmpty() },
+		threadRoot = threadRoot,
+		fileId = opened?.fileId.orEmpty(),
+		fileName = opened?.fileName.orEmpty(),
+		fileType = opened?.fileType.orEmpty(),
+		poll = text.toPoll(),
+		vote = text.toVote(),
+		deleted = false,
+		edited = false,
+		service = serviceText != null,
+	)
+
+	return if (deleted) {
+		line.markDeleted()
+	} else {
+		line
+	}
+}
+
+internal fun ReactionDto.toEntity(name: String, mine: Boolean): ChatReaction =
+	ChatReaction(
+		userId = userId,
+		name = name,
+		reaction = reaction,
+		sentAt = createdAt,
+		mine = mine,
+	)
