@@ -10,7 +10,7 @@ import androidx.fragment.app.FragmentFactory
 import com.nmichail.meridian.component.ui.compose.Screen
 import com.nmichail.meridian.core.navigation.screen.FullScreen
 import com.nmichail.meridian.core.navigation.screen.FullScreenFragment
-import com.nmichail.meridian.features.calls.presentation.compose.conference.ConferenceRoom
+import com.nmichail.meridian.features.calls.catalog.presentation.compose.conference.ConferenceRoom
 
 fun getConferenceScreen(code: String, onBack: () -> Unit): FullScreen = object : FullScreen(
 	key = "conference-$code",

@@ -14,11 +14,11 @@ import com.nmichail.meridian.component.ui.bar.model.MUiBottomDestination
 import com.nmichail.meridian.component.ui.theme.MeridianTheme
 import com.nmichail.meridian.core.navigation.screen.FullScreen
 import com.nmichail.meridian.core.navigation.screen.FullScreenFragment
-import com.nmichail.meridian.features.calls.di.CallsComponentHolder
-import com.nmichail.meridian.features.calls.presentation.CallsDestination
-import com.nmichail.meridian.features.calls.presentation.CallsState
-import com.nmichail.meridian.features.calls.presentation.CallsIntent
-import com.nmichail.meridian.features.calls.presentation.CallsViewModel
+import com.nmichail.meridian.features.calls.catalog.di.CallsComponentHolder
+import com.nmichail.meridian.features.calls.catalog.presentation.CallsDestination
+import com.nmichail.meridian.features.calls.catalog.presentation.CallsState
+import com.nmichail.meridian.features.calls.catalog.presentation.CallsIntent
+import com.nmichail.meridian.features.calls.catalog.presentation.CallsViewModel
 import com.nmichail.meridian.features.chat.di.ChatComponentHolder
 import com.nmichail.meridian.features.chat.presentation.ChatViewModel
 import com.nmichail.meridian.features.profile.di.ProfileComponentHolder

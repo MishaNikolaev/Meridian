@@ -13,7 +13,7 @@ import dagger.Component
 @ChatSessionScope
 @Component(
 	dependencies = [CoreApi::class],
-	modules = [ChatModule::class, PhoneModule::class, SignalModule::class, CallBridgeModule::class],
+	modules = [ChatModule::class, PhoneModule::class, SignalModule::class],
 )
 interface ChatSessionComponent : ChatSessionApi, PhoneSessionApi, SignalSessionApi {
 

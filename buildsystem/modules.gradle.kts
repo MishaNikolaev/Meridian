@@ -21,7 +21,7 @@ include(
 	":features:search",
 	":features:conversation",
 	":features:contacts",
-	":features:calls",
+	":features:calls:catalog",
 	":features:calls:signal",
 	":features:calls:ring",
 	":features:profile:account",

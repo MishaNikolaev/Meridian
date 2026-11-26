@@ -1,8 +1,8 @@
 package com.nmichail.meridian.di
 
 import com.nmichail.meridian.core.network.di.CoreApi
-import com.nmichail.meridian.features.calls.di.CallsComponentHolder
-import com.nmichail.meridian.features.calls.di.callsFeatureDependencies
+import com.nmichail.meridian.features.calls.catalog.di.CallsComponentHolder
+import com.nmichail.meridian.features.calls.catalog.di.callsFeatureDependencies
 import com.nmichail.meridian.features.conversation.di.ConversationComponentHolder
 import com.nmichail.meridian.features.conversation.di.conversationFeatureDependencies
 import com.nmichail.meridian.features.conversation.presentation.ConversationRouter
