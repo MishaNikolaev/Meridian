@@ -23,19 +23,19 @@ class SignInViewModel @Inject constructor(
 
 	override fun applyIntent(intent: SignInIntent) {
 		when (intent) {
-			is SignInIntent.ChangeUsername -> handleChangeUsername(intent.value)
-			is SignInIntent.ChangePassword -> handleChangePassword(intent.value)
-			is SignInIntent.Submit -> handleSubmit()
+			is SignInIntent.ChangeUsername   -> handleChangeUsername(intent.value)
+			is SignInIntent.ChangePassword   -> handleChangePassword(intent.value)
+			is SignInIntent.Submit           -> handleSubmit()
 			is SignInIntent.OpenRegistration -> handleOpenRegistration()
-			is SignInIntent.OpenWorkspace -> handleOpenWorkspace()
-			is SignInIntent.NavigateBack -> handleNavigateBack()
+			is SignInIntent.OpenWorkspace    -> handleOpenWorkspace()
+			is SignInIntent.NavigateBack     -> handleNavigateBack()
 		}
 	}
 
 	private fun handleChangeUsername(value: String) {
 		when (val current = state.value) {
 			is SignInState.Loading -> return
-			SignInState.Initial -> setState(
+			SignInState.Initial    -> setState(
 				SignInState.Content(
 					username = validateUsernameUseCase(value),
 					password = PasswordValidationItem(),
@@ -46,7 +46,7 @@ class SignInViewModel @Inject constructor(
 				current.copy(username = validateUsernameUseCase(value)),
 			)
 
-			is SignInState.Error -> setState(
+			is SignInState.Error   -> setState(
 				SignInState.Content(
 					username = validateUsernameUseCase(value),
 					password = current.password,
@@ -56,11 +56,14 @@ class SignInViewModel @Inject constructor(
 	}
 
 	private fun handleChangePassword(value: String) {
+		val password = PasswordValidationItem(
+			data = value,
+			validationState = DefaultValidationState.Unverified
+		)
 
-		val password = PasswordValidationItem(data = value, validationState = DefaultValidationState.Unverified)
 		when (val current = state.value) {
 			is SignInState.Loading -> return
-			SignInState.Initial -> setState(
+			SignInState.Initial    -> setState(
 				SignInState.Content(
 					username = UsernameValidationItem(),
 					password = password,
@@ -71,7 +74,7 @@ class SignInViewModel @Inject constructor(
 				current.copy(password = password),
 			)
 
-			is SignInState.Error -> setState(
+			is SignInState.Error   -> setState(
 				SignInState.Content(
 					username = current.username,
 					password = password,
@@ -83,24 +86,24 @@ class SignInViewModel @Inject constructor(
 	private fun handleSubmit() {
 		when (val current = state.value) {
 			is SignInState.Loading -> return
-			SignInState.Initial -> signIn(
+			SignInState.Initial    -> handleSignIn(
 				usernameData = "",
 				passwordData = "",
 			)
 
-			is SignInState.Content -> signIn(
+			is SignInState.Content -> handleSignIn(
 				usernameData = current.username.data,
 				passwordData = current.password.data,
 			)
 
-			is SignInState.Error -> signIn(
+			is SignInState.Error   -> handleSignIn(
 				usernameData = current.username.data,
 				passwordData = current.password.data,
 			)
 		}
 	}
 
-	private fun signIn(usernameData: String, passwordData: String) {
+	private fun handleSignIn(usernameData: String, passwordData: String) {
 
 		val username = validateUsernameUseCase(usernameData)
 		val password = validatePasswordUseCase(passwordData)
@@ -114,6 +117,7 @@ class SignInViewModel @Inject constructor(
 			)
 			return
 		}
+
 		setState(
 			SignInState.Loading(
 				username = username,
@@ -122,7 +126,11 @@ class SignInViewModel @Inject constructor(
 		)
 
 		launchTry {
-			signInUseCase(username.data.trim(), password.data)
+			signInUseCase(
+				username.data.trim(),
+				password.data
+			)
+
 			router.navigateToHome()
 		} catch ::handleSignInFailure
 	}
