@@ -19,16 +19,12 @@ class SplashViewModel @Inject constructor(
 
 	private fun handleLoadInitialData() {
 		launchTry {
-			handleRestore()
+			if (restoreSessionUseCase()) {
+				router.navigateToHome()
+			} else {
+				router.navigateToSignIn()
+			}
 		} catch ::handleRestoreFailure
-	}
-
-	private suspend fun handleRestore() {
-		if (restoreSessionUseCase()) {
-			router.navigateToHome()
-		} else {
-			router.navigateToSignIn()
-		}
 	}
 
 	private fun handleRestoreFailure(error: Exception) {
