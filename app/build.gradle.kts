@@ -83,7 +83,7 @@ dependencies {
 	implementation(projects.features.search)
 	implementation(projects.features.conversation)
 	implementation(projects.features.contacts)
-	implementation(projects.features.calls)
+	implementation(projects.features.calls.catalog)
 	implementation(projects.features.profile.account)
 	implementation(projects.features.profile.about)
 	implementation(projects.features.profile.busy)

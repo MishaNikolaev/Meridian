@@ -18,6 +18,11 @@ dependencies {
 	implementation(projects.core.presentation)
 	implementation(projects.shared.chat)
 	implementation(projects.shared.phone)
+
+	testImplementation(projects.testutils)
+	testImplementation(libs.bundles.test.junit5)
+	testImplementation(libs.bundles.test.mockito)
+	testImplementation(libs.test.coroutines)
 }
 
 afterEvaluate {

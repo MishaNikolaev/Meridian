@@ -25,13 +25,13 @@ import com.nmichail.meridian.component.photopicker.ensurePersonPhoto
 import com.nmichail.meridian.component.ui.compose.Screen
 import com.nmichail.meridian.core.navigation.screen.FullScreen
 import com.nmichail.meridian.core.navigation.screen.FullScreenFragment
-import com.nmichail.meridian.features.calls.R
-import com.nmichail.meridian.features.calls.di.CallsComponentHolder
-import com.nmichail.meridian.features.calls.presentation.compose.media.CallLine
-import com.nmichail.meridian.features.calls.presentation.compose.media.HearCall
-import com.nmichail.meridian.features.calls.presentation.compose.media.rememberCallLine
-import com.nmichail.meridian.features.calls.presentation.compose.ring.RingCall
-import com.nmichail.meridian.features.calls.presentation.compose.ring.RingPhase
+import com.nmichail.meridian.features.calls.catalog.R
+import com.nmichail.meridian.features.calls.catalog.di.CallsComponentHolder
+import com.nmichail.meridian.features.calls.catalog.presentation.compose.media.CallLine
+import com.nmichail.meridian.features.calls.catalog.presentation.compose.media.HearCall
+import com.nmichail.meridian.features.calls.catalog.presentation.compose.media.rememberCallLine
+import com.nmichail.meridian.features.calls.catalog.presentation.compose.ring.RingCall
+import com.nmichail.meridian.features.calls.catalog.presentation.compose.ring.RingPhase
 import com.nmichail.meridian.features.calls.ring.OutgoingRing
 import com.nmichail.meridian.features.calls.ring.RingIncomingService
 import com.nmichail.meridian.features.calls.ring.playCallEnd
@@ -202,6 +202,7 @@ private fun CallSession(
 	WatchSignals(
 		signals = signals,
 		owner = owner,
+		line = line,
 		onPlaced = onCurrent,
 		onAccepted = goLive,
 		onClosed = {
@@ -242,11 +243,12 @@ private fun CallSession(
 private fun WatchSignals(
 	signals: CallSignalViewModel,
 	owner: LifecycleOwner,
+	line: CallLine?,
 	onPlaced: (String) -> Unit,
 	onAccepted: () -> Unit,
 	onClosed: () -> Unit,
 ) {
-	DisposableEffect(signals, owner) {
+	DisposableEffect(signals, owner, line) {
 		val observer = Observer<CallSignalEvent> { event ->
 			when (event) {
 				is CallSignalEvent.Placed -> onPlaced(event.callId)
@@ -255,7 +257,7 @@ private fun WatchSignals(
 					CallPhase.DECLINED, CallPhase.ENDED -> onClosed()
 					CallPhase.RINGING, CallPhase.MISSED -> Unit
 				}
-				CallSignalEvent.Offer -> Unit
+				is CallSignalEvent.Signal -> line?.take(event.body)
 			}
 		}
 		signals.event.observe(owner, observer)
@@ -293,7 +295,6 @@ private fun LiveCall(
 		callId = callId,
 		chatId = chatId,
 		line = line,
-		inbound = signals.inbound,
 		onIntent = signals::applyIntent,
 	)
 	RingCall(
