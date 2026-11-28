@@ -1,6 +1,6 @@
 package com.nmichail.meridian.shared.chat.data.cipher
 
-import android.util.Base64
+import java.util.Base64
 import java.security.GeneralSecurityException
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -26,7 +26,7 @@ object MessageCipher {
 		val encryptedBytes = ByteArray(randomBytes.size + body.size)
 		randomBytes.copyInto(encryptedBytes)
 		body.copyInto(encryptedBytes, randomBytes.size)
-		return Base64.encodeToString(encryptedBytes, Base64.NO_WRAP)
+		return Base64.getEncoder().encodeToString(encryptedBytes)
 	}
 
 	fun decrypt(chatId: String, encrypted: String): String {
@@ -61,7 +61,7 @@ object MessageCipher {
 
 	private fun decode(encoded: String): ByteArray? =
 		try {
-			Base64.decode(encoded, Base64.NO_WRAP)
+			Base64.getMimeDecoder().decode(encoded)
 		} catch (_: IllegalArgumentException) {
 			null
 		}
