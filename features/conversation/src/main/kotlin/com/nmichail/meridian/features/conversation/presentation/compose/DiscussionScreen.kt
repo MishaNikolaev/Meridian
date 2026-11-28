@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -22,7 +23,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -160,7 +160,6 @@ private fun DiscussionBar(
 				maxLines = 1,
 				overflow = TextOverflow.Ellipsis,
 			)
-
 			if (!pinned.isNullOrBlank()) {
 				Text(
 					text = pinned,
@@ -206,20 +205,14 @@ private fun CommentList(
 			verticalArrangement = Arrangement.spacedBy(6.dp),
 		) {
 			if (root != null) {
-				item(key = "post") {
-					DiscussionPost(
-						line = root,
-						title = title,
-						count = comments.size,
-						viewers = reactionViewers[root.id].orEmpty(),
-						selfName = selfName,
-						onIntent = onIntent,
-					)
-				}
-
-				item(key = "pill") {
-					CommentPill(count = comments.size)
-				}
+				discussionHeader(
+					root = root,
+					title = title,
+					count = comments.size,
+					viewers = reactionViewers[root.id].orEmpty(),
+					selfName = selfName,
+					onIntent = onIntent,
+				)
 			}
 
 			items(messages, key = { line -> line.id }) { line ->
@@ -252,17 +245,26 @@ private fun CommentList(
 	}
 }
 
-@Composable
-private fun FollowComments(listState: LazyListState, newest: ChatLine?, target: Int) {
-	LaunchedEffect(newest?.id) {
-		if (newest == null || target < 0) {
-			return@LaunchedEffect
-		}
-		val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
-		val nearEnd = lastVisible == null || lastVisible >= target - 1
-		if (newest.mine || nearEnd) {
-			listState.animateScrollToItem(target)
-		}
+private fun LazyListScope.discussionHeader(
+	root: ChatLine,
+	title: String,
+	count: Int,
+	viewers: List<ChatReaction>,
+	selfName: String,
+	onIntent: (ConversationIntent) -> Unit,
+) {
+	item(key = "post") {
+		DiscussionPost(
+			line = root,
+			title = title,
+			count = count,
+			viewers = viewers,
+			selfName = selfName,
+			onIntent = onIntent,
+		)
+	}
+	item(key = "pill") {
+		CommentPill(count = count)
 	}
 }
 
@@ -437,7 +439,6 @@ private fun CommentPill(count: Int) {
 @Composable
 private fun postedAt(iso: String?): String {
 	val day = messageDay(iso)
-
 	val clock = messageClock(iso)
 
 	if (day.isNullOrBlank()) {
