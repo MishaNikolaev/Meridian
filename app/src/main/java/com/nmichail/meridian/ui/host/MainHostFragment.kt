@@ -9,6 +9,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.viewModels
 import com.nmichail.meridian.component.ui.bar.model.MUiBottomDestination
 import com.nmichail.meridian.component.ui.theme.MeridianTheme
@@ -19,6 +20,8 @@ import com.nmichail.meridian.features.calls.catalog.presentation.CallsDestinatio
 import com.nmichail.meridian.features.calls.catalog.presentation.CallsState
 import com.nmichail.meridian.features.calls.catalog.presentation.CallsIntent
 import com.nmichail.meridian.features.calls.catalog.presentation.CallsViewModel
+import com.nmichail.meridian.MainActivity
+import com.nmichail.meridian.features.calls.catalog.presentation.compose.media.ProvideMeetingPreview
 import com.nmichail.meridian.features.chat.di.ChatComponentHolder
 import com.nmichail.meridian.features.chat.presentation.ChatViewModel
 import com.nmichail.meridian.features.profile.di.ProfileComponentHolder
@@ -61,6 +64,7 @@ class MainHostFragment : FullScreenFragment() {
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
+		(requireActivity() as MainActivity).bindMeeting(callsViewModel)
 		val restored = savedInstanceState?.getString(TAB) ?: return
 		selected.value = MUiBottomDestination.valueOf(restored)
 	}
@@ -72,23 +76,42 @@ class MainHostFragment : FullScreenFragment() {
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
 		ComposeView(requireContext()).apply {
+			setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
 			setContent {
-				MeridianTheme {
-					val callsState by callsViewModel.state.collectAsState()
-					MainHostScreen(
-						selected = selected.value,
-						onSelect = { selected.value = it },
-						chatState = chatViewModel.state,
-						onChatIntent = chatViewModel::applyIntent,
-						chatEvent = chatViewModel.event,
-						profileState = viewModel.state,
-						onProfileIntent = viewModel::applyIntent,
-						callsState = callsState,
-						onCallsIntent = callsViewModel::applyIntent,
-					)
+				ProvideMeetingPreview((requireActivity() as MainActivity).meetingPreview) {
+					MeridianTheme {
+						val callsState by callsViewModel.state.collectAsState()
+						MainHostScreen(
+							selected = selected.value,
+							onSelect = { selected.value = it },
+							chatState = chatViewModel.state,
+							onChatIntent = chatViewModel::applyIntent,
+							chatEvent = chatViewModel.event,
+							profileState = viewModel.state,
+							onProfileIntent = viewModel::applyIntent,
+							callsState = callsState,
+							onCallsIntent = callsViewModel::applyIntent,
+						)
+					}
 				}
 			}
 		}
+
+	override fun onStart() {
+		super.onStart()
+		if ((requireActivity() as MainActivity).takeMeetingRequest()) {
+			returnToMeeting()
+		}
+	}
+
+	fun returnToMeeting() {
+		selected.value = MUiBottomDestination.CALLS
+	}
+
+	override fun onDestroy() {
+		(activity as? MainActivity)?.unbindMeeting(callsViewModel)
+		super.onDestroy()
+	}
 
 	override fun navigateBack() {
 		val content = callsViewModel.state.value as? CallsState.Content

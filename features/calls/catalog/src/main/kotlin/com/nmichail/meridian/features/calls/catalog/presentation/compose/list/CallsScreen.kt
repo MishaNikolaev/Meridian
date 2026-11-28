@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
@@ -63,7 +64,10 @@ fun CallsScreen(
 			color = palette.textSecondary,
 			modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
 		)
-		is CallsState.Content -> CallsContent(state = state, onIntent = onIntent)
+		is CallsState.Content -> CallsContent(
+			state = state,
+			onIntent = onIntent,
+		)
 	}
 }
 
@@ -91,12 +95,26 @@ private fun CallsContent(
 			kind = LiveCall.Solo,
 			title = state.title,
 			onClose = { onIntent(CallsIntent.Back) },
+			selfName = "",
+			profilePhoto = "",
+			cameraEnabled = null,
+			onToggleCamera = {},
 		)
-		CallsDestination.Meeting -> CallStage(
-			kind = LiveCall.Meeting,
-			title = state.title,
-			onClose = { onIntent(CallsIntent.Back) },
-		)
+		CallsDestination.Meeting -> {
+			DisposableEffect(Unit) {
+				onIntent(CallsIntent.ShowMeeting(visible = true))
+				onDispose { onIntent(CallsIntent.ShowMeeting(visible = false)) }
+			}
+			CallStage(
+				kind = LiveCall.Meeting,
+				title = state.title,
+				onClose = { onIntent(CallsIntent.Back) },
+				selfName = state.profilePhoto?.name.orEmpty(),
+				profilePhoto = state.profilePhoto?.photoId.orEmpty(),
+				cameraEnabled = state.cameraEnabled,
+				onToggleCamera = { onIntent(CallsIntent.ToggleMeetingCamera) },
+			)
+		}
 		CallsDestination.List -> CallHome(
 			page = state.page,
 			calls = state.calls,

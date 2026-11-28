@@ -13,6 +13,10 @@ sealed interface CallsIntent {
 
 	data class OpenMeeting(val title: String) : CallsIntent
 
+	data class ShowMeeting(val visible: Boolean) : CallsIntent
+
+	data object ToggleMeetingCamera : CallsIntent
+
 	data object Back : CallsIntent
 
 	data class PickDay(val index: Int) : CallsIntent

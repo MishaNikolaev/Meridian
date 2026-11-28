@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,6 +20,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.nmichail.meridian.component.photo.PhotoFill
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.features.calls.catalog.R
@@ -44,12 +44,18 @@ internal fun FaceTile(face: FacePreview, modifier: Modifier = Modifier) {
 	) {
 		if (face.live) {
 			CallVideo(modifier = Modifier.fillMaxSize())
-		} else {
+		} else if (face.photo != 0) {
 			Image(
 				painter = painterResource(face.photo),
 				contentDescription = face.name,
 				contentScale = ContentScale.Crop,
 				modifier = Modifier.fillMaxSize(),
+			)
+		} else {
+			PhotoFill(
+				name = face.name,
+				modifier = Modifier,
+				photoId = face.photoId,
 			)
 		}
 		Row(
@@ -76,6 +82,8 @@ internal fun FaceTile(face: FacePreview, modifier: Modifier = Modifier) {
 internal fun SelfPreview(
 	speaking: Boolean,
 	camera: Boolean,
+	name: String,
+	photoId: String,
 	modifier: Modifier = Modifier,
 ) {
 	Box(
@@ -91,18 +99,7 @@ internal fun SelfPreview(
 			.background(palette.surface),
 	) {
 		if (LocalCallCapture.current == null || !camera) {
-			Text(
-				text = stringResource(R.string.calls_you),
-				style = MeridianType.captionSmall,
-				color = palette.textOnAccent,
-				modifier = Modifier
-					.align(Alignment.Center)
-					.size(40.dp)
-					.clip(CircleShape)
-					.background(Color(color = 0xFF4F46E5))
-					.padding(top = 12.dp),
-				textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-			)
+			PhotoFill(name = name, modifier = Modifier, photoId = photoId)
 		} else {
 			CallVideo()
 		}

@@ -11,9 +11,9 @@ class SaveChatTextUseCaseTest {
 	private val useCase = SaveChatTextUseCase(repository)
 
 	@Test
-	fun `invoke EXPECT repository save`() {
+	fun `invoke EXPECT repository save text`() {
 		useCase("тест")
 
-		verify(repository).save("тест")
+		verify(repository).saveText("тест")
 	}
 }

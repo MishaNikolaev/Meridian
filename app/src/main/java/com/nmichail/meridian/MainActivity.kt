@@ -13,7 +13,16 @@ import com.nmichail.meridian.di.ActivityComponent
 import com.nmichail.meridian.di.ChatSessionHolder
 import com.nmichail.meridian.navigation.router.main.MainRouter
 import com.nmichail.meridian.shared.chat.di.ChatRealtimeHolder
+import com.nmichail.meridian.component.ui.theme.MeridianTheme
+import com.nmichail.meridian.features.calls.catalog.presentation.compose.conference.MeetingOverlay
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import com.nmichail.meridian.features.calls.catalog.presentation.CallsViewModel
+import com.nmichail.meridian.features.calls.catalog.presentation.compose.media.MeetingPreview
 import com.nmichail.meridian.features.calls.ring.IncomingRing
+import com.nmichail.meridian.ui.host.MainHostFragment
+import com.nmichail.meridian.ui.host.PassThroughComposeView
 import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -37,6 +46,23 @@ class MainActivity : AppCompatActivity() {
 
 	private lateinit var activityComponent: ActivityComponent
 
+	val meetingPreview = MeetingPreview()
+	private val meetingOwner = mutableStateOf<CallsViewModel?>(null)
+	private var returnToMeeting = false
+
+	fun bindMeeting(viewModel: CallsViewModel) {
+		meetingOwner.value = viewModel
+	}
+
+	fun unbindMeeting(viewModel: CallsViewModel) {
+		if (meetingOwner.value === viewModel) {
+			meetingOwner.value = null
+			returnToMeeting = false
+		}
+	}
+
+	fun takeMeetingRequest(): Boolean = returnToMeeting.also { returnToMeeting = false }
+
 	private var rings: Job? = null
 
 	fun ring(): IncomingRing = incomingRing
@@ -49,16 +75,41 @@ class MainActivity : AppCompatActivity() {
 		super.onCreate(if (sessionOpen) savedInstanceState else null)
 		enableEdgeToEdge()
 		setContentView(R.layout.activity_main)
+		val overlay = findViewById<PassThroughComposeView>(R.id.meeting_overlay)
+		overlay.compose.setContent {
+			val viewModel = meetingOwner.value ?: return@setContent
+			val calls by viewModel.state.collectAsState()
+			MeridianTheme {
+				MeetingOverlay(
+					state = calls,
+					preview = meetingPreview,
+					onBounds = { overlay.touchBounds = it },
+					onOpen = ::openMeeting,
+				)
+			}
+		}
 		if (!sessionOpen || savedInstanceState == null) {
 			router.navigateToSplash()
 		}
 		lifecycleScope.launch {
 			sessionEvents.expired.collect {
+				meetingOwner.value = null
+				returnToMeeting = false
 				router.navigateToSignIn()
 			}
 		}
 		watchRings()
 		ring().onIntent(intent)
+	}
+
+	private fun openMeeting() {
+		val top = supportFragmentManager.findFragmentById(R.id.container)
+		if (top is MainHostFragment) {
+			top.returnToMeeting()
+		} else {
+			returnToMeeting = true
+			supportFragmentManager.popBackStack()
+		}
 	}
 
 	override fun onNewIntent(intent: Intent) {

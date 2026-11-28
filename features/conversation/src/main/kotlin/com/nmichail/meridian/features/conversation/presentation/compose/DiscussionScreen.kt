@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -158,7 +159,6 @@ private fun DiscussionBar(
 				maxLines = 1,
 				overflow = TextOverflow.Ellipsis,
 			)
-
 			if (!pinned.isNullOrBlank()) {
 				Text(
 					text = pinned,
@@ -192,6 +192,9 @@ private fun CommentList(
 	val you = stringResource(R.string.conversation_you)
 	val greeting = stringResource(R.string.conversation_greeting)
 	val messages = comments.filter { line -> line.vote == null }
+	val newest = messages.lastOrNull()
+	val tail = messages.lastIndex + if (root != null) 2 else 0
+	FollowComments(listState = listState, newest = newest, target = tail)
 
 	CompositionLocalProvider(LocalTallies provides tallies) {
 		LazyColumn(
@@ -201,20 +204,14 @@ private fun CommentList(
 			verticalArrangement = Arrangement.spacedBy(6.dp),
 		) {
 			if (root != null) {
-				item(key = "post") {
-					DiscussionPost(
-						line = root,
-						title = title,
-						count = comments.size,
-						viewers = reactionViewers[root.id].orEmpty(),
-						selfName = selfName,
-						onIntent = onIntent,
-					)
-				}
-
-				item(key = "pill") {
-					CommentPill(count = comments.size)
-				}
+				discussionHeader(
+					root = root,
+					title = title,
+					count = comments.size,
+					viewers = reactionViewers[root.id].orEmpty(),
+					selfName = selfName,
+					onIntent = onIntent,
+				)
 			}
 
 			items(messages, key = { line -> line.id }) { line ->
@@ -244,6 +241,29 @@ private fun CommentList(
 				)
 			}
 		}
+	}
+}
+
+private fun LazyListScope.discussionHeader(
+	root: ChatLine,
+	title: String,
+	count: Int,
+	viewers: List<ChatReaction>,
+	selfName: String,
+	onIntent: (ConversationIntent) -> Unit,
+) {
+	item(key = "post") {
+		DiscussionPost(
+			line = root,
+			title = title,
+			count = count,
+			viewers = viewers,
+			selfName = selfName,
+			onIntent = onIntent,
+		)
+	}
+	item(key = "pill") {
+		CommentPill(count = count)
 	}
 }
 
@@ -418,7 +438,6 @@ private fun CommentPill(count: Int) {
 @Composable
 private fun postedAt(iso: String?): String {
 	val day = messageDay(iso)
-
 	val clock = messageClock(iso)
 
 	if (day.isNullOrBlank()) {
