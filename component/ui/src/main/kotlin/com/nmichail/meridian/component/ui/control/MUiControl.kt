@@ -23,7 +23,11 @@ fun MUiSwitch(
 	model: MUiSwitchModel,
 	onClick: () -> Unit,
 	modifier: Modifier = Modifier,
+	compact: Boolean = false,
 ) {
+	val width = if (compact) 34.dp else 46.dp
+	val height = if (compact) 20.dp else 28.dp
+	val thumb = if (compact) 14.dp else 22.dp
 	val track = select(
 		active = model.checked,
 		on = palette.accentPrimary,
@@ -32,11 +36,11 @@ fun MUiSwitch(
 
 	Box(
 		modifier = modifier
-			.size(width = 46.dp, height = 28.dp)
-			.clip(RoundedCornerShape(14.dp))
+			.size(width = width, height = height)
+			.clip(RoundedCornerShape(height / 2))
 			.background(track)
 			.clickable(onClick = onClick)
-			.padding(3.dp),
+			.padding(if (compact) 2.dp else 3.dp),
 		contentAlignment = select(
 			active = model.checked,
 			on = Alignment.CenterEnd,
@@ -45,7 +49,7 @@ fun MUiSwitch(
 	) {
 		Box(
 			modifier = Modifier
-				.size(22.dp)
+				.size(thumb)
 				.clip(CircleShape)
 				.background(palette.controlThumb),
 		)

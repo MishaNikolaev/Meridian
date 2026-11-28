@@ -2,7 +2,8 @@ package com.nmichail.meridian.features.calls.catalog.presentation.compose.confer
 
 internal data class FacePreview(
 	val name: String,
-	val photo: Int,
+	val photo: Int = 0,
+	val photoId: String = "",
 	val muted: Boolean = false,
 	val speaking: Boolean = false,
 	val live: Boolean = false,

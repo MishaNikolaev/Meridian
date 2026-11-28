@@ -23,8 +23,8 @@ class ChatRepositoryImplTest {
 	}
 
 	@Test
-	fun `save EXPECT data source save text`() {
-		repository.save("текст")
+	fun `save text EXPECT data source save text`() {
+		repository.saveText("текст")
 
 		verify(dataSource).saveText("текст")
 	}

@@ -3,6 +3,7 @@ package com.nmichail.meridian.features.calls.catalog.presentation.compose.media
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import com.nmichail.meridian.features.calls.catalog.data.media.WebRtcCall
 import com.nmichail.meridian.features.calls.signal.presentation.CallSignalIntent
 
 @Composable
@@ -11,11 +12,12 @@ fun HearCall(
 	incoming: Boolean,
 	callId: String,
 	chatId: String,
-	line: CallLine?,
+	line: WebRtcCall?,
 	onIntent: (CallSignalIntent) -> Unit,
 ) {
+	val hasCall = callId.isNotEmpty() && chatId.isNotEmpty()
 	LaunchedEffect(live, incoming, callId, chatId) {
-		if (callId.isEmpty() || chatId.isEmpty()) {
+		if (!hasCall) {
 			onIntent(CallSignalIntent.Stop)
 		} else if (live || !incoming) {
 			onIntent(CallSignalIntent.Start(callId = callId, chatId = chatId, incoming = incoming))
@@ -38,9 +40,9 @@ fun HearCall(
 		onDispose { onIntent(CallSignalIntent.Stop) }
 	}
 
-	LaunchedEffect(live, line, incoming) {
-		if (live && line != null && !incoming) {
-			line.offer()
+	LaunchedEffect(live, line, incoming, callId, chatId) {
+		if (live && !incoming && hasCall) {
+			line?.offer()
 		}
 	}
 }

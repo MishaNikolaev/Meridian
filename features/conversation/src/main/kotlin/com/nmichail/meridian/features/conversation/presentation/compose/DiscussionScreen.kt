@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -21,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -192,6 +194,9 @@ private fun CommentList(
 	val you = stringResource(R.string.conversation_you)
 	val greeting = stringResource(R.string.conversation_greeting)
 	val messages = comments.filter { line -> line.vote == null }
+	val newest = messages.lastOrNull()
+	val tail = messages.lastIndex + if (root != null) 2 else 0
+	FollowComments(listState = listState, newest = newest, target = tail)
 
 	CompositionLocalProvider(LocalTallies provides tallies) {
 		LazyColumn(
@@ -243,6 +248,20 @@ private fun CommentList(
 					onIntent = onIntent,
 				)
 			}
+		}
+	}
+}
+
+@Composable
+private fun FollowComments(listState: LazyListState, newest: ChatLine?, target: Int) {
+	LaunchedEffect(newest?.id) {
+		if (newest == null || target < 0) {
+			return@LaunchedEffect
+		}
+		val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
+		val nearEnd = lastVisible == null || lastVisible >= target - 1
+		if (newest.mine || nearEnd) {
+			listState.animateScrollToItem(target)
 		}
 	}
 }

@@ -19,6 +19,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
+import com.nmichail.meridian.features.calls.catalog.data.media.WebRtcCall
 import org.webrtc.SurfaceViewRenderer
 
 internal val LocalCallCapture = staticCompositionLocalOf<CallCapture?> { null }
@@ -42,7 +43,7 @@ internal fun WithCallCamera(content: @Composable () -> Unit) {
 }
 
 @Composable
-fun rememberCallLine(video: Boolean, active: Boolean = true): CallLine? {
+fun rememberWebRtcCall(video: Boolean, active: Boolean = true, loud: Boolean = video): WebRtcCall? {
 	val context = LocalContext.current
 	val micGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
 	val cameraGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
@@ -63,15 +64,15 @@ fun rememberCallLine(video: Boolean, active: Boolean = true): CallLine? {
 		}
 		launcher.launch(permissions)
 	}
-	val line = remember(allowed, video, active) {
-		if (active && allowed) CallLine(context.applicationContext, video) else null
+	val line = remember(allowed, video, active, loud) {
+		if (active && allowed) WebRtcCall(context.applicationContext, video, loud) else null
 	}
 	DisposableEffect(line) { onDispose { line?.stop() } }
 	return line
 }
 
 @Composable
-internal fun CallPicture(line: CallLine, remote: Boolean, modifier: Modifier = Modifier) {
+internal fun CallPicture(line: WebRtcCall, remote: Boolean, modifier: Modifier = Modifier) {
 	AndroidView(
 		modifier = modifier,
 		factory = { viewContext ->
@@ -89,7 +90,7 @@ internal fun CallPicture(line: CallLine, remote: Boolean, modifier: Modifier = M
 
 @Composable
 internal fun CallVideo(modifier: Modifier = Modifier) {
-	val capture = LocalCallCapture.current ?: return
+	val capture = LocalCallCapture.current ?: LocalMeetingPreview.current?.capture ?: return
 	AndroidView(
 		modifier = modifier.fillMaxSize(),
 		factory = { viewContext ->
@@ -101,5 +102,6 @@ internal fun CallVideo(modifier: Modifier = Modifier) {
 				capture.bind(this)
 			}
 		},
+		onRelease = { renderer -> capture.release(renderer) },
 	)
 }

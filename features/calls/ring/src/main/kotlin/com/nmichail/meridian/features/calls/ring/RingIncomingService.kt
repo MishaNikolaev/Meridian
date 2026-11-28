@@ -8,10 +8,22 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.graphics.Bitmap
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.Person
+import androidx.core.graphics.drawable.IconCompat
+import coil3.request.SuccessResult
+import coil3.toBitmap
+import com.nmichail.meridian.component.photopicker.photoLoader
+import com.nmichail.meridian.component.photopicker.photoRequest
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 class RingIncomingService : Service() {
 	companion object {
@@ -25,16 +37,19 @@ class RingIncomingService : Service() {
 		const val TITLE = "title"
 		const val PERSON_ID = "personId"
 		const val VIDEO = "video"
+		private const val PHOTO_ID = "photoId"
 		private const val CHANNEL = "ring_incoming_v2"
 		private const val NOTE = 71
+		private const val PHOTO_PIXELS = 144
 		private const val CODE_ANSWER = 1
 		private const val CODE_DECLINE = 2
 		private const val CODE_OPEN = 3
 		private val PULSE = longArrayOf(0L, 800L, 400L, 800L)
 
-		fun show(context: Context, banner: RingBanner) {
+		fun show(context: Context, banner: RingBanner, photoId: String) {
 			val intent = Intent(context, RingIncomingService::class.java)
 				.setAction(SHOW)
+				.putExtra(PHOTO_ID, photoId)
 				.putExtra(CALL_ID, banner.callId)
 				.putExtra(CHAT_ID, banner.chatId)
 				.putExtra(TITLE, banner.title)
@@ -54,12 +69,14 @@ class RingIncomingService : Service() {
 
 	private var sound: RingSound? = null
 	private var active: RingBanner? = null
+	private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+	private var photoJob: Job? = null
 
 	override fun onBind(intent: Intent?): IBinder? = null
 
 	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 		when (intent?.action) {
-			SHOW -> show(intent.banner())
+			SHOW -> show(intent.banner(), intent.getStringExtra(PHOTO_ID).orEmpty())
 			STOP -> {
 				if (active?.callId == intent.getStringExtra(CALL_ID)) {
 					finish()
@@ -75,25 +92,42 @@ class RingIncomingService : Service() {
 	}
 
 	override fun onDestroy() {
+		scope.cancel()
 		sound?.stop()
 		sound = null
 		active = null
 		super.onDestroy()
 	}
 
-	private fun show(banner: RingBanner?) {
+	private fun show(banner: RingBanner?, photoId: String) {
 		if (banner == null || banner.callId.isEmpty()) {
 			finish()
 			return
 		}
+		val sameCall = active?.callId == banner.callId
 		active = banner
 		val ring = sound ?: RingSound(this).also { sound = it }
-		ring.play(incoming = true)
-		val note = notice(banner)
+		if (!sameCall) ring.play(incoming = true)
+		val note = notice(banner, null)
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
 			startForeground(NOTE, note, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
 		} else {
 			startForeground(NOTE, note)
+		}
+		photoJob?.cancel()
+		if (photoId.isNotBlank()) {
+			photoJob = scope.launch {
+				val request = photoRequest(
+					context = this@RingIncomingService,
+					photoId = photoId,
+					pixels = PHOTO_PIXELS,
+				)
+				val result = photoLoader().execute(request)
+				val photo = (result as? SuccessResult)?.image?.toBitmap() ?: return@launch
+				if (active === banner) {
+					getSystemService(NotificationManager::class.java).notify(NOTE, notice(banner, photo))
+				}
+			}
 		}
 	}
 
@@ -103,6 +137,7 @@ class RingIncomingService : Service() {
 	}
 
 	private fun finish() {
+		photoJob?.cancel()
 		sound?.stop()
 		sound = null
 		active = null
@@ -110,7 +145,7 @@ class RingIncomingService : Service() {
 		stopSelf()
 	}
 
-	private fun notice(banner: RingBanner): Notification {
+	private fun notice(banner: RingBanner, photo: Bitmap?): Notification {
 		val manager = getSystemService(NotificationManager::class.java)
 		val channel = NotificationChannel(CHANNEL, getString(R.string.ring_channel), NotificationManager.IMPORTANCE_HIGH)
 		channel.setSound(null, null)
@@ -120,7 +155,11 @@ class RingIncomingService : Service() {
 		channel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
 		manager.createNotificationChannel(channel)
 		val name = banner.title.ifBlank { getString(R.string.ring_incoming) }
-		val person = Person.Builder().setName(name).setImportant(true).build()
+		val person = Person.Builder()
+			.setName(name)
+			.setImportant(true)
+			.setIcon(photo?.let { IconCompat.createWithBitmap(it) })
+			.build()
 		val answer = action(ANSWER, banner, CODE_ANSWER)
 		val decline = action(DECLINE, banner, CODE_DECLINE)
 		val open = PendingIntent.getActivity(
@@ -131,6 +170,8 @@ class RingIncomingService : Service() {
 		)
 		return NotificationCompat.Builder(this, CHANNEL)
 			.setSmallIcon(R.drawable.ic_ring_in)
+			.setLargeIcon(photo)
+			.setOnlyAlertOnce(true)
 			.setContentTitle(name)
 			.setContentText(getString(R.string.ring_heads_up))
 			.setCategory(NotificationCompat.CATEGORY_CALL)

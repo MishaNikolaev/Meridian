@@ -27,9 +27,9 @@ import com.nmichail.meridian.core.navigation.screen.FullScreen
 import com.nmichail.meridian.core.navigation.screen.FullScreenFragment
 import com.nmichail.meridian.features.calls.catalog.R
 import com.nmichail.meridian.features.calls.catalog.di.CallsComponentHolder
-import com.nmichail.meridian.features.calls.catalog.presentation.compose.media.CallLine
+import com.nmichail.meridian.features.calls.catalog.data.media.WebRtcCall
 import com.nmichail.meridian.features.calls.catalog.presentation.compose.media.HearCall
-import com.nmichail.meridian.features.calls.catalog.presentation.compose.media.rememberCallLine
+import com.nmichail.meridian.features.calls.catalog.presentation.compose.media.rememberWebRtcCall
 import com.nmichail.meridian.features.calls.catalog.presentation.compose.ring.RingCall
 import com.nmichail.meridian.features.calls.catalog.presentation.compose.ring.RingPhase
 import com.nmichail.meridian.features.calls.ring.OutgoingRing
@@ -101,7 +101,6 @@ class PersonalCallFragment : FullScreenFragment() {
 	}
 
 	override fun navigateBack() {
-		(activity as? MainActivity)?.ring()?.release()
 		back?.invoke()
 	}
 }
@@ -157,7 +156,11 @@ private fun PersonalCall(
 	val request = { next: CallPhase ->
 		signals.applyIntent(CallSignalIntent.Update(callId = current, phase = next))
 	}
-	val line = rememberCallLine(video = video, active = phase != RingPhase.Incoming)
+	val line = rememberWebRtcCall(
+		video = video,
+		active = phase != RingPhase.Incoming,
+		loud = video || personId.isEmpty(),
+	)
 	CallSession(
 		title = title,
 		personId = personId,
@@ -186,7 +189,7 @@ private fun CallSession(
 	phase: RingPhase,
 	current: String,
 	chatId: String,
-	line: CallLine?,
+	line: WebRtcCall?,
 	signals: CallSignalViewModel,
 	realtime: ChatRealtime,
 	owner: LifecycleOwner,
@@ -243,7 +246,7 @@ private fun CallSession(
 private fun WatchSignals(
 	signals: CallSignalViewModel,
 	owner: LifecycleOwner,
-	line: CallLine?,
+	line: WebRtcCall?,
 	onPlaced: (String) -> Unit,
 	onAccepted: () -> Unit,
 	onClosed: () -> Unit,
@@ -280,7 +283,7 @@ private fun LiveCall(
 	personId: String,
 	phase: RingPhase,
 	video: Boolean,
-	line: CallLine?,
+	line: WebRtcCall?,
 	incoming: Boolean,
 	callId: String,
 	chatId: String,
@@ -300,6 +303,7 @@ private fun LiveCall(
 	RingCall(
 		name = name,
 		userId = personId,
+		chatId = chatId,
 		phase = phase,
 		video = video,
 		line = line,
@@ -336,7 +340,7 @@ private fun WatchCall(
 			}
 			onCurrent(notice.callId)
 			when (notice.state.toCallPhase()) {
-				CallPhase.ACCEPTED -> onLive()
+				CallPhase.ACCEPTED -> if (!incoming) onLive()
 				CallPhase.DECLINED, CallPhase.ENDED, CallPhase.MISSED -> onDone()
 				CallPhase.RINGING, null -> Unit
 			}

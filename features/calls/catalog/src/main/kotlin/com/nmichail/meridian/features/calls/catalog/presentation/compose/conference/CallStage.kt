@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.nmichail.meridian.component.ui.theme.MeridianType
 import com.nmichail.meridian.component.ui.theme.palette
 import com.nmichail.meridian.features.calls.catalog.R
+import com.nmichail.meridian.features.calls.catalog.presentation.compose.media.LocalMeetingPreview
 import com.nmichail.meridian.features.calls.catalog.presentation.compose.media.LocalCallCapture
 import com.nmichail.meridian.features.calls.catalog.presentation.compose.media.WithCallCamera
 import com.nmichail.meridian.features.calls.catalog.presentation.compose.media.callTime
@@ -46,66 +47,121 @@ internal enum class LiveCall {
 
 @Composable
 fun ConferenceRoom(title: String, onClose: () -> Unit) {
-	CallStage(kind = LiveCall.Meeting, title = title, onClose = onClose)
+	CallStage(kind = LiveCall.Meeting, title = title, onClose = onClose, selfName = "", profilePhoto = "", cameraEnabled = null, onToggleCamera = {})
 }
 
 @Composable
-internal fun CallStage(kind: LiveCall, title: String, onClose: () -> Unit) {
-	WithCallCamera {
-		val context = LocalContext.current
-		val audio = remember(context) { context.getSystemService(AudioManager::class.java) }
-		val capture = LocalCallCapture.current
-		var muted by remember { mutableStateOf(false) }
-		var camera by remember { mutableStateOf(true) }
-		var speaker by remember { mutableStateOf(true) }
-		val speaking = rememberSpeaking(active = !muted)
-		val meeting = title.ifBlank { stringResource(R.string.calls_live_title) }
-
-		DisposableEffect(audio) {
-			routeSpeaker(audio, true)
-			onDispose {
-				audio?.mode = AudioManager.MODE_NORMAL
-				audio?.isSpeakerphoneOn = false
-			}
+internal fun CallStage(
+	kind: LiveCall,
+	title: String,
+	onClose: () -> Unit,
+	selfName: String,
+	profilePhoto: String,
+	cameraEnabled: Boolean?,
+	onToggleCamera: () -> Unit,
+) {
+	val shared = cameraEnabled != null || LocalCallCapture.current != null
+	if (!shared) {
+		WithCallCamera {
+			Stage(
+				kind = kind,
+				title = title,
+				onClose = onClose,
+				selfName = selfName,
+				profilePhoto = profilePhoto,
+				cameraEnabled = cameraEnabled,
+				onToggleCamera = onToggleCamera,
+			)
 		}
-		Column(
-			modifier = Modifier
-				.fillMaxSize()
-				.background(palette.page),
-		) {
-			when (kind) {
-				LiveCall.Solo -> SoloStage(
-					modifier = Modifier.weight(1f),
-					name = stringResource(R.string.calls_solo_name),
-					speaking = speaking,
-					muted = muted,
-					camera = camera,
-				)
-				LiveCall.Meeting -> MeetingStage(
-					modifier = Modifier.weight(1f),
-					title = meeting,
-					speaking = speaking,
-					muted = muted,
-					camera = camera,
-				)
-			}
-			CallControls(
+	} else {
+		Stage(
+			kind = kind,
+			title = title,
+			onClose = onClose,
+			selfName = selfName,
+			profilePhoto = profilePhoto,
+			cameraEnabled = cameraEnabled,
+			onToggleCamera = onToggleCamera,
+		)
+	}
+}
+
+@Composable
+private fun Stage(
+	kind: LiveCall,
+	title: String,
+	onClose: () -> Unit,
+	selfName: String,
+	profilePhoto: String,
+	cameraEnabled: Boolean?,
+	onToggleCamera: () -> Unit,
+) {
+	val context = LocalContext.current
+	val audio = remember(context) { context.getSystemService(AudioManager::class.java) }
+	val capture = LocalCallCapture.current ?: LocalMeetingPreview.current?.capture
+	var muted by remember { mutableStateOf(false) }
+	var localCamera by remember { mutableStateOf(true) }
+	val camera = cameraEnabled ?: localCamera
+	var speaker by remember { mutableStateOf(true) }
+	val speaking = rememberSpeaking(active = !muted)
+	val meeting = title.ifBlank { stringResource(R.string.calls_live_title) }
+	HoldSpeaker(audio)
+	Column(
+		modifier = Modifier
+			.fillMaxSize()
+			.background(palette.page),
+	) {
+		when (kind) {
+			LiveCall.Solo    -> SoloStage(
+				modifier = Modifier.weight(1f),
+				name = stringResource(R.string.calls_solo_name),
+				speaking = speaking,
 				muted = muted,
 				camera = camera,
-				speaker = speaker,
-				onMute = { muted = !muted },
-				onCamera = {
-					val next = !camera
-					camera = next
-					capture?.setCamera(next)
-				},
-				onSpeaker = {
-					val next = !speaker
-					speaker = next
-					routeSpeaker(audio, next)
-				},
-				onClose = onClose,
+				selfName = selfName,
+				profilePhoto = profilePhoto,
 			)
+
+			LiveCall.Meeting -> MeetingStage(
+				modifier = Modifier.weight(1f),
+				title = meeting,
+				speaking = speaking,
+				muted = muted,
+				camera = camera,
+				selfName = selfName,
+				profilePhoto = profilePhoto,
+			)
+		}
+		CallControls(
+			muted = muted,
+			camera = camera,
+			speaker = speaker,
+			onMute = { muted = !muted },
+			onCamera = {
+				if (cameraEnabled == null) {
+					localCamera = !camera
+					capture?.setCamera(localCamera)
+				} else {
+					onToggleCamera()
+				}
+			},
+			onSpeaker = {
+				val next = !speaker
+				speaker = next
+				routeSpeaker(audio, next)
+			},
+			onClose = onClose,
+		)
+	}
+}
+
+@Composable
+private fun HoldSpeaker(audio: AudioManager?) {
+	DisposableEffect(audio) {
+		routeSpeaker(audio, true)
+		onDispose {
+			audio?.mode = AudioManager.MODE_NORMAL
+			audio?.isSpeakerphoneOn = false
 		}
 	}
 }
@@ -117,6 +173,8 @@ private fun SoloStage(
 	speaking: Boolean,
 	muted: Boolean,
 	camera: Boolean,
+	selfName: String,
+	profilePhoto: String,
 ) {
 	val seconds = rememberStageSeconds()
 	Column(
@@ -159,6 +217,8 @@ private fun SoloStage(
 			SelfPreview(
 				speaking = speaking && !muted,
 				camera = camera,
+				name = selfName.ifBlank { stringResource(R.string.calls_you) },
+				photoId = profilePhoto,
 				modifier = Modifier
 					.align(Alignment.BottomEnd)
 					.padding(12.dp)
@@ -175,11 +235,14 @@ private fun MeetingStage(
 	speaking: Boolean,
 	muted: Boolean,
 	camera: Boolean,
+	selfName: String,
+	profilePhoto: String,
 ) {
 	val seconds = rememberStageSeconds()
 	Column(modifier = modifier.padding(horizontal = 12.dp)) {
 
-		Text(text = title,
+		Text(
+			text = title,
 			style = MeridianType.bodyName,
 			color = palette.textPrimary
 		)
@@ -192,8 +255,8 @@ private fun MeetingStage(
 
 		FaceTile(
 			face = FacePreview(
-				name = stringResource(R.string.calls_you),
-				photo = R.drawable.call_preview_self,
+				name = selfName.ifBlank { stringResource(R.string.calls_you) },
+				photoId = profilePhoto,
 				muted = muted,
 				speaking = speaking && !muted,
 				live = camera,
@@ -229,7 +292,7 @@ private fun CallControls(
 			} else {
 				R.drawable.ic_call_mic_light
 			},
-			color = palette.textPrimary,
+			color = palette.textSecondary,
 			onClick = onMute,
 		)
 		Control(
@@ -238,21 +301,17 @@ private fun CallControls(
 			} else {
 				R.drawable.ic_call_video_off
 			},
-			color = palette.textPrimary,
+			color = palette.textSecondary,
 			onClick = onCamera,
 		)
 		Control(
 			icon = R.drawable.ic_call_volume,
-			color = if (speaker) {
-				palette.textPrimary
-			} else {
-				palette.field
-			},
+			color = palette.textSecondary,
 			onClick = onSpeaker,
 		)
 		Control(
 			icon = R.drawable.ic_call_more,
-			color = palette.field,
+			color = palette.textSecondary,
 		)
 		Control(
 			icon = R.drawable.ic_call_end,

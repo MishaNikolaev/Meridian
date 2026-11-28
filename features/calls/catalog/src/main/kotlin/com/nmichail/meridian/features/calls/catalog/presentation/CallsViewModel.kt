@@ -1,5 +1,6 @@
 package com.nmichail.meridian.features.calls.catalog.presentation
 
+import com.nmichail.meridian.component.photopicker.domain.usecase.LoadPhotoUseCase
 import com.nmichail.meridian.component.photopicker.domain.usecase.NoteFacesUseCase
 import com.nmichail.meridian.core.network.error.presentation.ErrorDelegate
 import com.nmichail.meridian.core.network.error.userMessage
@@ -14,6 +15,7 @@ class CallsViewModel @Inject constructor(
 	private val loadBusyPeopleUseCase: LoadBusyPeopleUseCase,
 	private val loadCallsUseCase: LoadCallsUseCase,
 	private val getUserIdUseCase: GetUserIdUseCase,
+	private val loadPhotoUseCase: LoadPhotoUseCase,
 	private val noteFacesUseCase: NoteFacesUseCase,
 	private val errorDelegate: ErrorDelegate,
 ) : BaseViewModel<CallsState, CallsIntent, Nothing>() {
@@ -22,14 +24,16 @@ class CallsViewModel @Inject constructor(
 
 	override fun applyIntent(intent: CallsIntent) {
 		when (intent) {
-			is CallsIntent.LoadInitialData -> handleLoadInitialData()
-			is CallsIntent.OpenPage        -> handlePage(intent.page)
-			is CallsIntent.OpenStart       -> handleScreen(CallsDestination.Start)
-			is CallsIntent.OpenPlan        -> handleScreen(CallsDestination.Plan)
-			is CallsIntent.OpenFind        -> handleFind()
-			is CallsIntent.OpenMeeting     -> handleMeeting(intent)
-			is CallsIntent.PickDay         -> handleLoad(intent.index)
-			is CallsIntent.Back            -> handleBack()
+			is CallsIntent.LoadInitialData     -> handleLoadInitialData()
+			is CallsIntent.OpenPage            -> handlePage(intent.page)
+			is CallsIntent.OpenStart           -> handleScreen(CallsDestination.Start)
+			is CallsIntent.OpenPlan            -> handleScreen(CallsDestination.Plan)
+			is CallsIntent.OpenFind            -> handleFind()
+			is CallsIntent.OpenMeeting         -> handleMeeting(intent)
+			is CallsIntent.ToggleMeetingCamera -> handleToggleMeetingCamera()
+			is CallsIntent.ShowMeeting         -> handleShowMeeting(intent.visible)
+			is CallsIntent.PickDay             -> handleLoad(intent.index)
+			is CallsIntent.Back                -> handleBack()
 		}
 	}
 
@@ -59,8 +63,33 @@ class CallsViewModel @Inject constructor(
 			current.copy(
 				screen = CallsDestination.Meeting,
 				title = intent.title.trim(),
+				profilePhoto = null,
+				meetingVisible = true,
+				cameraEnabled = true,
 			),
 		)
+		launchTry {
+			val userId = getUserIdUseCase()?.takeIf(String::isNotBlank) ?: return@launchTry
+			val photo = loadPhotoUseCase(userId) ?: return@launchTry
+			val content = state.value as? CallsState.Content ?: return@launchTry
+			if (content.screen == CallsDestination.Meeting) {
+				setState(content.copy(profilePhoto = photo))
+			}
+		} catch errorDelegate::processNonBlockingError
+	}
+
+	private fun handleShowMeeting(visible: Boolean) {
+		val content = state.value as? CallsState.Content ?: return
+		if (content.screen == CallsDestination.Meeting) {
+			setState(content.copy(meetingVisible = visible))
+		}
+	}
+
+	private fun handleToggleMeetingCamera() {
+		val content = state.value as? CallsState.Content ?: return
+		if (content.screen == CallsDestination.Meeting) {
+			setState(content.copy(cameraEnabled = !content.cameraEnabled))
+		}
 	}
 
 	private fun handleFind() {
@@ -126,6 +155,9 @@ class CallsViewModel @Inject constructor(
 						title = "",
 						day = 0,
 						people = null,
+						profilePhoto = null,
+						meetingVisible = false,
+						cameraEnabled = true,
 					),
 				)
 			}

@@ -11,10 +11,13 @@ import org.webrtc.SurfaceViewRenderer
 import org.webrtc.VideoTrack
 
 internal class CallCapture(context: Context) {
+
 	private val egl = EglBase.create()
 	private val factory: PeerConnectionFactory
 	private val capturer = frontCamera(context)
 	val track: VideoTrack
+	private var sink: SurfaceViewRenderer? = null
+
 	var cameraOn: Boolean = true
 		private set
 
@@ -37,10 +40,23 @@ internal class CallCapture(context: Context) {
 	}
 
 	fun bind(renderer: SurfaceViewRenderer) {
+		if (sink === renderer) {
+			return
+		}
+		sink?.let { previous -> track.removeSink(previous) }
 		renderer.init(egl.eglBaseContext, null)
 		renderer.setMirror(true)
 		renderer.setEnableHardwareScaler(true)
 		track.addSink(renderer)
+		sink = renderer
+	}
+
+	fun release(renderer: SurfaceViewRenderer) {
+		track.removeSink(renderer)
+		if (sink === renderer) {
+			sink = null
+		}
+		renderer.release()
 	}
 
 	fun setCamera(on: Boolean) {
@@ -48,7 +64,11 @@ internal class CallCapture(context: Context) {
 			return
 		}
 		if (on) {
-			capturer.openPreview(width = 1280, height = 720, frames = 30)
+			capturer.openPreview(
+				width = 1280,
+				height = 720,
+				frames = 30
+			)
 		} else {
 			capturer.stopCapture()
 		}

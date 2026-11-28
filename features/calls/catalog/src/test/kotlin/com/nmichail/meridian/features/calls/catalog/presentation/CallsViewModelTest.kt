@@ -1,6 +1,7 @@
 package com.nmichail.meridian.features.calls.catalog.presentation
 
 import com.nmichail.meridian.component.photopicker.domain.repository.PhotoRepository
+import com.nmichail.meridian.component.photopicker.domain.usecase.LoadPhotoUseCase
 import com.nmichail.meridian.component.photopicker.domain.usecase.NoteFacesUseCase
 import com.nmichail.meridian.core.network.error.presentation.ErrorDelegate
 import com.nmichail.meridian.core.network.session.SessionRepository
@@ -15,9 +16,9 @@ import com.nmichail.meridian.shared.busy.domain.entity.BusyPerson
 import com.nmichail.meridian.shared.busy.domain.repository.BusyRepository
 import com.nmichail.meridian.shared.busy.domain.usecase.LoadBusyPeopleUseCase
 import com.nmichail.meridian.testutils.TestCoroutineExtension
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.kotlin.doReturn
@@ -71,20 +72,23 @@ class CallsViewModelTest {
 		on { getUserId() } doReturn "self"
 	}
 
-	private fun viewModel() = CallsViewModel(
-		loadBusyPeopleUseCase = LoadBusyPeopleUseCase(board),
-		loadCallsUseCase = LoadCallsUseCase(repository),
-		getUserIdUseCase = GetUserIdUseCase(sessionRepository = sessionRepository),
-		noteFacesUseCase = NoteFacesUseCase(photos),
-		errorDelegate = mock<ErrorDelegate>(),
-	)
+	private lateinit var viewModel: CallsViewModel
+
+	@BeforeEach
+	fun setUp() {
+		viewModel = CallsViewModel(
+			loadBusyPeopleUseCase = LoadBusyPeopleUseCase(board),
+			loadCallsUseCase = LoadCallsUseCase(repository),
+			getUserIdUseCase = GetUserIdUseCase(sessionRepository = sessionRepository),
+			loadPhotoUseCase = LoadPhotoUseCase(photos),
+			noteFacesUseCase = NoteFacesUseCase(photos),
+			errorDelegate = mock<ErrorDelegate>(),
+		)
+		viewModel.applyIntent(CallsIntent.LoadInitialData)
+	}
 
 	@Test
 	fun `start EXPECT conference`() = runTest {
-		val viewModel = viewModel()
-		viewModel.applyIntent(CallsIntent.LoadInitialData)
-		advanceUntilIdle()
-
 		viewModel.applyIntent(CallsIntent.OpenStart)
 
 		val content = viewModel.state.value as CallsState.Content
@@ -93,10 +97,6 @@ class CallsViewModelTest {
 
 	@Test
 	fun `meeting EXPECT conferences tab`() = runTest {
-		val viewModel = viewModel()
-		viewModel.applyIntent(CallsIntent.LoadInitialData)
-		advanceUntilIdle()
-
 		viewModel.applyIntent(CallsIntent.OpenMeeting(title = ""))
 
 		val content = viewModel.state.value as CallsState.Content
@@ -106,9 +106,6 @@ class CallsViewModelTest {
 
 	@Test
 	fun `back EXPECT list`() = runTest {
-		val viewModel = viewModel()
-		viewModel.applyIntent(CallsIntent.LoadInitialData)
-		advanceUntilIdle()
 		viewModel.applyIntent(CallsIntent.OpenStart)
 
 		viewModel.applyIntent(CallsIntent.Back)
@@ -119,9 +116,6 @@ class CallsViewModelTest {
 
 	@Test
 	fun `find time EXPECT plan`() = runTest {
-		val viewModel = viewModel()
-		viewModel.applyIntent(CallsIntent.LoadInitialData)
-		advanceUntilIdle()
 		viewModel.applyIntent(CallsIntent.OpenPlan)
 		viewModel.applyIntent(CallsIntent.OpenFind)
 
@@ -133,12 +127,7 @@ class CallsViewModelTest {
 
 	@Test
 	fun `calls tab EXPECT history`() = runTest {
-		val viewModel = viewModel()
-		viewModel.applyIntent(CallsIntent.LoadInitialData)
-		advanceUntilIdle()
-
 		viewModel.applyIntent(CallsIntent.OpenPage(CallPage.History))
-		advanceUntilIdle()
 
 		val content = viewModel.state.value as CallsState.Content
 		assertEquals(CallPage.History, content.page)
@@ -151,12 +140,7 @@ class CallsViewModelTest {
 
 	@Test
 	fun `missed tab EXPECT only missed`() = runTest {
-		val viewModel = viewModel()
-		viewModel.applyIntent(CallsIntent.LoadInitialData)
-		advanceUntilIdle()
-
 		viewModel.applyIntent(CallsIntent.OpenPage(CallPage.Missed))
-		advanceUntilIdle()
 
 		val calls = (viewModel.state.value as CallsState.Content).calls
 		val missed = calls.filter { call -> call.direction == CallDirection.Missed }

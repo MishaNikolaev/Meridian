@@ -5,8 +5,10 @@ import android.content.Intent
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import com.nmichail.meridian.component.photopicker.PhotoLocalDataSource
 import com.nmichail.meridian.component.photopicker.loadPersonFace
 import com.nmichail.meridian.core.network.error.presentation.ErrorDelegate
+import com.nmichail.meridian.shared.chat.domain.entity.ChatType
 import com.nmichail.meridian.shared.chat.domain.entity.RingNotice
 import com.nmichail.meridian.shared.calls.data.mapper.toCallMedia
 import com.nmichail.meridian.shared.calls.data.mapper.toCallPhase
@@ -15,8 +17,10 @@ import com.nmichail.meridian.shared.calls.domain.entity.CallPhase
 import com.nmichail.meridian.shared.session.domain.usecase.GetUserIdUseCase
 import de.jensklingenberg.ktorfit.Ktorfit
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 class IncomingRing @Inject constructor(
 	private val activity: Activity,
@@ -40,14 +44,10 @@ class IncomingRing @Inject constructor(
 
 	fun detach(callId: String) {
 		if (shownCallId == callId) {
-			release()
+			shownCallId = null
+			onLive = null
+			onClose = null
 		}
-	}
-
-	fun release() {
-		shownCallId = null
-		onLive = null
-		onClose = null
 	}
 
 	suspend fun onNotice(notice: RingNotice) {
@@ -77,14 +77,18 @@ class IncomingRing @Inject constructor(
 			return
 		}
 		val chat = try {
-			session.readChat(notice.chatId)
+			withTimeoutOrNull(1_500.milliseconds) { session.readChat(notice.chatId) }
 		} catch (error: CancellationException) {
 			throw error
 		} catch (error: Exception) {
 			errorDelegate.processNonBlockingError(error)
 			null
 		}
-		val personId = chat?.personId?.takeIf { id -> id.isNotEmpty() } ?: notice.actorUserId
+		val personId = when (chat?.type) {
+			ChatType.DIRECT -> chat.personId?.takeIf(String::isNotBlank) ?: notice.actorUserId
+			null -> notice.actorUserId
+			else -> ""
+		}
 		val next = RingBanner(
 			callId = notice.callId,
 			chatId = notice.chatId,
@@ -93,16 +97,28 @@ class IncomingRing @Inject constructor(
 			video = notice.media.toCallMedia() == CallMedia.VIDEO,
 		)
 		banner = next
-		RingIncomingService.show(activity, next)
+		val saved = if (personId.isEmpty()) {
+			PhotoLocalDataSource.storedChatPhoto(notice.chatId)
+		} else {
+			PhotoLocalDataSource.storedPersonPhoto(personId)
+		}
+		RingIncomingService.show(activity, next, saved)
 		if (owner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
 			open(next, accepted = false)
 		}
+		loadCallerPhoto(next, saved)
+	}
+
+	private fun loadCallerPhoto(current: RingBanner, saved: String) {
+		if (current.personId.isEmpty()) {
+			return
+		}
 		owner.lifecycleScope.launch {
-			val face = loadPersonFace(ktorfit = ktorfit, userId = personId)
-			val titled = next.copy(title = next.title.ifBlank { face.name })
-			if (banner?.callId == titled.callId) {
+			val face = loadPersonFace(ktorfit = ktorfit, userId = current.personId)
+			val titled = current.copy(title = current.title.ifBlank { face.name })
+			if (banner?.callId == titled.callId && (titled != current || face.photoId != saved)) {
 				banner = titled
-				RingIncomingService.show(activity, titled)
+				RingIncomingService.show(activity, titled, face.photoId)
 			}
 		}
 	}

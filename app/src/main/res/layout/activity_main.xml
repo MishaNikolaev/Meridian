@@ -8,6 +8,13 @@
 		android:layout_width="match_parent"
 		android:layout_height="match_parent" />
 
+	<com.nmichail.meridian.ui.host.PassThroughComposeView
+		android:id="@+id/meeting_overlay"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:background="@android:color/transparent"
+		android:elevation="24dp" />
+
 	<androidx.compose.ui.platform.ComposeView
 		android:id="@+id/ring_overlay"
 		android:layout_width="match_parent"

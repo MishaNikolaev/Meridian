@@ -51,6 +51,10 @@ class ChatRepositoryImpl @Inject constructor(
 ) : ChatRepository {
 	override suspend fun readChat(chatId: String): Chat {
 		val dto = api.getChat(chatId).chat
+		val photoId = dto.photoId.orEmpty()
+		if (photoId.isNotEmpty()) {
+			PhotoLocalDataSource.keepChatPhoto(chatId = chatId, photoId = photoId)
+		}
 		val title = dto.title?.takeIf { value -> value.isNotBlank() } ?: dto.personName.orEmpty()
 
 		return dto.toEntity(mentioned = false).copy(title = title)

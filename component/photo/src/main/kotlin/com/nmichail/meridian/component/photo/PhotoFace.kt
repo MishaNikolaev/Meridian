@@ -36,12 +36,12 @@ fun PhotoFace(
 	corner: Dp = size / 2,
 	style: TextStyle = MeridianType.bodyName,
 ) {
-	val stored = if (chatId.isNotEmpty()) {
+	val saved = if (chatId.isNotEmpty()) {
 		PhotoLocalDataSource.storedChatPhoto(chatId)
 	} else {
 		PhotoLocalDataSource.storedPersonPhoto(userId)
 	}
-	val photo = stored.ifEmpty { photoId }
+	val photo = saved.ifEmpty { photoId }
 	val pixels = with(LocalDensity.current) { size.roundToPx() }
 	val shape = RoundedCornerShape(corner)
 
