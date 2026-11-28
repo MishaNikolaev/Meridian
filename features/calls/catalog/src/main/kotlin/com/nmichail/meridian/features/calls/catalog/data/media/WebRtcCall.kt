@@ -106,7 +106,7 @@ class WebRtcCall(context: Context, video: Boolean, loud: Boolean) {
 				context,
 				source.capturerObserver,
 			)
-			startCapture(capturer)
+			capturer.startCallCapture()
 			factory.createVideoTrack("local", source)
 		}
 		val config = PeerConnection.RTCConfiguration(
@@ -133,11 +133,6 @@ class WebRtcCall(context: Context, video: Boolean, loud: Boolean) {
 			track.setEnabled(true)
 			pc.addTrack(track, listOf("call"))
 		}
-	}
-
-	@Suppress("MagicNumber")
-	private fun startCapture(capturer: org.webrtc.CameraVideoCapturer) {
-		capturer.startCapture(1280, 720, 30)
 	}
 
 	fun setMuted(on: Boolean) {
@@ -290,4 +285,9 @@ class WebRtcCall(context: Context, video: Boolean, loud: Boolean) {
 			}
 		}
 	}
+}
+
+@Suppress("MagicNumber")
+private fun org.webrtc.CameraVideoCapturer.startCallCapture() {
+	startCapture(1280, 720, 30)
 }
